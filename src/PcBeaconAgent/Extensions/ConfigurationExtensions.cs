@@ -10,7 +10,6 @@ namespace PcBeaconAgent.Extensions
     {
         public static AppSettings AddApplicationConfiguration(this IHostApplicationBuilder builder)
         {
-            // 1. Читаем конфигурацию напрямую из файла в базовой директории
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -18,14 +17,11 @@ namespace PcBeaconAgent.Extensions
 
             var settings = new AppSettings();
 
-            // 2. Биндим секции на ваш класс настроек
             configuration.GetSection("ServerSettings").Bind(settings.Server);
             configuration.GetSection("LogSettings").Bind(settings.Log);
 
-            // Регестрируем синглтон настроек в DI-контейнер
             builder.Services.AddSingleton(settings);
 
-            // 3. Сразу же на месте настраиваем и запускаем Serilog
             string fullLogPath = Path.Combine(AppContext.BaseDirectory, settings.Log.FilePath);
 
             var loggerConfig = new LoggerConfiguration()

@@ -10,7 +10,6 @@ namespace PcBeaconAgent.Endpoints
     {
         public static IEndpointRouteBuilder MapAudioEndpoints(this IEndpointRouteBuilder app)
         {
-            // Группируем все эндпоинты под общим префиксом /api/audio
             var audioGroup = app.MapGroup("/api/audio");
 
             audioGroup.MapGet("/favicon.ico", () => Results.NoContent());
