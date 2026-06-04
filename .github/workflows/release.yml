@@ -5,12 +5,10 @@ on:
     tags:
       - 'v.*'
 
-# Фикс ошибки 403: даем экшену права на создание релизов и запись файлов
 permissions:
   contents: write
 
 env:
-  # Убираем ворнинг GitHub об устаревшей ноде (форсируем Node 24)
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -30,17 +28,23 @@ jobs:
       run: dotnet restore
 
     - name: Publish Single-File Executable
-      # Фикс ворнинга: указываем путь к конкретному .csproj и собираем через PublishDir
+      
       run: |
-        dotnet publish src/PcBeaconAgent/PcBeaconAgent.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -p:PublishDir=../../publish
+        dotnet publish src/PcBeaconAgent/PcBeaconAgent.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -p:DebugType=None -p:PublishDir=../../publish
+
+    - name: Clean up extra files and build artifacts
+      
+      run: |
+        if (Test-Path "./publish/aspnetcorev2_inprocess.dll") { Remove-Item "./publish/aspnetcorev2_inprocess.dll" -Force }
+        if (Test-Path "./publish/logs") { Remove-Item "./publish/logs" -Recurse -Force }
 
     - name: Create Zip Archive
-      # Скрипт заберет exe и appsettings.json из папки publish
       run: |
         Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgentService-${{ github.ref_name }}-win-x64.zip
 
     - name: Create GitHub Release and Upload Asset
-      uses: softprops/action-gh-release@v2
+     
+      uses: softprops/action-gh-release@v2.0.1
       with:
         files: ./PcBeaconAgentService-${{ github.ref_name }}-win-x64.zip
         generate_release_notes: true
