@@ -1,4 +1,4 @@
-# PcBeaconAgentService <img src=".github/assets/beacon.png" align="right" height="50" alt="PcBeaconAgent Logo">
+# PcBeaconAgentService <img src=".github/assets/beacon.png" align="right" height="45" alt="PcBeaconAgent Logo">
 
 [![Release Status](https://github.com/vertigra/PcBeaconAgentService/actions/workflows/release.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgentService/actions/workflows/release.yml)
 
