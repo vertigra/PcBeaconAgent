@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.OpenApi.Generated;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PcBeaconAgent.Extensions;
@@ -7,10 +6,8 @@ using Serilog;
 
 try
 {
-    var builder = WebApplication.CreateBuilder(args);
-
-    var settings = builder.AddApplicationConfiguration();
-    builder.Host.UseSerilog();
+    var builder = WebApplication.CreateBuilder(args); 
+    var settings = builder.AddApplicationConfiguration(args);
 
     Log.Information("PcBeaconAgent started...");
 
@@ -25,6 +22,7 @@ try
 
     app.Urls.Add($"http://{settings.Server.Host}:{settings.Server.Port}");
     app.ConfigureWebApi();
+
     await app.RunAsync();
 }
 catch (Exception ex)
