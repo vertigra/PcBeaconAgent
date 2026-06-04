@@ -2,5 +2,5 @@
   <Folder Name="/Элементы решения/">
     <File Path="README.md" />
   </Folder>
-  <Project Path="src/PcBeaconAgent/PcBeaconAgent.csproj" />
+  <Project Path="src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj" />
 </Solution>

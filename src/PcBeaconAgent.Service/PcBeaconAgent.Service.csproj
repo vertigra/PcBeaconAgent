@@ -3,10 +3,10 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
 
-    <AssemblyName>PcBeaconAgent</AssemblyName>
-    <RootNamespace>PcBeaconAgent</RootNamespace>
+    <AssemblyName>PcBeaconAgent.Service</AssemblyName>
+    <RootNamespace>PcBeaconAgent.Service</RootNamespace>
     <UserSecretsId>dotnet-PcBeaconAgent-cfec9708-b427-4f85-9e98-3cf8c1748e58</UserSecretsId>
     <NoWarn>$(NoWarn);NU1701</NoWarn>
 

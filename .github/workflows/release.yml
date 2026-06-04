@@ -28,25 +28,22 @@ jobs:
       run: dotnet restore
 
     - name: Publish Single-File Executable
-      
       run: |
-        dotnet publish src/PcBeaconAgent/PcBeaconAgent.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -p:DebugType=None -p:PublishDir=../../publish
+        dotnet publish src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -p:DebugType=None -p:PublishDir=../../publish
 
     - name: Clean up extra files and build artifacts
-      
       run: |
         if (Test-Path "./publish/aspnetcorev2_inprocess.dll") { Remove-Item "./publish/aspnetcorev2_inprocess.dll" -Force }
         if (Test-Path "./publish/logs") { Remove-Item "./publish/logs" -Recurse -Force }
 
     - name: Create Zip Archive
       run: |
-        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgentService-${{ github.ref_name }}-win-x64.zip
+        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-${{ github.ref_name }}-win-x64.zip
 
     - name: Create GitHub Release and Upload Asset
-     
       uses: softprops/action-gh-release@v2.0.1
       with:
-        files: ./PcBeaconAgentService-${{ github.ref_name }}-win-x64.zip
+        files: ./PcBeaconAgent.Service-${{ github.ref_name }}-win-x64.zip
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

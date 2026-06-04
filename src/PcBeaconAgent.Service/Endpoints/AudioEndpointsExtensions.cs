@@ -3,8 +3,9 @@ using AudioSwitcher.AudioApi.CoreAudio;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using System.Linq;
 
-namespace PcBeaconAgent.Endpoints
+namespace PcBeaconAgent.Service.Endpoints
 {
     public static class AudioEndpointsExtensions
     {

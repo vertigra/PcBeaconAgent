@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using PcBeaconAgent.Endpoints;
+using PcBeaconAgent.Service.Endpoints;
 using Scalar.AspNetCore;
 
-namespace PcBeaconAgent.Extensions
+namespace PcBeaconAgent.Service.Extensions
 {
     public static class WebApiExtensions
     {

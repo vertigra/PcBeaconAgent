@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Configuration;
+using PcBeaconAgent.Service.Configuration;
+using System;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Services;
+namespace PcBeaconAgent.Service.Services;
 
 public class UdpDiscoveryBackgroundService(AppSettings mSettings, ILogger<UdpDiscoveryBackgroundService> mLogger) : BackgroundService
 {

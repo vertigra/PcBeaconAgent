@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PcBeaconAgent.Configuration;
+using PcBeaconAgent.Service.Configuration;
 using Serilog;
+using System;
 using System.IO;
 using System.Linq;
 
-namespace PcBeaconAgent.Extensions;
+namespace PcBeaconAgent.Service.Extensions;
 
 public static class ConfigurationExtensions
 {
