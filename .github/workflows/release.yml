@@ -1,0 +1,40 @@
+name: Publish Single-File Release
+
+on:
+  push:
+    tags:
+      - 'v.*'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x 
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish Single-File Executable
+      run: |
+        dotnet publish --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true --output ./publish
+
+    # Упаковываем .exe и appsettings.json в один архив перед отправкой в релиз
+    - name: Create Zip Archive
+      run: |
+        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgentService-${{ github.ref_name }}-win-x64.zip
+
+    - name: Create GitHub Release and Upload Asset
+      uses: softprops/action-gh-release@v2
+      with:
+        # Теперь загружаем zip-архив, где лежит и программа, и её конфиг
+        files: ./PcBeaconAgentService-${{ github.ref_name }}-win-x64.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
