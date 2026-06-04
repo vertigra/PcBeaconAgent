@@ -40,7 +40,7 @@ public static class ConfigurationExtensions
 
         builder.Services.AddSerilog();
 
-        Log.Information("PcBeaconAgent инициализирован. Режим Silent: {SilentMode}", silentMode);
+        Log.Information("PcBeaconAgent initialized. Silent mode: {SilentMode}", silentMode);
 
         return settings;
     }

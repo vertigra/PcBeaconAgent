@@ -15,6 +15,6 @@
 
     public class LogSettings
     {
-        public string FilePath { get; set; } = "logs\\pc-controller.log";
+        public string FilePath { get; set; } = "logs\\pc-beacon-agent-.log";
     }
 }
