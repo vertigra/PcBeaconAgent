@@ -6,7 +6,7 @@ using Serilog;
 using System;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Service
+namespace PcBeaconAgent.Service.BackgroundServices
 {
     public class Program
     {
@@ -21,9 +21,10 @@ namespace PcBeaconAgent.Service
 
                 builder.Services.AddWindowsService(options =>
                 {
-
                     options.ServiceName = "PcBeaconAgent";
                 });
+                
+                builder.Services.AddHostedService<UdpBackgroundResponder>();
 
                 builder.Services.AddOpenApi();
 

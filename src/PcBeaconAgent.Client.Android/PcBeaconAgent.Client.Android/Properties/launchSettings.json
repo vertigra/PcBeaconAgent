@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Android Emulator": {
+      "commandName": "MsBuild",
+      "launchBrowser": false,
+      "launchUrl": "",
+      "environmentVariables": {
+        "DOTNET_MODIFIABLE_ASSEMBLIES": "debug"
+      }
+    }
+  }
+}
