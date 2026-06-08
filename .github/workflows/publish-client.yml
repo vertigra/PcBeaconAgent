@@ -65,7 +65,7 @@ jobs:
       run: |
         $apkPath = Get-ChildItem -Path src/PcBeaconAgent.Client.Android/ -Filter *.apk -Recurse | Select-Object -First 1
         if ($apkPath) {
-            Copy-Item $apkPath.FullName -Destination "./BeaconClient-${{ github.ref_name }}.apk"
+            Copy-Item $apkPath.FullName -Destination "./BeaconClient-v.${{ steps.parse_version.outputs.VERSION_NAME }}.apk"
         } else {
             Write-Error "APK file not found!"
             exit 1
@@ -74,7 +74,7 @@ jobs:
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2.0.1
       with:
-        files: ./BeaconClient-${{ github.ref_name }}.apk
+        files: ./BeaconClient-v.${{ steps.parse_version.outputs.VERSION_NAME }}.apk
         name: Client Android Release ${{ steps.parse_version.outputs.VERSION_NAME }}
         generate_release_notes: true
       env:

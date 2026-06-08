@@ -60,12 +60,12 @@ jobs:
 
     - name: Create Zip Archive
       run: |
-        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-${{ github.ref_name }}-win-x64.zip
+        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-v.${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2.0.1
       with:
-        files: ./PcBeaconAgent.Service-${{ github.ref_name }}-win-x64.zip
+        files: ./PcBeaconAgent.Service-v.${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
         name: Server Release ${{ steps.parse_version.outputs.VERSION_NAME }}
         generate_release_notes: true
       env:
