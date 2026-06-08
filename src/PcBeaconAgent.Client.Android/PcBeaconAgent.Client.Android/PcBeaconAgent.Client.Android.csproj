@@ -15,10 +15,17 @@
     <RootNamespace>PcBeaconAgent.Client.Android</RootNamespace>
     <ApplicationTitle>BeaconClient</ApplicationTitle>
     <ApplicationId>com.companyname.beaconclient</ApplicationId>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationVersionDisplay>1.0</ApplicationVersionDisplay>
+    <ApplicationVersion Condition="'$(AppVersionCode)' == ''">1</ApplicationVersion>
+    <ApplicationVersion Condition="'$(AppVersionCode)' != ''">$(AppVersionCode)</ApplicationVersion>
+
+    <ApplicationVersionDisplay Condition="'$(AppVersionName)' == ''">1.0.0</ApplicationVersionDisplay>
+    <ApplicationVersionDisplay Condition="'$(AppVersionName)' != ''">$(AppVersionName)</ApplicationVersionDisplay>
   </PropertyGroup>
 
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundScale="0.65" Color="#1E1E1E" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
@@ -26,9 +33,13 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.70" />
     <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.70" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\AppIcon\" />
   </ItemGroup>
 
 </Project>

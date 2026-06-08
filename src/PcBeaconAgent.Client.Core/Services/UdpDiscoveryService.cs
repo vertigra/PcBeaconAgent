@@ -20,13 +20,9 @@ public partial class UdpDiscoveryService : IUdpDiscoveryService, IDisposable
     private readonly int mPort;
     private readonly string mDiscoveryRequestPayload = "PING_PC_BEACON_AGENT";
     private readonly ObservableCollection<BeaconDevice> mInternalDevices;
-
-    // Optimized lock mechanism for .NET 9/10 (Fixes IDE0330)
-    private readonly System.Threading.Lock mLock = new();
-
+    private readonly Lock mLock = new();
     private readonly ILogger<UdpDiscoveryService> mLogger;
     private readonly JsonSerializerOptions mJsonOptions;
-
     private CancellationTokenSource? mTokenSource;
     private UdpClient? mListenerClient; // Dedicated client ONLY for listening to the port
     private bool mIsScanning;

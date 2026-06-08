@@ -5,38 +5,45 @@ using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
 
-namespace PcBeaconAgent.Client.Android
+namespace PcBeaconAgent.Client.Android;
+
+/// <summary>
+/// Main lifecycle activity for the Android application.
+/// Manages system-level configurations including Wi-Fi multicast locking.
+/// </summary>
+[Activity(
+    Theme = "@style/Maui.SplashTheme",
+    MainLauncher = true,
+    ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+public class MainActivity : MauiAppCompatActivity
 {
-    [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
-    public class MainActivity : MauiAppCompatActivity
+    private WifiManager.MulticastLock? _multicastLock;
+
+    /// <inheritdoc />
+    protected override void OnCreate(Bundle? savedInstanceState)
     {
-        // Ссылка на наш "замок", чтобы мы могли открыть его при закрытии приложения
-        private WifiManager.MulticastLock? _multicastLock;
+        base.OnCreate(savedInstanceState);
 
-        protected override void OnCreate(Bundle? savedInstanceState)
+        // 1. Request access to the Android system Wi-Fi service
+        if (GetSystemService(WifiService) is WifiManager wifi)
         {
-            base.OnCreate(savedInstanceState);
+            // 2. Create a multicast lock with a unique reference tag
+            _multicastLock = wifi.CreateMulticastLock("pc_beacon_multicast_lock");
 
-            // 1. Запрашиваем у Android доступ к системному сервису Wi-Fi
-            if (GetSystemService(Context.WifiService) is WifiManager wifi)
-            {
-                // 2. Создаем замок с произвольным текстовым именем-тегом
-                _multicastLock = wifi.CreateMulticastLock("pc_beacon_multicast_lock");
+            // 3. Acquire the lock to prevent the Android network stack from filtering incoming UDP broadcast/multicast packets
+            _multicastLock?.Acquire();
+        }
+    }
 
-                // 3. АКТИВИРУЕМ замок. С этой секунды Wi-Fi чип перестает выбрасывать пакеты ответов!
-                _multicastLock?.Acquire();
-            }
+    /// <inheritdoc />
+    protected override void OnDestroy()
+    {
+        // Release the multicast lock when the activity is destroyed to save device battery power
+        if (_multicastLock is { IsHeld: true })
+        {
+            _multicastLock.Release();
         }
 
-        protected override void OnDestroy()
-        {
-            // Когда приложение полностью закрывается, возвращаем настройки Wi-Fi обратно,
-            // чтобы не тратить батарею смартфона впустую
-            if (_multicastLock is { IsHeld: true })
-            {
-                _multicastLock.Release();
-            }
-            base.OnDestroy();
-        }
+        base.OnDestroy();
     }
 }

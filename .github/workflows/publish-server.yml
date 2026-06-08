@@ -1,0 +1,75 @@
+name: Publish Server Release
+
+on:
+  push:
+    tags:
+      - 'server.v.*'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Parse Version from Tag
+      id: parse_version
+      shell: pwsh
+      run: |
+        $tag = "${{ github.ref_name }}" # Например: server.v.1.5.2
+        if ($tag -match 'server\.v\.(\d+)\.(\d+)\.(\d+)') {
+            $versionName = "$max_major_minor_build"
+            $versionName = "${{ env:versionName }}"
+            $versionName = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
+            
+            echo "VERSION_NAME=$versionName" >> $env:GITHUB_OUTPUT
+            Write-Output "Parsed Server Version Name: $versionName"
+        } else {
+            Write-Error "Tag $tag does not match expected format server.v.X.Y.Z"
+            exit 1
+        }
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x 
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish Single-File Executable
+      run: |
+        dotnet publish src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          --self-contained true `
+          -p:DebugType=None `
+          -p:PublishDir=../../publish `
+          -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
+
+    - name: Clean up extra files and build artifacts
+      run: |
+        if (Test-Path "./publish/aspnetcorev2_inprocess.dll") { Remove-Item "./publish/aspnetcorev2_inprocess.dll" -Force }
+        if (Test-Path "./publish/logs") { Remove-Item "./publish/logs" -Recurse -Force }
+
+    - name: Create Zip Archive
+      run: |
+        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-${{ github.ref_name }}-win-x64.zip
+
+    - name: Create GitHub Release and Upload Asset
+      uses: softprops/action-gh-release@v2.0.1
+      with:
+        files: ./PcBeaconAgent.Service-${{ github.ref_name }}-win-x64.zip
+        name: Server Release ${{ steps.parse_version.outputs.VERSION_NAME }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -23,6 +23,7 @@
                 StrokeThickness="1"
                 BackgroundColor="#1E1E1E" 
                 Padding="15">
+
             <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
                 <Button Text="Start Scan" 
                         Command="{Binding StartScanCommand}" 
@@ -51,9 +52,30 @@
                         <Grid ColumnDefinitions="*, Auto">
 
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <Label Text="{Binding MachineName}" FontSize="18" FontAttributes="Bold" />
-                                <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="14" TextColor="DimGray" />
-                                <Label Text="{Binding LastSeen, StringFormat='Last Response: {0:HH:mm:ss}'}" FontSize="11" TextColor="DarkGray" />
+                                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                    <Label Text="{Binding MachineName}" FontSize="18" FontAttributes="Bold" TextColor="White" />
+
+                                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                        <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="14" TextColor="LightGray" />
+                                        <Label Text="•" TextColor="DimGray" VerticalOptions="Center"/>
+                                        <Label Text="{Binding InterfaceType}" FontSize="12" FontAttributes="Italic" TextColor="DarkSlateBlue">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding InterfaceType}" Value="Wi-Fi">
+                                                    <Setter Property="TextColor" Value="DeepSkyBlue" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding InterfaceType}" Value="Ethernet">
+                                                    <Setter Property="TextColor" Value="LightGreen" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </HorizontalStackLayout>
+
+                                    <Label Text="{Binding InterfaceName, StringFormat='Adapter: {0}'}" FontSize="12" TextColor="Gray" />
+
+                                    <Label Text="{Binding MacAddress, StringFormat='MAC: {0}'}" FontSize="11" TextColor="DimGray" FontFamily="Monospace" />
+
+                                    <Label Text="{Binding LastSeen, StringFormat='Last Response: {0:HH:mm:ss}'}" FontSize="11" TextColor="DarkGray" Margin="0,4,0,0" />
+                                </VerticalStackLayout>
                             </VerticalStackLayout>
 
                             <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">

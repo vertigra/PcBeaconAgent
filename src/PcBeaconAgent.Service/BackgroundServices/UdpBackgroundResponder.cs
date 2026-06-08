@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -7,13 +9,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Service.Configuration; // Подтягиваем твои AppSettings
-using PcBeaconAgent.Service.Models;
+using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Service.Configuration;
 
 namespace PcBeaconAgent.Service.BackgroundServices;
 
 /// <summary>
-/// Background service that listens for UDP discovery pings and responds with the agent's identity and API port.
+/// Background service that listens for UDP discovery pings and responds with the agent's identity,
+/// active network adapter details, hardware MAC address, and Web API configuration port.
 /// </summary>
 public partial class UdpBackgroundResponder : BackgroundService
 {
@@ -26,6 +29,8 @@ public partial class UdpBackgroundResponder : BackgroundService
     /// <summary>
     /// Initializes a new instance of the <see cref="UdpBackgroundResponder"/> class.
     /// </summary>
+    /// <param name="settings">The application settings containing server and discovery port configurations.</param>
+    /// <param name="logger">The high-performance logger instance for tracking network activities.</param>
     public UdpBackgroundResponder(AppSettings settings, ILogger<UdpBackgroundResponder> logger)
     {
         mSettings = settings;
@@ -43,8 +48,7 @@ public partial class UdpBackgroundResponder : BackgroundService
     {
         int udpPort = mSettings.Server.DiscoveryPort;
 
-        if (mLogger.IsEnabled(LogLevel.Information))
-            mLogger.LogInformation("Starting UDP Responder on port {Port}...", udpPort);
+        LogStartingResponder(mLogger, udpPort);
 
         using var udpServer = new UdpClient();
 
@@ -55,12 +59,12 @@ public partial class UdpBackgroundResponder : BackgroundService
 
             if (OperatingSystem.IsWindows())
             {
+                // SIO_UDP_CONNRESET fixes the annoying Winsock 10054 Connection Reset crash on Windows
                 const int SIO_UDP_CONNRESET = -1744830452;
                 udpServer.Client.IOControl(SIO_UDP_CONNRESET, [0], null);
             }
 
-            if (mLogger.IsEnabled(LogLevel.Information))
-                mLogger.LogInformation("UDP Responder successfully bound to port {Port}.", udpPort);
+            LogResponderBound(mLogger, udpPort);
         }
         catch (Exception ex)
         {
@@ -77,22 +81,26 @@ public partial class UdpBackgroundResponder : BackgroundService
 
                 if (message == mDiscoveryRequestPayload)
                 {
-                    if (mLogger.IsEnabled(LogLevel.Information))
-                        mLogger.LogInformation("Discovery request received from {ClientEndpoint}", result.RemoteEndPoint);
+                    LogDiscoveryRequestReceived(mLogger, result.RemoteEndPoint);
 
-                    var responseData = new UdpBeaconResponse
+                    var (mac, ifaceName, ifaceType) = GetNetworkInterfaceDetails(result.RemoteEndPoint.Address);
+
+                    var responseData = new BeaconDevice
                     {
                         MachineName = mMachineName,
-                        ApiPort = mSettings.Server.Port
+                        ApiPort = mSettings.Server.Port,
+                        MacAddress = mac,
+                        InterfaceName = ifaceName,
+                        InterfaceType = ifaceType
                     };
 
                     string jsonResponse = JsonSerializer.Serialize(responseData, mJsonOptions);
                     byte[] responseBuffer = Encoding.UTF8.GetBytes(jsonResponse);
 
-                    await udpServer.SendAsync(responseBuffer, responseBuffer.Length, result.RemoteEndPoint);
+                    var targetEndPoint = new IPEndPoint(result.RemoteEndPoint.Address, udpPort);
+                    await udpServer.SendAsync(responseBuffer, responseBuffer.Length, targetEndPoint);
 
-                    if (mLogger.IsEnabled(LogLevel.Trace))
-                        mLogger.LogTrace("Sent JSON discovery response to {ClientEndpoint}.", result.RemoteEndPoint);
+                    LogDiscoveryResponseSent(mLogger, result.RemoteEndPoint);
                 }
             }
             catch (OperationCanceledException)
@@ -101,23 +109,97 @@ public partial class UdpBackgroundResponder : BackgroundService
             }
             catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
             {
-                if (mLogger.IsEnabled(LogLevel.Debug))
-                    mLogger.LogDebug("Ignored Windows Winsock 10054 Connection Reset error.");
+                LogConnectionResetIgnored(mLogger);
             }
             catch (Exception ex)
             {
-                mLogger.LogError(ex, "Error occurred in UDP Responder loop.");
+                LogResponderLoopError(mLogger, ex);
                 await Task.Delay(2000, stoppingToken);
             }
         }
 
-        if (mLogger.IsEnabled(LogLevel.Information))
-            mLogger.LogInformation("UDP Responder on port {Port} stopped.", udpPort);
+        LogResponderStopped(mLogger, udpPort);
     }
 
-    [LoggerMessage(
-        EventId = 101,
-        Level = LogLevel.Error,
-        Message = "Error occurred in UDP background responder loop.")]
+    /// <summary>
+    /// Analyzes available local network interfaces to extract specific hardware properties 
+    /// corresponding to the subnet used by the requesting client.
+    /// </summary>
+    /// <param name="clientIp">The remote IP address of the discovering client device.</param>
+    /// <returns>A tuple containing the MAC address, system interface name, and connectivity medium type.</returns>
+    private (string Mac, string Name, string Type) GetNetworkInterfaceDetails(IPAddress clientIp)
+    {
+        try
+        {
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach (var ni in interfaces)
+            {
+                // Filter only operational network cards, excluding software loopbacks
+                if (ni.OperationalStatus != OperationalStatus.Up ||
+                    ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                    continue;
+
+                var ipProps = ni.GetIPProperties();
+
+                // Match interface bound to the same local subnet as the client
+                foreach (var unicast in ipProps.UnicastAddresses)
+                {
+                    if (unicast.Address.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
+
+                    byte[] clientBytes = clientIp.GetAddressBytes();
+                    byte[] serverBytes = unicast.Address.GetAddressBytes();
+
+                    // Basic matching criteria checking the main local network octets
+                    if (clientBytes[0] == serverBytes[0] && clientBytes[1] == serverBytes[1] && clientBytes[2] == serverBytes[2])
+                    {
+                        // Format physical MAC hardware address into standardized hex representation (AA:BB:CC:DD:EE:FF)
+                        string mac = string.Join(":", ni.GetPhysicalAddress().GetAddressBytes().Select(b => b.ToString("X2")));
+
+                        string type = ni.NetworkInterfaceType switch
+                        {
+                            NetworkInterfaceType.Wireless80211 => "Wi-Fi",
+                            NetworkInterfaceType.Ethernet => "Ethernet",
+                            _ => ni.NetworkInterfaceType.ToString()
+                        };
+
+                        return (mac, ni.Name, type);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogNetworkInterfaceFailure(mLogger, ex);
+        }
+
+        return ("Unknown", "Unknown", "Unknown");
+    }
+
+    // --- High-Performance Code-Generated Logger Extensions ---
+
+    [LoggerMessage(EventId = 100, Level = LogLevel.Information, Message = "Starting UDP Responder on port {Port}...")]
+    private static partial void LogStartingResponder(ILogger logger, int port);
+
+    [LoggerMessage(EventId = 101, Level = LogLevel.Information, Message = "UDP Responder successfully bound to port {Port}.")]
+    private static partial void LogResponderBound(ILogger logger, int port);
+
+    [LoggerMessage(EventId = 102, Level = LogLevel.Information, Message = "Discovery request received from {ClientEndpoint}")]
+    private static partial void LogDiscoveryRequestReceived(ILogger logger, IPEndPoint clientEndpoint);
+
+    [LoggerMessage(EventId = 103, Level = LogLevel.Trace, Message = "Sent JSON discovery response to {ClientEndpoint}.")]
+    private static partial void LogDiscoveryResponseSent(ILogger logger, IPEndPoint clientEndpoint);
+
+    [LoggerMessage(EventId = 104, Level = LogLevel.Debug, Message = "Ignored Windows Winsock 10054 Connection Reset error.")]
+    private static partial void LogConnectionResetIgnored(ILogger logger);
+
+    [LoggerMessage(EventId = 105, Level = LogLevel.Information, Message = "UDP Responder on port {Port} stopped.")]
+    private static partial void LogResponderStopped(ILogger logger, int port);
+
+    [LoggerMessage(EventId = 106, Level = LogLevel.Debug, Message = "Failed to retrieve network interface details.")]
+    private static partial void LogNetworkInterfaceFailure(ILogger logger, Exception ex);
+
+    [LoggerMessage(EventId = 107, Level = LogLevel.Error, Message = "Error occurred in UDP background responder loop.")]
     private static partial void LogResponderLoopError(ILogger logger, Exception ex);
 }
