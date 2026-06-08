@@ -91,11 +91,12 @@ public partial class UdpBackgroundResponder : BackgroundService
                         ApiPort = mSettings.Server.Port,
                         MacAddress = mac,
                         InterfaceName = ifaceName,
-                        InterfaceType = ifaceType
+                        InterfaceType = ifaceType,
+                        Status = "Online",
+                        LastSeen = DateTime.UtcNow
                     };
 
-                    string jsonResponse = JsonSerializer.Serialize(responseData, mJsonOptions);
-                    byte[] responseBuffer = Encoding.UTF8.GetBytes(jsonResponse);
+                    byte[] responseBuffer = JsonSerializer.SerializeToUtf8Bytes(responseData, BeaconJsonContext.Default.BeaconDevice);
 
                     var targetEndPoint = new IPEndPoint(result.RemoteEndPoint.Address, udpPort);
                     await udpServer.SendAsync(responseBuffer, responseBuffer.Length, targetEndPoint);

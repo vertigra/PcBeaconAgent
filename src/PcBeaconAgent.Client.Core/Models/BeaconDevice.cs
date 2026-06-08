@@ -58,10 +58,23 @@ public partial class BeaconDevice : ObservableObject
     [ObservableProperty]
     public partial string Status { get; set; } = "Online";
 
+    private DateTime _backFieldLastSeen = DateTime.UtcNow;
+
     /// <summary>
     /// Gets or sets the timestamp of the last received beacon response from this device.
     /// Stored in Universal Time Coordinated (UTC) to prevent local time-zone shifts during comparisons.
     /// </summary>
-    [ObservableProperty]
-    public partial DateTime LastSeen { get; set; } = DateTime.UtcNow;
+
+    public DateTime LastSeen
+    {
+        get => _backFieldLastSeen;
+        set
+        {
+            // Convert incoming UTC time from network payloads to device's local time
+            DateTime localValue = value.Kind == DateTimeKind.Utc ? value.ToLocalTime() : value;
+
+            // SetProperty checks for equality and raises PropertyChanged for MAUI XAML data binding
+            SetProperty(ref _backFieldLastSeen, localValue);
+        }
+    }
 }
