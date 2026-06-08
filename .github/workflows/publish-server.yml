@@ -23,12 +23,9 @@ jobs:
       id: parse_version
       shell: pwsh
       run: |
-        $tag = "${{ github.ref_name }}" # Например: server.v.1.5.2
+        $tag = "${{ github.ref_name }}"
         if ($tag -match 'server\.v\.(\d+)\.(\d+)\.(\d+)') {
-            $versionName = "$max_major_minor_build"
-            $versionName = "${{ env:versionName }}"
             $versionName = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
-            
             echo "VERSION_NAME=$versionName" >> $env:GITHUB_OUTPUT
             Write-Output "Parsed Server Version Name: $versionName"
         } else {

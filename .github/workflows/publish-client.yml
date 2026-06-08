@@ -1,4 +1,4 @@
-name: Publish Android Client Release
+﻿name: Publish Android Client Release
 
 on:
   push:
@@ -18,12 +18,12 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v4
-    
+
     - name: Parse Version from Tag
       id: parse_version
       shell: pwsh
       run: |
-        $tag = "${{ github.ref_name }}" # Например: client.v.2.4.12
+        $tag = "${{ github.ref_name }}"
         if ($tag -match 'client\.v\.(\d+)\.(\d+)\.(\d+)') {
             $major = [int]$Matches[1]
             $minor = [int]$Matches[2]
@@ -34,9 +34,6 @@ jobs:
             
             echo "VERSION_NAME=$versionName" >> $env:GITHUB_OUTPUT
             echo "VERSION_CODE=$versionCode" >> $env:GITHUB_OUTPUT
-            
-            Write-Output "Parsed Version Name: $versionName"
-            Write-Output "Calculated Version Code: $versionCode"
         } else {
             Write-Error "Tag $tag does not match expected format client.v.X.Y.Z"
             exit 1
@@ -52,7 +49,7 @@ jobs:
 
     - name: Restore Client Dependencies
       run: dotnet restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
-      
+
     - name: Publish Android App (Generate APK)
       run: |
         dotnet publish src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj `
@@ -69,7 +66,6 @@ jobs:
         $apkPath = Get-ChildItem -Path src/PcBeaconAgent.Client.Android/ -Filter *.apk -Recurse | Select-Object -First 1
         if ($apkPath) {
             Copy-Item $apkPath.FullName -Destination "./BeaconClient-${{ github.ref_name }}.apk"
-            Write-Output "APK prepared successfully."
         } else {
             Write-Error "APK file not found!"
             exit 1
@@ -78,7 +74,7 @@ jobs:
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2.0.1
       with:
-        files: ./BeaconClient-${{ github.ref_name }}.apk
+        files: ./BeaconClient-${{ github.ref_name }}
         name: Client Android Release ${{ steps.parse_version.outputs.VERSION_NAME }}
         generate_release_notes: true
       env:
