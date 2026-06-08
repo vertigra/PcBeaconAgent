@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/other/">
+    <File Path=".github/workflows/publish-client.yml" />
+    <File Path=".github/workflows/publish-server.yml" />
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj" Id="e7928992-ba00-4832-89e7-c3893a7e468f">
       <Deploy Solution="Debug|*" />
