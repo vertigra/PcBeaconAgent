@@ -3,17 +3,17 @@
 [![Publish Server Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
 [![Publish Android Client Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
 
-### Description
+### 📋 Description
 A solution designed to monitor PC status and manage it remotely. It consists of a background agent service for Windows and cross-platform clients.
 
 The **PcBeaconAgent.Service** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
 
-### Build Features
+### ⚙️ Build Features
 * **Single-File Executable**: The service compiles into a single, self-contained `.exe` file.
 * **Trimmed**: All unused code is automatically removed during compilation to optimize production binary size.
 * **Self-Contained**: The .NET 10 runtime is packed inside the executable, meaning no external .NET SDK installation is required on the target machine.
 
-### CLI Arguments (Silent Mode)
+### 💻 CLI Arguments (Silent Mode)
 By default, the agent duplicates all logs directly to the console window. For background or scripted execution, you can completely suppress terminal output using the following flags:
 
     Run in silent mode (logs will be written to the file only):
@@ -26,7 +26,7 @@ By default, the agent duplicates all logs directly to the console window. For ba
 
 The project utilizes automated deployment pipelines configured via **GitHub Actions**. Server and client applications are completely decoupled and managed using independent versioning tracks via Git tags.
 
-### Release Tag Formats
+### 🏷️ Release Tag Formats
 
 To trigger a release workflow, push a tag matching one of the strict naming conventions below from your local terminal:
 
@@ -39,7 +39,7 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 
 ---
 
-### How to Publish a New Version
+### 🛠️ How to Publish a New Version
 
 1. Commit and push all your changes to the remote branch (e.g., `main`).
 2. Create and push the component-specific tag using your Git CLI:
@@ -56,7 +56,7 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 
 ---
 
-### Internal Version Processing Mechanics
+### ⚙️ Internal Version Processing Mechanics
 
 #### 🖥️ Server (PcBeaconAgent.Service)
 * **Pipeline Output:** A standalone, native Windows x64 single-file executable packed inside a `.zip` archive.
@@ -67,6 +67,8 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 * **Pipeline Output:** A standalone, signed optimization architecture `.apk` package.
 * **Version Code Calculation:** Android requires a monotonically increasing integer for its `versionCode`. The pipeline automatically computes this value on the fly from your tag using a positioning multiplier formula:
 
-      $$\text{VersionCode} = (\text{Major} \times 10000) + (\text{Minor} \times 100) + \text{Build}$$
+$$	ext{VersionCode} = (	ext{Major} 	imes 10000) + (	ext{Minor} 	imes 100) + 	ext{Build}$$
 
 * *Example:* Pushing tag `client.v.2.4.12` instantly compiles an APK injected with `versionCode="20412"` and `versionName="2.4.12"`.
+
+---

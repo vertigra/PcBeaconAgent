@@ -74,7 +74,7 @@ jobs:
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2.0.1
       with:
-        files: ./BeaconClient-${{ github.ref_name }}
+        files: ./BeaconClient-${{ github.ref_name }}.apk
         name: Client Android Release ${{ steps.parse_version.outputs.VERSION_NAME }}
         generate_release_notes: true
       env:
