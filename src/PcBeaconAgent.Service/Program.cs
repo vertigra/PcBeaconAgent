@@ -24,13 +24,13 @@ namespace PcBeaconAgent.Service.BackgroundServices
                     options.ServiceName = "PcBeaconAgent";
                 });
                 
-                builder.Services.AddHostedService<UdpBackgroundResponder>();
+                builder.Services.AddHostedService<UdpBeaconServer>();
 
                 builder.Services.AddOpenApi();
 
                 var app = builder.Build();
 
-                app.Urls.Add($"http://{settings.Server.Host}:{settings.Server.Port}");
+                app.Urls.Add($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
                 app.ConfigureWebApi();
 
                 await app.RunAsync();
@@ -41,6 +41,7 @@ namespace PcBeaconAgent.Service.BackgroundServices
                 Console.Error.WriteLine($"Critical error on started: {ex.Message}");
                 Console.Error.WriteLine(ex.StackTrace);
                 Console.ResetColor();
+                Console.ReadLine();
 
                 Log.Fatal(ex, "PcBeaconAgent service fatal ended");
             }

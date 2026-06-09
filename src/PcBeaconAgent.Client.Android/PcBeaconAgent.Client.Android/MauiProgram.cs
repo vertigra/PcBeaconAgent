@@ -1,11 +1,9 @@
 ﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using PcBeaconAgent.Client.Android.ViewModels;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Services;
 
 namespace PcBeaconAgent.Client.Android;
 
@@ -20,8 +18,10 @@ public static class MauiProgram
 
         builder.Services.AddLogging();
 
-        builder.Services.AddSingleton<IUdpDiscoveryService>(sp =>
-            new UdpDiscoveryService(sp.GetRequiredService<ILogger<UdpDiscoveryService>>(), port: 8888));
+        builder.Services.AddSingleton<IUdpBeaconScanner>(sp =>
+        {
+            return new UdpBeaconScanner(8888);
+        });
 
         builder.Services.AddSingleton<App>();
         builder.Services.AddTransient<MainPage>();

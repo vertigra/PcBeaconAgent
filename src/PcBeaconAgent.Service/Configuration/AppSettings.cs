@@ -9,7 +9,7 @@
     public class ServerSettings
     {
         public string Host { get; set; } = "0.0.0.0";
-        public int Port { get; set; } = 5000;
+        public int ApiPort { get; set; } = 5000;
         public int DiscoveryPort { get; set; } = 8888;
     }
 

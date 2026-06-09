@@ -1,108 +1,33 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             xmlns:viewModels="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
              xmlns:models="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
+             xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
              x:Class="PcBeaconAgent.Client.Android.MainPage"
-             x:DataType="viewModels:MainViewModel"
-             BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#121212}"
-             Title="Agents Discovery">
+             x:DataType="vm:MainViewModel">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, *" Padding="16">
+    <Grid RowDefinitions="Auto, *" Padding="20">
+        <Button Text="Start Scan" 
+                Command="{Binding StartScanCommand}" 
+                IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
 
-        <Border Grid.Row="0" 
-                StrokeShape="RoundRectangle 12" 
-                Stroke="#333333" 
-                StrokeThickness="1"
-                BackgroundColor="#1E1E1E" 
-                Padding="15">
-
-            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
-                <Button Text="Start Scan" 
-                        Command="{Binding StartScanCommand}" 
-                        IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
-                        BackgroundColor="DarkSlateBlue" TextColor="White" CornerRadius="8" />
-
-                <Button Text="Stop Scan" 
-                        Command="{Binding StopScanCommand}" 
-                        IsEnabled="{Binding IsScanning}"
-                        BackgroundColor="IndianRed" TextColor="White" CornerRadius="8" />
-
-                <ActivityIndicator IsRunning="{Binding IsScanning}" Color="DarkSlateBlue" VerticalOptions="Center" WidthRequest="30" HeightRequest="30" Margin="12,0,0,0"/>
-            </HorizontalStackLayout>
-        </Border>
-
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Devices}" Margin="0,16,0,0">
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Devices}" Margin="0,20,0,0">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:BeaconDevice">
-                    <Border StrokeShape="RoundRectangle 12" 
-                            Stroke="#333333" 
-                            StrokeThickness="1"
-                            BackgroundColor="#1E1E1E" 
-                            Padding="15"
-                            Margin="0,0,0,10">
-
-                        <Grid ColumnDefinitions="*, Auto">
-
-                            <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                    <Label Text="{Binding MachineName}" FontSize="18" FontAttributes="Bold" TextColor="White" />
-
-                                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                                        <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="14" TextColor="LightGray" />
-                                        <Label Text="•" TextColor="DimGray" VerticalOptions="Center"/>
-                                        <Label Text="{Binding InterfaceType}" FontSize="12" FontAttributes="Italic" TextColor="DarkSlateBlue">
-                                            <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding InterfaceType}" Value="Wi-Fi">
-                                                    <Setter Property="TextColor" Value="DeepSkyBlue" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Label" Binding="{Binding InterfaceType}" Value="Ethernet">
-                                                    <Setter Property="TextColor" Value="LightGreen" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
-                                    </HorizontalStackLayout>
-
-                                    <Label Text="{Binding InterfaceName, StringFormat='Adapter: {0}'}" FontSize="12" TextColor="Gray" />
-
-                                    <Label Text="{Binding MacAddress, StringFormat='MAC: {0}'}" FontSize="11" TextColor="DimGray" FontFamily="Monospace" />
-
-                                    <Label Text="{Binding LastSeen, StringFormat='Last Response: {0:HH:mm:ss}'}" FontSize="11" TextColor="DarkGray" Margin="0,4,0,0" />
-                                </VerticalStackLayout>
-                            </VerticalStackLayout>
-
-                            <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-
-                                <BoxView WidthRequest="12" HeightRequest="12" CornerRadius="6" 
-                                         Color="Gray" 
-                                         VerticalOptions="Center">
-                                    <BoxView.Triggers>
-                                        <DataTrigger TargetType="BoxView" Binding="{Binding Status}" Value="Online">
-                                            <Setter Property="Color" Value="Green" />
-                                        </DataTrigger>
-                                    </BoxView.Triggers>
-                                </BoxView>
-
-                                <Label Text="{Binding Status}" FontAttributes="Bold" FontSize="14"
-                                       TextColor="Gray" 
-                                       VerticalOptions="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="Online">
-                                            <Setter Property="TextColor" Value="Green" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-
-                            </HorizontalStackLayout>
-
-                        </Grid>
+                <DataTemplate x:DataType="models:DiscoveredBeacon">
+                    <Border Margin="0,5" Padding="15" StrokeShape="RoundRectangle 10">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="IP:" FontAttributes="Bold"/>
+                            <Label Text="{Binding IpAddress}"/>
+                            <Label Text="|" />
+                            <Label Text="Port:" FontAttributes="Bold"/>
+                            <Label Text="{Binding Port}"/>
+                        </HorizontalStackLayout>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
