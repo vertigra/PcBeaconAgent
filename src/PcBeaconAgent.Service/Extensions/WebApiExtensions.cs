@@ -10,9 +10,8 @@ namespace PcBeaconAgent.Service.Extensions
         {
 #if DEBUG
             services.AddOpenApi();
-            return services;
 #endif
-
+            return services;
         }
 
         public static WebApplication ConfigureWebApi(this WebApplication app)
