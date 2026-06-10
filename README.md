@@ -81,3 +81,8 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 * *Example:* Pushing tag `client.v.2.4.12` instantly compiles an APK injected with `versionCode="20412"` and `versionName="2.4.12"`.
 
 ---
+## 🤝 Development Standards
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification to maintain a clean project history and enable automated changelog generation.
+
+* Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on commit message formats, types, and scopes.
