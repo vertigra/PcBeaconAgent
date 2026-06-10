@@ -4,6 +4,7 @@
     <File Path=".github/workflows/publish-server.yml" />
     <File Path="cliff.toml" />
     <File Path="CONTRIBUTING.md" />
+    <File Path="LICENSE.txt" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">
