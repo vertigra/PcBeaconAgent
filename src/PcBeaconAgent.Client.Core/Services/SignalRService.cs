@@ -1,79 +1,90 @@
-﻿using System;
+﻿// File: PcBeaconAgent.Client.Core/Services/SignalRService.cs
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Services;
 
 /// <inheritdoc />
 public class SignalRService : ISignalRService
 {
-    private HubConnection? mHubConnection;
-    private string? mServerUrl;
+    private readonly Dictionary<string, HubConnection> mConnections = new();
+    private readonly ILogger<SignalRService> mLogger;
 
-    /// <inheritdoc />
-    public event EventHandler<bool>? ConnectionChanged;
+    public event Action<string, BeaconDevice>? DeviceDetailsReceived;
+    public event Action<string>? ServerRequestedDisconnect;
 
-    /// <inheritdoc />
-    public bool IsConnected => mHubConnection?.State == HubConnectionState.Connected;
-
-    /// <inheritdoc />
-    public void Configure(string serverUrl)
+    public SignalRService(ILogger<SignalRService> logger)
     {
-        if (string.IsNullOrWhiteSpace(serverUrl))
-            throw new ArgumentException("Server URL cannot be empty.", nameof(serverUrl));
+        mLogger = logger;
+    }
 
-        mServerUrl = serverUrl;
-
-        // Initialize the member connection with automatic reconnect
-        mHubConnection = new HubConnectionBuilder()
-            .WithUrl(mServerUrl)
+    /// <inheritdoc />
+    public async Task ConnectAsync(string connectionId, string hubUrl, CancellationToken ct = default)
+    {
+        var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl)
             .WithAutomaticReconnect()
             .Build();
 
-        mHubConnection.Closed += OnConnectionClosed;
-        mHubConnection.Reconnected += OnReconnected;
-    }
-
-    /// <inheritdoc />
-    public async Task ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        if (mHubConnection == null)
-            throw new InvalidOperationException("Service must be configured with a URL before connecting.");
-
-        await mHubConnection.StartAsync(cancellationToken);
-        ConnectionChanged?.Invoke(this, true);
-    }
-
-    /// <inheritdoc />
-    public async Task DisconnectAsync()
-    {
-        if (mHubConnection != null)
+        connection.On<BeaconDevice>("ReceiveDeviceDetails", (json) =>
         {
-            await mHubConnection.StopAsync();
-            ConnectionChanged?.Invoke(this, false);
+            try
+            {
+                if (json != null) 
+                    DeviceDetailsReceived?.Invoke(connectionId, json);
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogError(ex, "Failed to deserialize device details for {Id}", connectionId);
+            }
+        });
+
+        connection.On("CloseConnection", () =>
+        {
+            ServerRequestedDisconnect?.Invoke(connectionId);
+        });
+
+        mConnections[connectionId] = connection;
+
+        try
+        {
+            await connection.StartAsync(ct);
+            mLogger.LogInformation("Connected to hub: {Id}", connectionId);
+        }
+        catch (Exception ex)
+        {
+            mConnections.Remove(connectionId);
+            mLogger.LogError(ex, "Could not connect to {Id}", connectionId);
+            throw;
         }
     }
 
     /// <inheritdoc />
-    public async Task SendCommandAsync(string command, object data)
+    public async Task DisconnectAsync(string connectionId)
     {
-        if (IsConnected && mHubConnection != null)
+        if (mConnections.TryGetValue(connectionId, out var connection))
         {
-            await mHubConnection.SendAsync(command, data);
+            await connection.StopAsync();
+            await connection.DisposeAsync();
+            mConnections.Remove(connectionId);
+            mLogger.LogInformation("Disconnected from {Id}", connectionId);
         }
     }
 
-    private Task OnConnectionClosed(Exception? exception)
+    /// <inheritdoc />
+    public async Task SendCommandAsync(string connectionId, string command, object data)
     {
-        ConnectionChanged?.Invoke(this, false);
-        return Task.CompletedTask;
-    }
-
-    private Task OnReconnected(string? connectionId)
-    {
-        ConnectionChanged?.Invoke(this, true);
-        return Task.CompletedTask;
+        if (mConnections.TryGetValue(connectionId, out var connection) &&
+            connection.State == HubConnectionState.Connected)
+        {
+            await connection.SendAsync(command, data);
+        }
     }
 }

@@ -1,43 +1,38 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Interfaces;
 
 /// <summary>
-/// A robust SignalR client implementation that provides real-time bi-directional communication.
-/// Manages connection lifecycle, automatic reconnection, and command dispatching
-/// between the agent and the management server.
+/// Provides a centralized service for managing multiple SignalR hub connections.
+/// Handles connection lifecycle, event routing, and data deserialization internally.
 /// </summary>
 public interface ISignalRService
 {
     /// <summary>
-    /// Gets a value indicating whether the client is currently connected.
+    /// Triggered when valid device details are received from a specific hub.
     /// </summary>
-    bool IsConnected { get; }
+    event Action<string, BeaconDevice>? DeviceDetailsReceived;
 
     /// <summary>
-    /// Configures the service with the target server URL found via discovery.
+    /// Triggered when the server requests a graceful disconnection.
     /// </summary>
-    void Configure(string serverUrl);
+    event Action<string>? ServerRequestedDisconnect;
 
     /// <summary>
-    /// Establishes a connection to the server.
+    /// Establishes a new connection to a hub and starts listening for commands.
     /// </summary>
-    Task ConnectAsync(CancellationToken cancellationToken = default);
+    Task ConnectAsync(string connectionId, string hubUrl, CancellationToken ct = default);
 
     /// <summary>
-    /// Gracefully closes the connection.
+    /// Closes and disposes of a specific hub connection.
     /// </summary>
-    Task DisconnectAsync();
+    Task DisconnectAsync(string connectionId);
 
     /// <summary>
-    /// Sends a command to the server hub.
+    /// Sends a generic command to the specified hub.
     /// </summary>
-    Task SendCommandAsync(string command, object data);
-
-    /// <summary>
-    /// Event triggered when the connection state changes.
-    /// </summary>
-    event EventHandler<bool>? ConnectionChanged;
+    Task SendCommandAsync(string connectionId, string command, object data);
 }

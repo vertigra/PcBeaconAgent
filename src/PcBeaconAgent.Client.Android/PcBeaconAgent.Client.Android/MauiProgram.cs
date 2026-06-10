@@ -4,6 +4,7 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using PcBeaconAgent.Client.Android.ViewModels;
 using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.Services;
 
 namespace PcBeaconAgent.Client.Android;
 
@@ -22,6 +23,8 @@ public static class MauiProgram
         {
             return new UdpBeaconScanner(8888);
         });
+
+        builder.Services.AddSingleton<ISignalRService, SignalRService>();
 
         builder.Services.AddSingleton<App>();
         builder.Services.AddTransient<MainPage>();
