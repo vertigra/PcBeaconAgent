@@ -4,7 +4,8 @@
              xmlns:models="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
              xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
              x:Class="PcBeaconAgent.Client.Android.MainPage"
-             x:DataType="vm:MainViewModel">
+             x:DataType="vm:MainViewModel"
+             BackgroundColor="#121212">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -13,21 +14,52 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto, *" Padding="20">
-        <Button Text="Start Scan" 
-                Command="{Binding StartScanCommand}" 
-                IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Devices}" Margin="0,20,0,0">
+        <Button Grid.Row="0"
+                Text="Start Scan" 
+                Command="{Binding StartScanCommand}" 
+                IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
+                HorizontalOptions="Fill"
+                Margin="0,0,0,10"
+                BackgroundColor="#6750A4"
+                TextColor="White"/>
+
+        <CollectionView Grid.Row="1" 
+                        ItemsSource="{Binding Devices}" 
+                        Margin="0,10,0,0">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:DiscoveredBeacon">
-                    <Border Margin="0,5" Padding="15" StrokeShape="RoundRectangle 10">
-                        <HorizontalStackLayout Spacing="10">
-                            <Label Text="IP:" FontAttributes="Bold"/>
-                            <Label Text="{Binding IpAddress}"/>
-                            <Label Text="|" />
-                            <Label Text="Port:" FontAttributes="Bold"/>
-                            <Label Text="{Binding Port}"/>
-                        </HorizontalStackLayout>
+                <DataTemplate x:DataType="models:BeaconDevice">
+
+                    <Border Margin="0,5" 
+                            Padding="20" 
+                            StrokeShape="RoundRectangle 12"
+                            BackgroundColor="#212121"
+                            StrokeThickness="0">
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label Text="{Binding MachineName, TargetNullValue='Ожидание данных...'}" 
+                                   FontSize="20" 
+                                   FontAttributes="Bold" 
+                                   TextColor="White"/>
+
+                            <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                <Label Text="{Binding IpAddress}" FontSize="16" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding ApiPort, StringFormat=':{0}'}" FontSize="16" TextColor="#BDBDBD"/>
+                            </HorizontalStackLayout>
+
+                            <BoxView HeightRequest="1" BackgroundColor="#424242" Margin="0,5"/>
+
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding MacAddress, StringFormat='MAC: {0}'}" 
+                                       FontSize="14" 
+                                       TextColor="#EEEEEE"/>
+                                <Label Text="{Binding InterfaceType, StringFormat='Type: {0}'}" 
+                                       FontSize="14" 
+                                       TextColor="#EEEEEE"/>
+                            </VerticalStackLayout>
+
+                        </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

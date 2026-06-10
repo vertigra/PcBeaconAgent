@@ -31,17 +31,28 @@ public class UdpBeaconServer : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var result = await udpServer.ReceiveAsync(stoppingToken);
-
-            if (result.Buffer.Length > 0 && result.Buffer[0] == ping)
+            try
             {
-                byte[] portBytes = BitConverter.GetBytes((ushort)mSettings.Server.ApiPort);
-                byte[] response = { pong, portBytes[0], portBytes[1] };
+                var result = await udpServer.ReceiveAsync(stoppingToken);
 
-                await udpServer.SendAsync(response, response.Length, result.RemoteEndPoint);
+                if (result.Buffer.Length > 0 && result.Buffer[0] == ping)
+                {
+                    byte[] portBytes = BitConverter.GetBytes((ushort)mSettings.Server.ApiPort);
+                    byte[] response = [pong, portBytes[0], portBytes[1]];
 
-                mLogger.LogInformation("Sent API port {Port} to {EndPoint}", mSettings.Server.ApiPort, result.RemoteEndPoint);
-                OnResponseSent?.Invoke(result.RemoteEndPoint, mSettings.Server.ApiPort);
+                    await udpServer.SendAsync(response, response.Length, result.RemoteEndPoint);
+
+                    mLogger.LogInformation("Sent API port {Port} to {EndPoint}", mSettings.Server.ApiPort, result.RemoteEndPoint);
+                    OnResponseSent?.Invoke(result.RemoteEndPoint, mSettings.Server.ApiPort);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                mLogger.LogInformation("UDP Beacon Server is shutting down...");
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogError(ex, "An error occurred while listening for UDP broadcasts");
             }
         }
     }

@@ -2,32 +2,42 @@
 using AudioSwitcher.AudioApi.CoreAudio;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc; 
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 
 namespace PcBeaconAgent.Service.Endpoints
 {
     public static class AudioEndpointsExtensions
     {
-        public static IEndpointRouteBuilder MapAudioEndpoints(this IEndpointRouteBuilder app)
+        public static IServiceCollection AddAudioService(this IServiceCollection services)
+        {
+            services.AddSingleton<CoreAudioController>();
+            return services;
+        }
+
+        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app)
         {
             var audioGroup = app.MapGroup("/api/audio");
 
-            audioGroup.MapGet("/favicon.ico", () => Results.NoContent());
-
-            audioGroup.MapGet("/devices", (CoreAudioController controller) =>
+            // GET /api/audio/devices
+            audioGroup.MapGet("/devices", ([FromServices] CoreAudioController controller) =>
             {
-                var devices = controller.GetPlaybackDevices(DeviceState.Active).Select(d => new { d.Id, d.FullName });
+                var devices = controller.GetPlaybackDevices(DeviceState.Active)
+                                        .Select(d => new { d.Id, d.FullName });
                 return Results.Ok(devices);
             });
 
-            audioGroup.MapGet("/default-device", (CoreAudioController controller) =>
+            // GET /api/audio/default-device
+            audioGroup.MapGet("/default-device", ([FromServices] CoreAudioController controller) =>
             {
                 var device = controller.DefaultPlaybackDevice;
                 return device != null ? Results.Ok(new { id = device.Id.ToString() }) : Results.NotFound();
             });
 
-            audioGroup.MapPost("/set", (string id, CoreAudioController controller) =>
+            // POST /api/audio/set?id=...
+            audioGroup.MapPost("/set", ([FromQuery] string id, [FromServices] CoreAudioController controller) =>
             {
                 var device = controller.GetPlaybackDevices().FirstOrDefault(d => d.Id.ToString() == id);
                 if (device != null)

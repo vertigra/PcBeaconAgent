@@ -1,0 +1,19 @@
+[changelog]
+body = """
+{% for group, commits in commits | group_by(attribute=\"group\") %}\n
+### {{ group | upper_first }}\n
+{% for commit in commits %}\n
+- {{ commit.message | upper_first }} ({{ commit.id | truncate(length=7, end=\"\") }})\n
+{% endfor %}\n
+{% endfor %}\n
+"""
+
+[git]
+commit_parsers = [
+    { message = "^feat\\(client\\)", group = "Client - Added" },
+    { message = "^feat\\(server\\)", group = "Server - Added" },
+    { message = "^fix\\(client\\)", group = "Client - Fixed" },
+    { message = "^fix\\(server\\)", group = "Server - Fixed" },
+    { message = "^refactor", group = "Refactored" },
+    { message = "^docs", group = "Documentation" },
+]

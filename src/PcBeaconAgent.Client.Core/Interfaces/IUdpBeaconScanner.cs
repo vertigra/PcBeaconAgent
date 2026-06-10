@@ -19,6 +19,6 @@ namespace PcBeaconAgent.Client.Core.Interfaces
         /// </summary>
         /// <param name="timeoutMs">Timeout in milliseconds for the response wait.</param>
         /// <returns>The discovered device or null if no response was received.</returns>
-        Task<DiscoveredBeacon?> ScanAsync(int timeoutMs = 2000);
+        Task ScanAsync(int timeoutMs = 2000);
     }
 }

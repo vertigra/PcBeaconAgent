@@ -2,6 +2,8 @@
   <Folder Name="/other/">
     <File Path=".github/workflows/publish-client.yml" />
     <File Path=".github/workflows/publish-server.yml" />
+    <File Path="cliff.toml" />
+    <File Path="CONTRIBUTING.md" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">

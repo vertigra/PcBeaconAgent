@@ -1,11 +1,20 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using PcBeaconAgent.Service.Endpoints;
+using Microsoft.Extensions.DependencyInjection;
 using Scalar.AspNetCore;
 
 namespace PcBeaconAgent.Service.Extensions
 {
     public static class WebApiExtensions
     {
+        public static IServiceCollection AddWebApi(this IServiceCollection services)
+        {
+#if DEBUG
+            services.AddOpenApi();
+            return services;
+#endif
+
+        }
+
         public static WebApplication ConfigureWebApi(this WebApplication app)
         {
 #if DEBUG
@@ -16,7 +25,6 @@ namespace PcBeaconAgent.Service.Extensions
                 options.WithTheme(ScalarTheme.Saturn);
             });
 #endif
-            app.MapAudioEndpoints();
 
             return app;
         }

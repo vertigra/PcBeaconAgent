@@ -18,6 +18,8 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
 
     - name: Parse Version from Tag
       id: parse_version
@@ -29,7 +31,7 @@ jobs:
             echo "VERSION_NAME=$versionName" >> $env:GITHUB_OUTPUT
             Write-Output "Parsed Server Version Name: $versionName"
         } else {
-            Write-Error "Tag $tag does not match expected format server.v.X.Y.Z"
+            Write-Error "Tag $tag does not match format server.v.X.Y.Z"
             exit 1
         }
 
@@ -53,7 +55,7 @@ jobs:
           -p:PublishDir=../../publish `
           -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
-    - name: Clean up extra files and build artifacts
+    - name: Clean up extra files
       run: |
         if (Test-Path "./publish/aspnetcorev2_inprocess.dll") { Remove-Item "./publish/aspnetcorev2_inprocess.dll" -Force }
         if (Test-Path "./publish/logs") { Remove-Item "./publish/logs" -Recurse -Force }
@@ -62,11 +64,20 @@ jobs:
       run: |
         Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-v.${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
 
-    - name: Create GitHub Release and Upload Asset
+    - name: Generate Changelog
+      uses: orhun/git-cliff-action@v4
+      id: git-cliff
+      with:
+        config: cliff.toml
+        args: --verbose --latest --strip header --include-path "src/PcBeaconAgent.Service/*" --include-path "src/PcBeaconAgent.Client.Core/*"
+      env:
+        OUTPUT: RELEASE_NOTES.md
+
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2.0.1
       with:
         files: ./PcBeaconAgent.Service-v.${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
         name: Server Release ${{ steps.parse_version.outputs.VERSION_NAME }}
-        generate_release_notes: true
+        body_path: RELEASE_NOTES.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

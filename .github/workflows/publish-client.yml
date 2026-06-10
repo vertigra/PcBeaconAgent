@@ -18,6 +18,8 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Parse Version from Tag
       id: parse_version
@@ -25,17 +27,13 @@ jobs:
       run: |
         $tag = "${{ github.ref_name }}"
         if ($tag -match 'client\.v\.(\d+)\.(\d+)\.(\d+)') {
-            $major = [int]$Matches[1]
-            $minor = [int]$Matches[2]
-            $build = [int]$Matches[3]
-            
-            $versionName = "$major.$minor.$build"
-            $versionCode = ($major * 10000) + ($minor * 100) + $build
+            $versionName = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
+            $versionCode = ([int]$Matches[1] * 10000) + ([int]$Matches[2] * 100) + [int]$Matches[3]
             
             echo "VERSION_NAME=$versionName" >> $env:GITHUB_OUTPUT
             echo "VERSION_CODE=$versionCode" >> $env:GITHUB_OUTPUT
         } else {
-            Write-Error "Tag $tag does not match expected format client.v.X.Y.Z"
+            Write-Error "Tag $tag does not match format client.v.X.Y.Z"
             exit 1
         }
 
@@ -44,13 +42,12 @@ jobs:
       with:
         dotnet-version: 10.0.x 
 
-    - name: Restore MAUI Android Workloads
-      run: dotnet workload restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
+    - name: Restore Workloads and Dependencies
+      run: |
+        dotnet workload restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
+        dotnet restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
 
-    - name: Restore Client Dependencies
-      run: dotnet restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
-
-    - name: Publish Android App (Generate APK)
+    - name: Publish Android App
       run: |
         dotnet publish src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj `
           -c Release `
@@ -60,22 +57,31 @@ jobs:
           -p:AppVersionCode=${{ steps.parse_version.outputs.VERSION_CODE }} `
           -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
-    - name: Prepare Android Artifact File
+    - name: Prepare Artifact
       shell: pwsh
       run: |
         $apkPath = Get-ChildItem -Path src/PcBeaconAgent.Client.Android/ -Filter *.apk -Recurse | Select-Object -First 1
         if ($apkPath) {
             Copy-Item $apkPath.FullName -Destination "./BeaconClient-v.${{ steps.parse_version.outputs.VERSION_NAME }}.apk"
         } else {
-            Write-Error "APK file not found!"
+            Write-Error "APK not found!"
             exit 1
         }
 
-    - name: Create GitHub Release and Upload Asset
+    - name: Generate Changelog
+      uses: orhun/git-cliff-action@v4
+      id: git-cliff
+      with:
+        config: cliff.toml
+        args: --verbose --latest --strip header --include-path "src/PcBeaconAgent.Client.Android/*" --include-path "src/PcBeaconAgent.Client.Core/*"
+      env:
+        OUTPUT: RELEASE_NOTES.md
+
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2.0.1
       with:
         files: ./BeaconClient-v.${{ steps.parse_version.outputs.VERSION_NAME }}.apk
         name: Client Android Release ${{ steps.parse_version.outputs.VERSION_NAME }}
-        generate_release_notes: true
+        body_path: RELEASE_NOTES.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
