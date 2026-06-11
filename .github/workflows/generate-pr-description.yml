@@ -1,5 +1,28 @@
-const commits = await github.rest.pulls.listCommits({ ... });
-const summary = commits.data.map(c => `- ${c.commit.message}`).join('\n');
-await github.rest.pulls.update({
-  body: `## Summary\n${summary}`
-});
+name: Generate PR Description
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  generate-description:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Generate Description
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const body = '## Summary\n' + commits.map(c => `- ${c.commit.message}`).join('\n');
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: body,
+            });
