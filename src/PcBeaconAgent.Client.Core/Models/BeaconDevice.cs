@@ -51,5 +51,13 @@ namespace PcBeaconAgent.Client.Core.Models
         /// </summary>
         [ObservableProperty]
         public partial string InterfaceType { get; set; } = string.Empty;
+
+        public override bool Equals(object? obj) => obj is BeaconDevice device && 
+            IpAddress == device.IpAddress && 
+            MacAddress == device.MacAddress &&
+            InterfaceName == device.InterfaceName &&
+            InterfaceType == device.InterfaceType &&
+            MachineName == device.MachineName;
+        public override int GetHashCode() => IpAddress.GetHashCode();
     }
 }
