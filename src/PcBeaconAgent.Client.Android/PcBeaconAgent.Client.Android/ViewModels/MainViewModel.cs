@@ -16,22 +16,34 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly IUdpBeaconScanner mScanner;
     private readonly ISignalRService mSignalRService;
     private readonly ILogger<MainViewModel> mLogger;
+    private readonly IDeviceStorageService mStorage;
 
     [ObservableProperty]
-    private partial bool IsScanning { get; set; }
+    public partial bool IsScanning { get; set; }
 
-    public ObservableCollection<BeaconDevice> Devices { get; } = new();
+    public ObservableCollection<BeaconDevice> Devices { get; } = [];
 
-    public MainViewModel(IUdpBeaconScanner scanner, ISignalRService signalRService, ILogger<MainViewModel> logger)
+    public MainViewModel(IUdpBeaconScanner scanner, ISignalRService signalRService, IDeviceStorageService storage, ILogger<MainViewModel> logger)
     {
         mScanner = scanner;
         mSignalRService = signalRService;
+        mStorage = storage; 
         mLogger = logger;
         
         mScanner.OnBeaconFound += OnBeaconFound;
 
         mSignalRService.DeviceDetailsReceived += OnDeviceDetailsReceived;
         mSignalRService.ServerRequestedDisconnect += OnServerRequestedDisconnect;
+
+        LoadDevice();
+    }
+
+    private void LoadDevice()
+    {
+        foreach (var device in mStorage.LoadDevices())
+        {
+            Devices.Add(device);
+        }
     }
 
     private void OnBeaconFound(DiscoveredBeacon beacon)
@@ -48,7 +60,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             Devices.Add(newDevice);
 
-            // Trigger connection via service
             string hubUrl = $"http://{newDevice.IpAddress}:{newDevice.ApiPort}/beaconHub";
             await mSignalRService.ConnectAsync(newDevice.IpAddress, hubUrl);
         });
@@ -58,13 +69,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            var device = Devices.FirstOrDefault(d => d.IpAddress == ipAddress);
+            BeaconDevice? device = Devices.FirstOrDefault(d => d.IpAddress == ipAddress);
+
             if (device != null)
             {
                 device.MachineName = data.MachineName;
                 device.MacAddress = data.MacAddress;
                 device.InterfaceType = data.InterfaceType;
                 device.InterfaceName = data.InterfaceName;
+
+                mStorage.SaveDevices(Devices);
+
                 mLogger.LogInformation("Updated UI for {Ip}", ipAddress);
             }
         });
@@ -102,7 +117,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        // Cleanup all
         mScanner.OnBeaconFound -= OnBeaconFound;
         mSignalRService.DeviceDetailsReceived -= OnDeviceDetailsReceived;
         mSignalRService.ServerRequestedDisconnect -= OnServerRequestedDisconnect;

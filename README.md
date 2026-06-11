@@ -8,6 +8,21 @@ A solution designed to monitor PC status and manage it remotely. It consists of 
 
 The **PcBeaconAgent.Service** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
 
+### 🧠 System Architecture
+
+The project is structured into distinct layers to ensure loose coupling, high testability, and a clear separation of concerns.
+
+* **Core (`PcBeaconAgent.Client.Core`)**: Contains business logic, service abstractions (e.g., `IPreferencesService`), and domain models (`BeaconDevice`). This layer is platform-agnostic and does not depend on specific UI frameworks.
+* **Platform Implementation**: Contains concrete platform-specific implementations of the Core interfaces (e.g., `MauiPreferencesService` implemented for Android).
+* **Dependency Injection**: Service lifecycles are managed via the MAUI DI container in `MauiProgram.cs`, facilitating easy testing and future-proofing.
+
+**Data Flow (UDP to Persistent Storage):**
+1. **UDP Beacon**: The scanner identifies a network device and initializes a base `BeaconDevice` DTO.
+2. **SignalR Handshake**: The client establishes a connection to the agent and retrieves full device metadata.
+3. **Storage Sync**: The device identity is persisted via `IDeviceStorageService`, which abstracts physical storage access.
+4. **Identity Tracking**: The model utilizes robust `Equals`/`GetHashCode` overrides to ensure consistent identity tracking even if the network configuration changes.
+
+
 ### ⚙️ Build Features
 * **Single-File Executable**: The service compiles into a single, self-contained `.exe` file.
 * **Trimmed**: All unused code is automatically removed during compilation to optimize production binary size.

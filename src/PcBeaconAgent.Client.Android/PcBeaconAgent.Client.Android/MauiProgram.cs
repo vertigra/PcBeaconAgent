@@ -2,7 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
+using PcBeaconAgent.Client.Android.Services;
 using PcBeaconAgent.Client.Android.ViewModels;
+using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Services;
 
@@ -19,12 +21,19 @@ public static class MauiProgram
 
         builder.Services.AddLogging();
 
+        builder.Services.AddSingleton<IPreferencesService, MauiPreferencesService>();
+        builder.Services.AddSingleton<IDeviceStorageService, DeviceStorageService>();
+
         builder.Services.AddSingleton<IUdpBeaconScanner>(sp =>
         {
-            return new UdpBeaconScanner(8888);
+            var prefs = sp.GetRequiredService<IPreferencesService>();
+            int port = prefs.Get(StorageKeys.DiscoveryPort, 8888);
+
+            return new UdpBeaconScanner(port);
         });
 
         builder.Services.AddSingleton<ISignalRService, SignalRService>();
+        
 
         builder.Services.AddSingleton<App>();
         builder.Services.AddTransient<MainPage>();
