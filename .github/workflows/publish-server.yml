@@ -61,7 +61,6 @@ jobs:
       - name: Unzip and Test
         shell: pwsh
         run: |
-          # Используем wildcard, так как имя файла теперь динамическое
           $zip = Get-ChildItem -Filter *.zip
           Expand-Archive -Path $zip.FullName -DestinationPath ./test-app
           $proc = Start-Process -FilePath "./test-app/PcBeaconAgent.Service.exe" -ArgumentList "--urls http://localhost:5000" -PassThru
@@ -70,12 +69,14 @@ jobs:
           Stop-Process -Id $proc.Id
 
   publish:
-    # ДОБАВИЛИ build В NEEDS, ЧТОБЫ ВИДЕТЬ OUTPUTS
     needs: [build, smoke-test]
     runs-on: windows-latest
     steps:
+      # fetch-depth: 0 критически важно для git-cliff
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
         
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -94,8 +95,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2.0.1
         with:
-          # Используем маску, чтобы не зависеть от жесткого имени в этом шаге
-          files: ./*.zip
+          # Жесткая привязка имени файла через output версии
+          files: PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip
           name: Server Release ${{ needs.build.outputs.version }}
           body_path: RELEASE_NOTES.md
         env:
