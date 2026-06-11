@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/other/">
+    <File Path=".github/workflows/generate-pr-description.yml" />
     <File Path=".github/workflows/publish-client.yml" />
     <File Path=".github/workflows/publish-server.yml" />
     <File Path="cliff.toml" />

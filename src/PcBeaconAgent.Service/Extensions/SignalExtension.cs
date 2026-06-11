@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Service.Services;
 
 namespace PcBeaconAgent.Service.Extensions
@@ -8,7 +9,11 @@ namespace PcBeaconAgent.Service.Extensions
     {
         public static IServiceCollection AddSignal(this IServiceCollection services)
         {
-            services.AddSignalR();
+            services.AddSignalR()
+            .AddJsonProtocol(options =>
+             {
+                 options.PayloadSerializerOptions.TypeInfoResolverChain.Insert(0, BeaconJsonContext.Default);
+             });
             return services;
         }
 
