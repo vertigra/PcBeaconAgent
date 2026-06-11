@@ -1,5 +1,0 @@
-const commits = await github.rest.pulls.listCommits({ ... });
-const summary = commits.data.map(c => `- ${c.commit.message}`).join('\n');
-await github.rest.pulls.update({
-  body: `## Summary\n${summary}`
-});
