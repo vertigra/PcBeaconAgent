@@ -41,14 +41,15 @@ jobs:
             -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None `
             -p:PublishDir=../../publish -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
+      # Используем версию в имени файла
       - name: Create Zip
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service.zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: server-package
-          path: ./PcBeaconAgent.Service.zip
+          path: ./PcBeaconAgent.Service-${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
 
   smoke-test:
     needs: build
@@ -61,7 +62,7 @@ jobs:
       - name: Unzip and Test
         shell: pwsh
         run: |
-          Expand-Archive -Path ./PcBeaconAgent.Service.zip -DestinationPath ./test-app
+          Expand-Archive -Path ./PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip -DestinationPath ./test-app
           $proc = Start-Process -FilePath "./test-app/PcBeaconAgent.Service.exe" -ArgumentList "--urls http://localhost:5000" -PassThru
           Start-Sleep -Seconds 5
           if ($proc.HasExited) { Write-Error "Server crashed!"; exit 1 }
@@ -91,7 +92,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2.0.1
         with:
-          files: ./PcBeaconAgent.Service.zip
+          # Теперь имя файла соответствует версии
+          files: ./PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip
           name: Server Release ${{ needs.build.outputs.version }}
           body_path: RELEASE_NOTES.md
         env:
