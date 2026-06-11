@@ -73,6 +73,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-package
+
       - name: Generate Changelog
         uses: orhun/git-cliff-action@v4
         id: git-cliff
@@ -81,10 +87,11 @@ jobs:
           args: --latest --strip header
         env:
           OUTPUT: RELEASE_NOTES.md
+
       - name: Create Release
         uses: softprops/action-gh-release@v2.0.1
         with:
-          files: ./*.zip
+          files: ./PcBeaconAgent.Service.zip
           name: Server Release ${{ needs.build.outputs.version }}
           body_path: RELEASE_NOTES.md
         env:
