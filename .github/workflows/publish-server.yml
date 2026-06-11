@@ -41,7 +41,6 @@ jobs:
             -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None `
             -p:PublishDir=../../publish -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
-      # Используем версию в имени файла
       - name: Create Zip
         run: Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
 
@@ -62,18 +61,22 @@ jobs:
       - name: Unzip and Test
         shell: pwsh
         run: |
-          Expand-Archive -Path ./PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip -DestinationPath ./test-app
+          $zip = Get-ChildItem -Filter *.zip
+          Expand-Archive -Path $zip.FullName -DestinationPath ./test-app
           $proc = Start-Process -FilePath "./test-app/PcBeaconAgent.Service.exe" -ArgumentList "--urls http://localhost:5000" -PassThru
           Start-Sleep -Seconds 5
           if ($proc.HasExited) { Write-Error "Server crashed!"; exit 1 }
           Stop-Process -Id $proc.Id
 
   publish:
-    needs: smoke-test
+    needs: [build, smoke-test]
     runs-on: windows-latest
     steps:
+      # fetch-depth: 0 критически важно для git-cliff
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
         
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -92,8 +95,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2.0.1
         with:
-          # Теперь имя файла соответствует версии
-          files: ./PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip
+          # Жесткая привязка имени файла через output версии
+          files: PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip
           name: Server Release ${{ needs.build.outputs.version }}
           body_path: RELEASE_NOTES.md
         env:
