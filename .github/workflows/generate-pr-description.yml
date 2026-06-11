@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches:
-      - master  # Скрипт будет работать только если PR идет в master
+      - master 
 
 jobs:
   generate-description:

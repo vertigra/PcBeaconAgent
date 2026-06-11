@@ -12,72 +12,80 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  publish:
+  build:
     runs-on: windows-latest
-
+    outputs:
+      version: ${{ steps.parse_version.outputs.VERSION_NAME }}
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - name: Parse Version from Tag
-      id: parse_version
-      shell: pwsh
-      run: |
-        $tag = "${{ github.ref_name }}"
-        if ($tag -match 'server\.v\.(\d+)\.(\d+)\.(\d+)') {
-            $versionName = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
-            echo "VERSION_NAME=$versionName" >> $env:GITHUB_OUTPUT
-            Write-Output "Parsed Server Version Name: $versionName"
-        } else {
-            Write-Error "Tag $tag does not match format server.v.X.Y.Z"
-            exit 1
-        }
+      - name: Parse Version
+        id: parse_version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match 'server\.v\.(\d+)\.(\d+)\.(\d+)') {
+              echo "VERSION_NAME=$($Matches[1]).$($Matches[2]).$($Matches[3])" >> $env:GITHUB_OUTPUT
+          } else { exit 1 }
 
-    - name: Setup .NET 10
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x 
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x 
 
-    - name: Restore dependencies
-      run: dotnet restore src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj
+      - name: Publish
+        run: |
+          dotnet publish src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj `
+            --configuration Release --runtime win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None `
+            -p:PublishDir=../../publish -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
-    - name: Publish Single-File Executable
-      run: |
-        dotnet publish src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj `
-          --configuration Release `
-          --runtime win-x64 `
-          -p:PublishSingleFile=true `
-          -p:PublishTrimmed=true `
-          --self-contained true `
-          -p:DebugType=None `
-          -p:PublishDir=../../publish `
-          -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
+      - name: Create Zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service.zip
 
-    - name: Clean up extra files
-      run: |
-        if (Test-Path "./publish/aspnetcorev2_inprocess.dll") { Remove-Item "./publish/aspnetcorev2_inprocess.dll" -Force }
-        if (Test-Path "./publish/logs") { Remove-Item "./publish/logs" -Recurse -Force }
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-package
+          path: ./PcBeaconAgent.Service.zip
 
-    - name: Create Zip Archive
-      run: |
-        Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-v.${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
+  smoke-test:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-package
+      - name: Unzip and Test
+        shell: pwsh
+        run: |
+          Expand-Archive -Path ./PcBeaconAgent.Service.zip -DestinationPath ./test-app
+          $proc = Start-Process -FilePath "./test-app/PcBeaconAgent.Service.exe" -ArgumentList "--urls http://localhost:5000" -PassThru
+          Start-Sleep -Seconds 5
+          if ($proc.HasExited) { Write-Error "Server crashed!"; exit 1 }
+          Stop-Process -Id $proc.Id
 
-    - name: Generate Changelog
-      uses: orhun/git-cliff-action@v4
-      id: git-cliff
-      with:
-        config: cliff.toml
-        args: --verbose --latest --strip header --include-path "src/PcBeaconAgent.Service/*" --include-path "src/PcBeaconAgent.Client.Core/*"
-      env:
-        OUTPUT: RELEASE_NOTES.md
-
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2.0.1
-      with:
-        files: ./PcBeaconAgent.Service-v.${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
-        name: Server Release ${{ steps.parse_version.outputs.VERSION_NAME }}
-        body_path: RELEASE_NOTES.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  publish:
+    needs: smoke-test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate Changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: RELEASE_NOTES.md
+      - name: Create Release
+        uses: softprops/action-gh-release@v2.0.1
+        with:
+          files: ./*.zip
+          name: Server Release ${{ needs.build.outputs.version }}
+          body_path: RELEASE_NOTES.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
