@@ -41,7 +41,6 @@ jobs:
             -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None `
             -p:PublishDir=../../publish -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
-      # Используем версию в имени файла
       - name: Create Zip
         run: Compress-Archive -Path ./publish/* -DestinationPath ./PcBeaconAgent.Service-${{ steps.parse_version.outputs.VERSION_NAME }}-win-x64.zip
 
@@ -62,14 +61,17 @@ jobs:
       - name: Unzip and Test
         shell: pwsh
         run: |
-          Expand-Archive -Path ./PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip -DestinationPath ./test-app
+          # Используем wildcard, так как имя файла теперь динамическое
+          $zip = Get-ChildItem -Filter *.zip
+          Expand-Archive -Path $zip.FullName -DestinationPath ./test-app
           $proc = Start-Process -FilePath "./test-app/PcBeaconAgent.Service.exe" -ArgumentList "--urls http://localhost:5000" -PassThru
           Start-Sleep -Seconds 5
           if ($proc.HasExited) { Write-Error "Server crashed!"; exit 1 }
           Stop-Process -Id $proc.Id
 
   publish:
-    needs: smoke-test
+    # ДОБАВИЛИ build В NEEDS, ЧТОБЫ ВИДЕТЬ OUTPUTS
+    needs: [build, smoke-test]
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -92,8 +94,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2.0.1
         with:
-          # Теперь имя файла соответствует версии
-          files: ./PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip
+          # Используем маску, чтобы не зависеть от жесткого имени в этом шаге
+          files: ./*.zip
           name: Server Release ${{ needs.build.outputs.version }}
           body_path: RELEASE_NOTES.md
         env:
