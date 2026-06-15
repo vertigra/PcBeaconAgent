@@ -1,7 +1,5 @@
-﻿// File: PcBeaconAgent.Client.Core/Services/SignalRService.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -12,15 +10,15 @@ using PcBeaconAgent.Client.Core.Models;
 namespace PcBeaconAgent.Client.Core.Services;
 
 /// <inheritdoc />
-public class SignalRService : ISignalRService
+public class SignalService : ISignalService
 {
     private readonly Dictionary<string, HubConnection> mConnections = new();
-    private readonly ILogger<SignalRService> mLogger;
+    private readonly ILogger<SignalService> mLogger;
 
     public event Action<string, BeaconDevice>? DeviceDetailsReceived;
     public event Action<string>? ServerRequestedDisconnect;
 
-    public SignalRService(ILogger<SignalRService> logger)
+    public SignalService(ILogger<SignalService> logger)
     {
         mLogger = logger;
     }

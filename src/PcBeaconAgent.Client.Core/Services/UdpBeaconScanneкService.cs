@@ -6,12 +6,14 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class UdpBeaconScanner : IUdpBeaconScanner
+namespace PcBeaconAgent.Client.Core.Services;
+
+public class UdpBeaconScanneкService : IUdpBeaconScannerService
 {
     private readonly int mDiscoveryPort;
     public event Action<DiscoveredBeacon>? OnBeaconFound;
 
-    public UdpBeaconScanner(int discoveryPort) => mDiscoveryPort = discoveryPort;
+    public UdpBeaconScanneкService(int discoveryPort) => mDiscoveryPort = discoveryPort;
 
     public async Task ScanAsync(int timeoutMs = 2000)
     {

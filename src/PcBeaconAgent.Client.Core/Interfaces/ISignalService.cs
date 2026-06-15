@@ -9,7 +9,7 @@ namespace PcBeaconAgent.Client.Core.Interfaces;
 /// Provides a centralized service for managing multiple SignalR hub connections.
 /// Handles connection lifecycle, event routing, and data deserialization internally.
 /// </summary>
-public interface ISignalRService
+public interface ISignalService
 {
     /// <summary>
     /// Triggered when valid device details are received from a specific hub.
