@@ -23,11 +23,11 @@ public static class MauiProgram
         builder.Services.AddLogging();
         builder.Services.AddHttpClient();
 
-        builder.Services.AddSingleton<DeviceFactory>();
-        builder.Services.AddSingleton<DeviceStore>();
-
         builder.Services.AddSingleton<IPreferencesService, MauiPreferencesService>();
         builder.Services.AddSingleton<IDeviceStorageService, DeviceStorageService>();
+
+        builder.Services.AddSingleton<DeviceFactory>();
+        builder.Services.AddSingleton<DeviceStore>();
 
         builder.Services.AddSingleton<IUdpBeaconScannerService>(sp =>
         {
