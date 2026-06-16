@@ -48,7 +48,7 @@ public class UdpBeaconScanneкService : IUdpBeaconScannerService
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка сканирования: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Scan error: {ex.Message}");
             }
         }
     }

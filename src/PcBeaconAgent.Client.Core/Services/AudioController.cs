@@ -7,12 +7,12 @@ namespace PcBeaconAgent.Client.Core.Services
 {
     public class AudioController : IAudioController
     {
-        private readonly HttpClient _client;
+        private readonly HttpClient mClient;
         public AudioController(string ip, int port, HttpClient client)
         {
-            _client = client;
-            _client.BaseAddress = new Uri($"http://{ip}:{port}/api/audio/");
+            mClient = client;
+            mClient.BaseAddress = new Uri($"http://{ip}:{port}/api/audio/");
         }
-        public async Task SetDefaultAsync(string id) => await _client.PostAsync($"set?id={id}", null);
+        public async Task SetDefaultAsync(string id) => await mClient.PostAsync($"set?id={id}", null);
     }
 }

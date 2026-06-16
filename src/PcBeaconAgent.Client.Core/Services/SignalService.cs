@@ -24,8 +24,14 @@ public class SignalService : ISignalService
     }
 
     /// <inheritdoc />
-    public async Task ConnectAsync(string connectionId, string hubUrl, CancellationToken ct = default)
+    public async Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default)
     {
+        if (mConnections.ContainsKey(ipAddress))
+        {
+            mLogger.LogWarning("Connection for {Ip} already exists, skipping.", ipAddress);
+            return;
+        }
+
         var connection = new HubConnectionBuilder()
             .WithUrl(hubUrl)
             .WithAutomaticReconnect()
@@ -36,50 +42,50 @@ public class SignalService : ISignalService
             try
             {
                 if (json != null) 
-                    DeviceDetailsReceived?.Invoke(connectionId, json);
+                    DeviceDetailsReceived?.Invoke(ipAddress, json);
             }
             catch (Exception ex)
             {
-                mLogger.LogError(ex, "Failed to deserialize device details for {Id}", connectionId);
+                mLogger.LogError(ex, "Failed to deserialize device details for {Id}", ipAddress);
             }
         });
 
         connection.On("CloseConnection", () =>
         {
-            ServerRequestedDisconnect?.Invoke(connectionId);
+            ServerRequestedDisconnect?.Invoke(ipAddress);
         });
 
-        mConnections[connectionId] = connection;
+        mConnections[ipAddress] = connection;
 
         try
         {
             await connection.StartAsync(ct);
-            mLogger.LogInformation("Connected to hub: {Id}", connectionId);
+            mLogger.LogInformation("Connected to hub: {Id}", ipAddress);
         }
         catch (Exception ex)
         {
-            mConnections.Remove(connectionId);
-            mLogger.LogError(ex, "Could not connect to {Id}", connectionId);
+            mConnections.Remove(ipAddress);
+            mLogger.LogError(ex, "Could not connect to {Id}", ipAddress);
             throw;
         }
     }
 
     /// <inheritdoc />
-    public async Task DisconnectAsync(string connectionId)
+    public async Task DisconnectAsync(string ipAddress)
     {
-        if (mConnections.TryGetValue(connectionId, out var connection))
+        if (mConnections.TryGetValue(ipAddress, out var connection))
         {
             await connection.StopAsync();
             await connection.DisposeAsync();
-            mConnections.Remove(connectionId);
-            mLogger.LogInformation("Disconnected from {Id}", connectionId);
+            mConnections.Remove(ipAddress);
+            mLogger.LogInformation("Disconnected from {Id}", ipAddress);
         }
     }
 
     /// <inheritdoc />
-    public async Task SendCommandAsync(string connectionId, string command, object data)
+    public async Task SendCommandAsync(string ipAddress, string command, object data)
     {
-        if (mConnections.TryGetValue(connectionId, out var connection) &&
+        if (mConnections.TryGetValue(ipAddress, out var connection) &&
             connection.State == HubConnectionState.Connected)
         {
             await connection.SendAsync(command, data);

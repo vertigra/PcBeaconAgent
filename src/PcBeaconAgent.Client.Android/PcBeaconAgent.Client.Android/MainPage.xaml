@@ -1,4 +1,5 @@
-﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
              xmlns:models="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
@@ -13,53 +14,58 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, *" Padding="20">
+    <Grid RowDefinitions="Auto, Auto, *, Auto, *" Padding="20" RowSpacing="10">
 
-        <Button Grid.Row="0"
-                Text="Start Scan" 
+        <Button Grid.Row="0" Text="Start Scan" 
                 Command="{Binding StartScanCommand}" 
                 IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
-                HorizontalOptions="Fill"
-                Margin="0,0,0,10"
-                BackgroundColor="#6750A4"
-                TextColor="White"/>
+                BackgroundColor="#6750A4" CornerRadius="12" />
 
-        <CollectionView Grid.Row="1" 
-                        ItemsSource="{Binding Devices}" 
-                        Margin="0,10,0,0">
+        <Label Grid.Row="1" Text="Discovered Devices" FontAttributes="Bold" TextColor="#D0BCFF" Margin="0,10,0,0"/>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding DiscoveredDevices}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:BeaconDevice">
-
-                    <Border Margin="0,5" 
-                            Padding="20" 
-                            StrokeShape="RoundRectangle 12"
-                            BackgroundColor="#212121"
-                            StrokeThickness="0">
-
-                        <VerticalStackLayout Spacing="8">
-
-                            <Label Text="{Binding MachineName, TargetNullValue='Ожидание данных...'}" 
-                                   FontSize="20" 
-                                   FontAttributes="Bold" 
-                                   TextColor="White"/>
-
-                            <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                <Label Text="{Binding IpAddress}" FontSize="16" TextColor="#BDBDBD"/>
-                                <Label Text="{Binding ApiPort, StringFormat=':{0}'}" FontSize="16" TextColor="#BDBDBD"/>
-                            </HorizontalStackLayout>
-
-                            <BoxView HeightRequest="1" BackgroundColor="#424242" Margin="0,5"/>
-
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding MacAddress, StringFormat='MAC: {0}'}" 
-                                       FontSize="14" 
-                                       TextColor="#EEEEEE"/>
-                                <Label Text="{Binding InterfaceType, StringFormat='Type: {0}'}" 
-                                       FontSize="14" 
-                                       TextColor="#EEEEEE"/>
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding MachineName, TargetNullValue='Unknown'}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                                <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding MacAddress, StringFormat='MAC: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding InterfaceName, StringFormat='Interface: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
                             </VerticalStackLayout>
 
-                        </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="Remember" 
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=RememberCommand}" 
+                                    CommandParameter="{Binding .}" 
+                                    BackgroundColor="#4CAF50" TextColor="White"
+                                    HeightRequest="40" WidthRequest="110" CornerRadius="8" VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Grid.Row="3" Text="Managed Devices" FontAttributes="Bold" TextColor="#D0BCFF" Margin="0,10,0,0"/>
+
+        <CollectionView Grid.Row="4" ItemsSource="{Binding ManagedDevices}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:ManagedDevice">
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="#322F35" Margin="0,5" Padding="15">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding Device.MachineName, TargetNullValue='Unknown'}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                                <Label Text="{Binding Device.IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.MacAddress, StringFormat='MAC: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.InterfaceName, StringFormat='Interface: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="1" Text="Forget" 
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}" 
+                                    CommandParameter="{Binding .}" 
+                                    BackgroundColor="#B3261E" TextColor="White"
+                                    HeightRequest="40" WidthRequest="110" CornerRadius="8" VerticalOptions="Center"/>
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

@@ -24,15 +24,15 @@ public interface ISignalService
     /// <summary>
     /// Establishes a new connection to a hub and starts listening for commands.
     /// </summary>
-    Task ConnectAsync(string connectionId, string hubUrl, CancellationToken ct = default);
+    Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default);
 
     /// <summary>
     /// Closes and disposes of a specific hub connection.
     /// </summary>
-    Task DisconnectAsync(string connectionId);
+    Task DisconnectAsync(string ipAddress);
 
     /// <summary>
     /// Sends a generic command to the specified hub.
     /// </summary>
-    Task SendCommandAsync(string connectionId, string command, object data);
+    Task SendCommandAsync(string ipAddress, string command, object data);
 }

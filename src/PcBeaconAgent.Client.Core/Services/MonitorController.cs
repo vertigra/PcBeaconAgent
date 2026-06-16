@@ -7,12 +7,12 @@ namespace PcBeaconAgent.Client.Core.Services
 {
     public class MonitorController : IMonitorController
     {
-        private readonly HttpClient _client;
+        private readonly HttpClient mClient;
         public MonitorController(string ip, int port, HttpClient client)
         {
-            _client = client;
-            _client.BaseAddress = new Uri($"http://{ip}:{port}/api/monitor/");
+            mClient = client;
+            mClient.BaseAddress = new Uri($"http://{ip}:{port}/api/monitor/");
         }
-        public async Task TogglePowerAsync(bool on) => await _client.PostAsync($"power?on={on}", null);
+        public async Task TogglePowerAsync(bool on) => await mClient.PostAsync($"power?on={on}", null);
     }
 }
