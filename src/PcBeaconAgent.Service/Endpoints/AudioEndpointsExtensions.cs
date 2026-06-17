@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc; 
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Service.Configuration;
+using PcBeaconAgent.Service.Extensions;
 using System.Linq;
 
 namespace PcBeaconAgent.Service.Endpoints
@@ -17,11 +19,13 @@ namespace PcBeaconAgent.Service.Endpoints
             return services;
         }
 
-        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app)
+        // FIX: добавлен параметр settings — раньше эти эндпоинты не имели вообще
+        // никакой аутентификации, и любое устройство в той же сети могло
+        // безнаказанно сменить дефолтное аудиоустройство на хосте.
+        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
         {
-            var audioGroup = app.MapGroup("/api/audio");
+            var audioGroup = app.MapGroup("/api/audio").RequireApiKey(settings);
 
-            // GET /api/audio/devices
             audioGroup.MapGet("/devices", ([FromServices] CoreAudioController controller) =>
             {
                 var devices = controller.GetPlaybackDevices(DeviceState.Active)
@@ -29,14 +33,12 @@ namespace PcBeaconAgent.Service.Endpoints
                 return Results.Ok(devices);
             });
 
-            // GET /api/audio/default-device
             audioGroup.MapGet("/default-device", ([FromServices] CoreAudioController controller) =>
             {
                 var device = controller.DefaultPlaybackDevice;
                 return device != null ? Results.Ok(new { id = device.Id.ToString() }) : Results.NotFound();
             });
 
-            // POST /api/audio/set?id=...
             audioGroup.MapPost("/set", ([FromQuery] string id, [FromServices] CoreAudioController controller) =>
             {
                 var device = controller.GetPlaybackDevices().FirstOrDefault(d => d.Id.ToString() == id);

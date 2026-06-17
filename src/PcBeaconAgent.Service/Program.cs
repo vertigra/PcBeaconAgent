@@ -2,15 +2,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.WindowsServices;
+using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Endpoints;
 using PcBeaconAgent.Service.Extensions;
-using PcBeaconAgent.Service.Services;
-using Scalar.AspNetCore;
 using Serilog;
 using System;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Service.BackgroundServices
+namespace PcBeaconAgent.Service
 {
     public class Program
     {
@@ -19,7 +19,8 @@ namespace PcBeaconAgent.Service.BackgroundServices
             try
             {
                 var builder = WebApplication.CreateSlimBuilder(args);
-                var settings = builder.AddApplicationConfiguration(args);
+                AppSettings settings = builder.AddApplicationConfiguration(args);
+                ShowSecurityWarning(settings);
 
                 builder.WebHost.UseUrls($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
 
@@ -37,8 +38,8 @@ namespace PcBeaconAgent.Service.BackgroundServices
                 var app = builder.Build();
                 app.MapSignalHubs();
                 app.ConfigureWebApi();
-                app.MapAudioServiceEndpoints();
-
+                app.MapAudioServiceEndpoints(settings);
+                
                 await app.RunAsync();
             }
             catch (Exception ex)
@@ -47,13 +48,37 @@ namespace PcBeaconAgent.Service.BackgroundServices
                 Console.Error.WriteLine($"Critical error on started: {ex.Message}");
                 Console.Error.WriteLine(ex.StackTrace);
                 Console.ResetColor();
-                Console.ReadLine();
-
+         
                 Log.Fatal(ex, "PcBeaconAgent service fatal ended");
+
+                if (!WindowsServiceHelpers.IsWindowsService() && Environment.UserInteractive && !Console.IsInputRedirected)
+                {
+                    Console.WriteLine("Press Enter to exit...");
+                    Console.ReadLine();
+                }
+
+                Environment.ExitCode = 1;
             }
             finally
             {
                 Log.CloseAndFlush();
+            }
+        }
+
+        private static void ShowSecurityWarning(AppSettings settings)
+        {
+            if (string.IsNullOrEmpty(settings.Server.ApiKey))
+            {
+                Log.Warning("API Security is DISABLED: No ApiKey configured in ServerSettings.");
+                if (Environment.UserInteractive)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("************************************************************");
+                    Console.WriteLine("* WARNING: API Security is DISABLED!                       *");
+                    Console.WriteLine("* Configure 'ApiKey' in appsettings.json for production.   *");
+                    Console.WriteLine("************************************************************");
+                    Console.ResetColor();
+                }
             }
         }
     }
