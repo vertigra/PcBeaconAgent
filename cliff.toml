@@ -9,7 +9,6 @@ body = """
 """
 
 [git]
-# Парсеры теперь работают от специфичных к общим
 commit_parsers = [
     { message = "^feat\\(client\\)", group = "Client - Added" },
     { message = "^feat\\(server\\)", group = "Server - Added" },
@@ -23,7 +22,5 @@ commit_parsers = [
     { message = "^chore", group = "Miscellaneous" },
 ]
 
-# Сортировка коммитов внутри группы по дате
 commit_sort_by = "date"
-# Сортировка самих групп
 group_by = "group"

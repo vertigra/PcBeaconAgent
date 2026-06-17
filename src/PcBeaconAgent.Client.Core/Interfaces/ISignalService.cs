@@ -21,14 +21,6 @@ public interface ISignalService
     /// </summary>
     event Action<string, bool>? DeviceStatusChanged;
 
-    /// <summary>
-    /// Establishes a new connection to a hub at the specified address.
-    /// Supports automatic reconnection.
-    /// </summary>
-    /// <param name="ipAddress">The IP address of the target device (used as a key).</param>
-    /// <param name="hubUrl">The full URL of the SignalR hub.</param>
-    /// <param name="ct">Cancellation token for the connection process.</param>
-    Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default);
 
     /// <summary>
     /// Establishes a connection to the beacon hub using the provided <see cref="BeaconDevice"/> model.

@@ -9,71 +9,12 @@ using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Services;
 
-public class SignalService : ISignalService
+public class SignalService(ILogger<SignalService> mLogger) : ISignalService
 {
-    private readonly Dictionary<string, HubConnection> mConnections = [];
-    private readonly ILogger<SignalService> mLogger;
-
     public event Action<string, BeaconDevice>? DeviceDetailsReceived;
     public event Action<string, bool>? DeviceStatusChanged;
 
-    public SignalService(ILogger<SignalService> logger)
-    {
-        mLogger = logger;
-    }
-
-    public async Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default)
-    {
-        if (mConnections.TryGetValue(ipAddress, out var connection))
-        {
-            if (connection.State == HubConnectionState.Connected || connection.State == HubConnectionState.Connecting)
-                return;
-
-            await DisconnectBeaconHubAsync(ipAddress);
-        }
-
-        var newConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
-            .WithAutomaticReconnect()
-            .Build();
-
-        newConnection.Closed += (ex) => {
-            DeviceStatusChanged?.Invoke(ipAddress, false);
-            return Task.CompletedTask;
-        };
-
-        newConnection.Reconnecting += (ex) => {
-            DeviceStatusChanged?.Invoke(ipAddress, false);
-            return Task.CompletedTask;
-        };
-
-        newConnection.Reconnected += (id) => {
-            DeviceStatusChanged?.Invoke(ipAddress, true);
-            return Task.CompletedTask;
-        };
-
-        newConnection.On<BeaconDevice>("ReceiveDeviceDetails", async (data) => {
-            DeviceDetailsReceived?.Invoke(ipAddress, data);
-        });
-
-        newConnection.On("CloseConnection", async () => {
-            await DisconnectBeaconHubAsync(ipAddress);
-        });
-
-        mConnections[ipAddress] = newConnection;
-
-        try
-        {
-            await newConnection.StartAsync(ct);
-            LogConnectionStarted(ipAddress);
-            DeviceStatusChanged?.Invoke(ipAddress, true);
-        }
-        catch (Exception ex)
-        {
-            LogConnectionError(ipAddress, ex);
-            DeviceStatusChanged?.Invoke(ipAddress, false);
-        }
-    }
+    private readonly Dictionary<string, HubConnection> mConnections = [];
 
     /// <inheritdoc />
     public async Task ConnectToBeaconHubAsync(BeaconDevice beaconDevice)
@@ -121,6 +62,70 @@ public class SignalService : ISignalService
         await SendCommandAsync(beaconDevice.IpAddress, "ReceiveDeviceDetailsAndClose");
     }
 
+    /// <summary>
+    /// Establishes a new connection to a hub at the specified address.
+    /// Supports automatic reconnection.
+    /// </summary>
+    /// <param name="ipAddress">The IP address of the target device (used as a key).</param>
+    /// <param name="hubUrl">The full URL of the SignalR hub.</param>
+    /// <param name="ct">Cancellation token for the connection process.</param>
+
+    private async Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default)
+    {
+        if (mConnections.TryGetValue(ipAddress, out var conn))
+        {
+            if (conn.State is HubConnectionState.Connected or HubConnectionState.Connecting)
+                return;
+            await DisconnectBeaconHubAsync(ipAddress);
+        }
+
+        var connection = CreateConnection(ipAddress, hubUrl);
+        mConnections[ipAddress] = connection;
+
+        try
+        {
+            await connection.StartAsync(ct);
+            LogConnectionStarted(ipAddress);
+            DeviceStatusChanged?.Invoke(ipAddress, true);
+        }
+        catch (Exception ex)
+        {
+            LogConnectionError(ipAddress, ex);
+            DeviceStatusChanged?.Invoke(ipAddress, false);
+        }
+    }
+
+    private HubConnection CreateConnection(string ipAddress, string hubUrl)
+    {
+        var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl)
+            .WithAutomaticReconnect()
+            .Build();
+
+        connection.Closed += (_) =>
+        {
+            DeviceStatusChanged?.Invoke(ipAddress, false);
+            return Task.CompletedTask;
+        };
+
+        connection.Reconnecting += (_) =>
+        {
+            DeviceStatusChanged?.Invoke(ipAddress, false);
+            return Task.CompletedTask;
+        };
+
+        connection.Reconnected += (_) =>
+        {
+            DeviceStatusChanged?.Invoke(ipAddress, true);
+            return Task.CompletedTask;
+        };
+
+        connection.On<BeaconDevice>("ReceiveDeviceDetails", data => DeviceDetailsReceived?.Invoke(ipAddress, data));
+        connection.On("CloseConnection", async () => await DisconnectBeaconHubAsync(ipAddress));
+
+        return connection;
+    }
+
 
     private static readonly Action<ILogger, string, string, Exception?> LogErrorAction =
             LoggerMessage.Define<string, string>(LogLevel.Error, new EventId(1, "ConnectionError"), "Connection error for {IpAddress}: {Message}");
@@ -131,12 +136,9 @@ public class SignalService : ISignalService
     private static readonly Action<ILogger, string, Exception?> LogStoppedAction =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, "ConnectionStopped"), "Connection stopped for {IpAddress}");
 
-    private void LogConnectionError(string ip, Exception ex)
-        => LogErrorAction(mLogger, ip, ex.Message, ex);
+    private void LogConnectionError(string ip, Exception ex) => LogErrorAction(mLogger, ip, ex.Message, ex);
 
-    private void LogConnectionStarted(string ip)
-        => LogStartedAction(mLogger, ip, null);
+    private void LogConnectionStarted(string ip) => LogStartedAction(mLogger, ip, null);
 
-    private void LogConnectionStopped(string ip)
-        => LogStoppedAction(mLogger, ip, null);
+    private void LogConnectionStopped(string ip) => LogStoppedAction(mLogger, ip, null);
 }
