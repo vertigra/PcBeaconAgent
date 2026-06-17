@@ -19,7 +19,7 @@ namespace PcBeaconAgent.Service.Extensions
 
         public static WebApplication MapSignalHubs(this WebApplication application)
         {
-            application.MapHub<BeaconHub>("/beaconHub");
+            application.MapHub<BeaconHub>("/hubs/beacon");
             return application;
         }
     }

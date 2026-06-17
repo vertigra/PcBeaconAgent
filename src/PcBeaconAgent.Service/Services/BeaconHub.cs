@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using AudioSwitcher.AudioApi;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Models;
@@ -13,9 +14,7 @@ namespace PcBeaconAgent.Service.Services
     {
         public override async Task OnConnectedAsync()
         {
-            var deviceData = GetLocalDeviceData();
-            await Clients.Caller.SendAsync("ReceiveDeviceDetails", deviceData);
-            await Clients.Caller.SendAsync("CloseConnection");
+            mLogger.LogInformation("Client connected");
             await base.OnConnectedAsync();
         }
 
@@ -23,6 +22,13 @@ namespace PcBeaconAgent.Service.Services
         {
             mLogger.LogInformation("Client disconnected by reason {reason}", exception?.Message);
             return base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task ReceiveDeviceDetailsAndClose()
+        {
+            var deviceData = GetLocalDeviceData();
+            await Clients.Caller.SendAsync("ReceiveDeviceDetails", deviceData);
+            await Clients.Caller.SendAsync("CloseConnection");
         }
 
         private BeaconDevice GetLocalDeviceData()

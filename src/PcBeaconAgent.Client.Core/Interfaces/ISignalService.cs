@@ -7,32 +7,66 @@ namespace PcBeaconAgent.Client.Core.Interfaces;
 
 /// <summary>
 /// Provides a centralized service for managing multiple SignalR hub connections.
-/// Handles connection lifecycle, event routing, and data deserialization internally.
+/// Handles connection lifecycles, event routing, and data transmission.
 /// </summary>
 public interface ISignalService
 {
     /// <summary>
-    /// Triggered when valid device details are received from a specific hub.
+    /// Triggered when detailed information about a device is received from the hub.
     /// </summary>
     event Action<string, BeaconDevice>? DeviceDetailsReceived;
 
     /// <summary>
-    /// Triggered when the server requests a graceful disconnection.
+    /// Triggered when the online/offline status of a specific device changes.
     /// </summary>
-    event Action<string>? ServerRequestedDisconnect;
+    event Action<string, bool>? DeviceStatusChanged;
 
     /// <summary>
-    /// Establishes a new connection to a hub and starts listening for commands.
+    /// Establishes a new connection to a hub at the specified address.
+    /// Supports automatic reconnection.
     /// </summary>
+    /// <param name="ipAddress">The IP address of the target device (used as a key).</param>
+    /// <param name="hubUrl">The full URL of the SignalR hub.</param>
+    /// <param name="ct">Cancellation token for the connection process.</param>
     Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default);
 
     /// <summary>
-    /// Closes and disposes of a specific hub connection.
+    /// Establishes a connection to the beacon hub using the provided <see cref="BeaconDevice"/> model.
     /// </summary>
-    Task DisconnectAsync(string ipAddress);
+    /// <param name="beaconDevice">The device containing network configuration details.</param>
+    Task ConnectToBeaconHubAsync(BeaconDevice beaconDevice);
 
     /// <summary>
-    /// Sends a generic command to the specified hub.
+    /// Gracefully closes and disposes of the connection associated with the given IP address.
     /// </summary>
+    /// <param name="ipAddress">The IP address of the device to disconnect.</param>
+    Task DisconnectBeaconHubAsync(string ipAddress);
+
+    /// <summary>
+    /// Gracefully closes and disposes of the connection for the specified device.
+    /// </summary>
+    /// <param name="beaconDevice">The device to disconnect.</param>
+    Task DisconnectBeaconHubAsync(BeaconDevice beaconDevice);
+
+    /// <summary>
+    /// Sends a command to the specified hub along with accompanying data.
+    /// </summary>
+    /// <param name="ipAddress">The IP address of the target device.</param>
+    /// <param name="command">The name of the hub method to invoke.</param>
+    /// <param name="data">The object payload to send.</param>
     Task SendCommandAsync(string ipAddress, string command, object data);
+
+    /// <summary>
+    /// Sends a command to the specified hub without additional data.
+    /// </summary>
+    /// <param name="ipAddress">The IP address of the target device.</param>
+    /// <param name="command">The name of the hub method to invoke.</param>
+    Task SendCommandAsync(string ipAddress, string command);
+
+    /// <summary>
+    /// Establishes a connection, requests device details, and immediately closes the connection.
+    /// Useful for single-shot state snapshots.
+    /// </summary>
+    /// <param name="beaconDevice">The device to query.</param>
+    Task ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice);
 }

@@ -11,6 +11,8 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <conv:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <conv:BoolToTextConverter x:Key="BoolToTextConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -60,11 +62,25 @@
                                 <Label Text="{Binding Device.InterfaceName, StringFormat='Interface: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
                             </VerticalStackLayout>
 
-                            <Button Grid.Column="1" Text="Forget" 
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}" 
-                                    CommandParameter="{Binding .}" 
-                                    BackgroundColor="#B3261E" TextColor="White"
-                                    HeightRequest="40" WidthRequest="110" CornerRadius="8" VerticalOptions="Center"/>
+                            <VerticalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                                <HorizontalStackLayout Spacing="5" HorizontalOptions="Center">
+                                    <Ellipse WidthRequest="10" HeightRequest="10" 
+                                             Fill="{Binding IsOnline, Converter={StaticResource BoolToColorConverter}}" 
+                                             VerticalOptions="Center"/>
+
+                                    <Label Text="{Binding IsOnline, Converter={StaticResource BoolToTextConverter}}" 
+                                           FontSize="10" 
+                                           TextColor="#BDBDBD" 
+                                           VerticalOptions="Center"/>
+
+                                </HorizontalStackLayout>
+
+                                <Button Text="Forget" 
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#B3261E" TextColor="White"
+                                        HeightRequest="40" WidthRequest="110" CornerRadius="8"/>
+                            </VerticalStackLayout>
                         </Grid>
                     </Border>
                 </DataTemplate>

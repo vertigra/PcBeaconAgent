@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace PcBeaconAgent.Client.Core.Models
+﻿namespace PcBeaconAgent.Client.Core.Models
 {
     public class DiscoveredBeacon
     {

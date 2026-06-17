@@ -14,10 +14,11 @@ namespace PcBeaconAgent.Client.Android.ViewModels;
 public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IUdpBeaconScannerService mScanner;
-    private readonly ISignalService mSignalRService;
+    private readonly ISignalService mSignalService;
     private readonly DeviceStore mDeviceStore;
 
-    [ObservableProperty] public partial bool IsScanning { get; set; }
+    [ObservableProperty] 
+    public partial bool IsScanning { get; set; }
 
     public ObservableCollection<BeaconDevice> DiscoveredDevices { get; } = [];
     public ObservableCollection<ManagedDevice> ManagedDevices => mDeviceStore.ManagedDevices;
@@ -26,16 +27,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         mDeviceStore = store;
         mScanner = scanner;
-        mSignalRService = signalRService;
+        mSignalService = signalRService;
 
         mScanner.OnBeaconFound += OnBeaconFound;
-        mSignalRService.DeviceDetailsReceived += OnDeviceDetailsReceived;
-        mSignalRService.ServerRequestedDisconnect += OnServerRequestedDisconnect;
+        mSignalService.DeviceDetailsReceived += OnDeviceDetailsReceived;
+        mSignalService.DeviceStatusChanged += OnDeviceStatusChanged;
     }
 
-    private async void OnServerRequestedDisconnect(string ipAddress)
+    private void OnDeviceStatusChanged(string ipAddress, bool isOnline)
     {
-        await mSignalRService.DisconnectAsync(ipAddress);
+        var device = ManagedDevices.FirstOrDefault(d => d.Device.IpAddress == ipAddress);
+        
+        if (device == null)
+            return;
+        
+        device.IsOnline = isOnline;
     }
 
     private void OnBeaconFound(DiscoveredBeacon beacon)
@@ -50,9 +56,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             var newDevice = new BeaconDevice { IpAddress = beacon.IpAddress, ApiPort = beacon.Port };
             DiscoveredDevices.Add(newDevice);
-
-            string hubUrl = $"http://{newDevice.IpAddress}:{newDevice.ApiPort}/beaconHub";
-            await mSignalRService.ConnectAsync(newDevice.IpAddress, hubUrl);
+            await mSignalService.ReceiveDeviceDetailsAndCloseAsync(newDevice);
         });
     }
 
@@ -66,12 +70,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 UpdateDeviceInfo(discovered, data);
                 int idx = DiscoveredDevices.IndexOf(discovered);
                 DiscoveredDevices[idx] = discovered; 
-            }
-
-            var managed = ManagedDevices.FirstOrDefault(d => d.Device.IpAddress == ipAddress);
-            if (managed != null)
-            {
-                UpdateDeviceInfo(managed.Device, data);
             }
         });
     }
@@ -94,19 +92,24 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    public void Remember(BeaconDevice device)
+    public async Task Remember(BeaconDevice device)
     {
         mDeviceStore.RememberDevice(device);
+        await mSignalService.ConnectToBeaconHubAsync(device);
         DiscoveredDevices.Remove(device);
     }
 
     [RelayCommand]
-    public void Forget(ManagedDevice device) => mDeviceStore.ForgetDevice(device.Device);
+    public async Task Forget(ManagedDevice device) 
+    {
+        await mSignalService.DisconnectBeaconHubAsync(device.Device);
+        mDeviceStore.ForgetDevice(device.Device);
+    } 
 
     public void Dispose()
     {
         mScanner.OnBeaconFound -= OnBeaconFound;
-        mSignalRService.DeviceDetailsReceived -= OnDeviceDetailsReceived;
-        mSignalRService.ServerRequestedDisconnect -= OnServerRequestedDisconnect;
+        mSignalService.DeviceDetailsReceived -= OnDeviceDetailsReceived;
+        mSignalService.DeviceStatusChanged -= OnDeviceStatusChanged;
     }
 }

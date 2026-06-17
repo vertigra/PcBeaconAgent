@@ -8,7 +8,7 @@ namespace PcBeaconAgent.Client.Core.Models
         public BeaconDevice Device { get; init; } = device;
 
         [ObservableProperty] 
-        public partial bool IsConnected { get; set; }
+        public partial bool IsOnline { get; set; }
         public IAudioController Audio { get; init; } = audio;
         public IMonitorController Monitor { get; init; } = monitor;
         public override bool Equals(object? obj) => obj is ManagedDevice other && Device.Equals(other.Device);

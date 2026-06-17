@@ -9,86 +9,134 @@ using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Services;
 
-/// <inheritdoc />
 public class SignalService : ISignalService
 {
-    private readonly Dictionary<string, HubConnection> mConnections = new();
+    private readonly Dictionary<string, HubConnection> mConnections = [];
     private readonly ILogger<SignalService> mLogger;
 
     public event Action<string, BeaconDevice>? DeviceDetailsReceived;
-    public event Action<string>? ServerRequestedDisconnect;
+    public event Action<string, bool>? DeviceStatusChanged;
 
     public SignalService(ILogger<SignalService> logger)
     {
         mLogger = logger;
     }
 
-    /// <inheritdoc />
     public async Task ConnectAsync(string ipAddress, string hubUrl, CancellationToken ct = default)
     {
-        if (mConnections.ContainsKey(ipAddress))
+        if (mConnections.TryGetValue(ipAddress, out var connection))
         {
-            mLogger.LogWarning("Connection for {Ip} already exists, skipping.", ipAddress);
-            return;
+            if (connection.State == HubConnectionState.Connected || connection.State == HubConnectionState.Connecting)
+                return;
+
+            await DisconnectBeaconHubAsync(ipAddress);
         }
 
-        var connection = new HubConnectionBuilder()
+        var newConnection = new HubConnectionBuilder()
             .WithUrl(hubUrl)
             .WithAutomaticReconnect()
             .Build();
 
-        connection.On<BeaconDevice>("ReceiveDeviceDetails", (json) =>
-        {
-            try
-            {
-                if (json != null) 
-                    DeviceDetailsReceived?.Invoke(ipAddress, json);
-            }
-            catch (Exception ex)
-            {
-                mLogger.LogError(ex, "Failed to deserialize device details for {Id}", ipAddress);
-            }
+        newConnection.Closed += (ex) => {
+            DeviceStatusChanged?.Invoke(ipAddress, false);
+            return Task.CompletedTask;
+        };
+
+        newConnection.Reconnecting += (ex) => {
+            DeviceStatusChanged?.Invoke(ipAddress, false);
+            return Task.CompletedTask;
+        };
+
+        newConnection.Reconnected += (id) => {
+            DeviceStatusChanged?.Invoke(ipAddress, true);
+            return Task.CompletedTask;
+        };
+
+        newConnection.On<BeaconDevice>("ReceiveDeviceDetails", async (data) => {
+            DeviceDetailsReceived?.Invoke(ipAddress, data);
         });
 
-        connection.On("CloseConnection", () =>
-        {
-            ServerRequestedDisconnect?.Invoke(ipAddress);
+        newConnection.On("CloseConnection", async () => {
+            await DisconnectBeaconHubAsync(ipAddress);
         });
 
-        mConnections[ipAddress] = connection;
+        mConnections[ipAddress] = newConnection;
 
         try
         {
-            await connection.StartAsync(ct);
-            mLogger.LogInformation("Connected to hub: {Id}", ipAddress);
+            await newConnection.StartAsync(ct);
+            LogConnectionStarted(ipAddress);
+            DeviceStatusChanged?.Invoke(ipAddress, true);
         }
         catch (Exception ex)
         {
-            mConnections.Remove(ipAddress);
-            mLogger.LogError(ex, "Could not connect to {Id}", ipAddress);
-            throw;
+            LogConnectionError(ipAddress, ex);
+            DeviceStatusChanged?.Invoke(ipAddress, false);
         }
     }
 
     /// <inheritdoc />
-    public async Task DisconnectAsync(string ipAddress)
+    public async Task ConnectToBeaconHubAsync(BeaconDevice beaconDevice)
     {
-        if (mConnections.TryGetValue(ipAddress, out var connection))
+        string hubUrl = $"http://{beaconDevice.IpAddress}:{beaconDevice.ApiPort}/hubs/beacon";
+        await ConnectAsync(beaconDevice.IpAddress, hubUrl);
+    }
+
+    /// <inheritdoc />
+    public async Task DisconnectBeaconHubAsync(string ipAddress)
+    {
+        if (mConnections.Remove(ipAddress, out var connection))
         {
             await connection.StopAsync();
             await connection.DisposeAsync();
-            mConnections.Remove(ipAddress);
-            mLogger.LogInformation("Disconnected from {Id}", ipAddress);
+            LogConnectionStopped(ipAddress);
         }
+    }
+
+    /// <inheritdoc />
+    public async Task DisconnectBeaconHubAsync(BeaconDevice beaconDevice)
+    {
+        await DisconnectBeaconHubAsync(beaconDevice.IpAddress);
     }
 
     /// <inheritdoc />
     public async Task SendCommandAsync(string ipAddress, string command, object data)
     {
-        if (mConnections.TryGetValue(ipAddress, out var connection) &&
-            connection.State == HubConnectionState.Connected)
-        {
+        if (mConnections.TryGetValue(ipAddress, out var connection) && connection.State == HubConnectionState.Connected)
             await connection.SendAsync(command, data);
-        }
     }
+
+    /// <inheritdoc />
+    public async Task SendCommandAsync(string ipAddress, string command)
+    {
+        if (mConnections.TryGetValue(ipAddress, out var connection) && connection.State == HubConnectionState.Connected)
+            await connection.SendAsync(command);
+    }
+
+    /// <inheritdoc />
+    public async Task ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice)
+    {
+        string hubUrl = $"http://{beaconDevice.IpAddress}:{beaconDevice.ApiPort}/hubs/beacon";
+        await ConnectAsync(beaconDevice.IpAddress, hubUrl);
+        await SendCommandAsync(beaconDevice.IpAddress, "ReceiveDeviceDetailsAndClose");
+    }
+
+
+    private static readonly Action<ILogger, string, string, Exception?> LogErrorAction =
+            LoggerMessage.Define<string, string>(LogLevel.Error, new EventId(1, "ConnectionError"), "Connection error for {IpAddress}: {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> LogStartedAction =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, "ConnectionStarted"), "Connection started for {IpAddress}");
+
+    private static readonly Action<ILogger, string, Exception?> LogStoppedAction =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, "ConnectionStopped"), "Connection stopped for {IpAddress}");
+
+    private void LogConnectionError(string ip, Exception ex)
+        => LogErrorAction(mLogger, ip, ex.Message, ex);
+
+    private void LogConnectionStarted(string ip)
+        => LogStartedAction(mLogger, ip, null);
+
+    private void LogConnectionStopped(string ip)
+        => LogStoppedAction(mLogger, ip, null);
 }
