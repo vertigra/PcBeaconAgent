@@ -2,6 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
+using PcBeaconAgent.Client.Core;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;
@@ -64,6 +66,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
             {
                 await mSignalService.ReceiveDeviceDetailsAndCloseAsync(newDevice);
             }
+            catch (NotPairedException)
+            {
+                await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Try to scan the network again.", "OK");
+                DiscoveredDevices.Remove(newDevice);
+            }
             catch (Exception ex)
             {
                 mLogger.LogWarning(ex, "Failed to connect to discovered device at {Ip}", newDevice.IpAddress);
@@ -108,9 +115,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task Remember(BeaconDevice device)
     {
-        mDeviceStore.RememberDevice(device);
-        await mSignalService.ConnectToBeaconHubAsync(device);
-        DiscoveredDevices.Remove(device);
+        try
+        {
+            mDeviceStore.RememberDevice(device);
+            await mSignalService.ConnectToBeaconHubAsync(device);
+            DiscoveredDevices.Remove(device);
+        }
+        catch (NotPairedException)
+        {
+            await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Try to scan the network again.", "OK");
+            mDeviceStore.ForgetDevice(device);
+        }
+        catch (Exception ex)
+        {
+            mLogger.LogWarning(ex, "Failed to remember discovered device at {Ip}", device.IpAddress);
+        }
     }
 
     [RelayCommand]

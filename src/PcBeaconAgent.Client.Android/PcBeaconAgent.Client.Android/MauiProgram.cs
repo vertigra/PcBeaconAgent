@@ -29,17 +29,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<DeviceFactory>();
         builder.Services.AddSingleton<DeviceStore>();
 
-        builder.Services.AddSingleton<IUdpBeaconScannerService>(sp =>
-        {
-            var prefs = sp.GetRequiredService<IPreferencesService>();
-            int port = prefs.Get(StorageKeys.DiscoveryPort, 8888);
-
-            return new UdpBeaconScanneкService(port);
-        });
-
+        builder.Services.AddSingleton<IUdpBeaconScannerService, UdpBeaconScannerService>();
         builder.Services.AddSingleton<ISignalService, SignalService>();
         
-
         builder.Services.AddSingleton<App>();
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddTransient<MainViewModel>();

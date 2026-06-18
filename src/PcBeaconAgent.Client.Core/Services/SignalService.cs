@@ -98,7 +98,13 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
 
     private HubConnection CreateConnection(string ipAddress, string hubUrl)
     {
-        var apiKey = mPrefs.Get(StorageKeys.ApiKey, string.Empty) ?? string.Empty;
+        var apiKey = mPrefs.Get(StorageKeys.ApiKey, string.Empty);
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            throw new NotPairedException();
+        }
+
         var connection = new HubConnectionBuilder()
              .WithUrl(hubUrl, options =>
              {

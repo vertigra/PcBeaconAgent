@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Endpoints;
 using PcBeaconAgent.Service.Extensions;
+using PcBeaconAgent.Service.Interfaces;
+using PcBeaconAgent.Service.Services;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -29,6 +31,7 @@ namespace PcBeaconAgent.Service
                     options.ServiceName = "PcBeaconAgent";
                 });
 
+                builder.Services.AddSingleton<IBeaconAnnouncementService, BeaconAnnouncementService>();
                 builder.Services.AddHostedService<UdpBeaconServer>();
 
                 builder.Services.AddSignal();
@@ -67,18 +70,13 @@ namespace PcBeaconAgent.Service
 
         private static void ShowSecurityWarning(AppSettings settings)
         {
-            if (string.IsNullOrEmpty(settings.Server.ApiKey))
+            if (!string.IsNullOrEmpty(settings.Server.ApiKey))
             {
-                Log.Warning("API Security is DISABLED: No ApiKey configured in ServerSettings.");
-                if (Environment.UserInteractive)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("************************************************************");
-                    Console.WriteLine("* WARNING: API Security is DISABLED!                       *");
-                    Console.WriteLine("* Configure 'ApiKey' in appsettings.json for production.   *");
-                    Console.WriteLine("************************************************************");
-                    Console.ResetColor();
-                }
+                Log.Information("API Security: Using STATIC ApiKey from appsettings.json.");
+            }
+            else
+            {
+                Log.Information("API Security: No static key found. Using AUTOMATICALLY generated key (server.key).");
             }
         }
     }

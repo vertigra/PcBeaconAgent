@@ -42,7 +42,7 @@ public static class ConfigurationExtensions
 
         Log.Logger = loggerConfig.CreateLogger();
 
-        if (string.IsNullOrWhiteSpace(settings.Server.ApiKey))
+        /*if (string.IsNullOrWhiteSpace(settings.Server.ApiKey))
         {
             settings.Server.ApiKey = Guid.NewGuid().ToString("N");
             Log.Warning(
@@ -50,7 +50,7 @@ public static class ConfigurationExtensions
                 "this run: {ApiKey}. Configure clients with this key, or set a fixed " +
                 "value in appsettings.json to keep it stable across restarts.",
                 settings.Server.ApiKey);
-        }
+        }*/
 
         builder.Services.AddSerilog();
 
