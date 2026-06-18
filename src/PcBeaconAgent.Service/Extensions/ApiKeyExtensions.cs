@@ -6,9 +6,6 @@ using System;
 
 namespace PcBeaconAgent.Service.Extensions
 {
-    // FIX (новый файл): лёгкая проверка общего секрета для REST-эндпоинтов, без
-    // подключения полноценного pipeline аутентификации/авторизации ASP.NET Core —
-    // тут достаточно сравнения одного заголовка.
     public static class ApiKeyExtensions
     {
         public static RouteGroupBuilder RequireApiKey(this RouteGroupBuilder group, AppSettings settings)

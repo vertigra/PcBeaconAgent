@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
-using PcBeaconAgent.Client.Core;
+using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;

@@ -41,7 +41,6 @@ public class UdpBeaconServer : BackgroundService
 
                 if (result.Buffer.Length > 0 && result.Buffer[0] == ping)
                 {
-                    // Собираем данные: Pong(1) + Порт(2) + ApiKey(N)
                     byte[] portBytes = BitConverter.GetBytes((ushort)mSettings.Server.ApiPort);
                     byte[] keyBytes = Encoding.UTF8.GetBytes(mBeaconService.ApiKey);
 

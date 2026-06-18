@@ -42,16 +42,6 @@ public static class ConfigurationExtensions
 
         Log.Logger = loggerConfig.CreateLogger();
 
-        /*if (string.IsNullOrWhiteSpace(settings.Server.ApiKey))
-        {
-            settings.Server.ApiKey = Guid.NewGuid().ToString("N");
-            Log.Warning(
-                "No ServerSettings:ApiKey configured — generated a temporary key for " +
-                "this run: {ApiKey}. Configure clients with this key, or set a fixed " +
-                "value in appsettings.json to keep it stable across restarts.",
-                settings.Server.ApiKey);
-        }*/
-
         builder.Services.AddSerilog();
 
         Log.Information("PcBeaconAgent initialized. Silent mode: {SilentMode}", silentMode);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Constants;
+using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
 using System;
@@ -172,6 +173,4 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     private void LogConnectionStopped(string ip) => LogStoppedAction(mLogger, ip, null);
 
     private void LogHandleDetailsError(string ip, Exception ex) => LogHandleDetailsErrorAction(mLogger, ip, ex);
-
-
 }

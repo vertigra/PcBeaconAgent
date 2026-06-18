@@ -4,7 +4,6 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using PcBeaconAgent.Client.Android.Services;
 using PcBeaconAgent.Client.Android.ViewModels;
-using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Client.Core.Stores;

@@ -18,10 +18,6 @@ namespace PcBeaconAgent.Service.Endpoints
             services.AddSingleton<CoreAudioController>();
             return services;
         }
-
-        // FIX: добавлен параметр settings — раньше эти эндпоинты не имели вообще
-        // никакой аутентификации, и любое устройство в той же сети могло
-        // безнаказанно сменить дефолтное аудиоустройство на хосте.
         public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
         {
             var audioGroup = app.MapGroup("/api/audio").RequireApiKey(settings);

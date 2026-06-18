@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PcBeaconAgent.Client.Core
+namespace PcBeaconAgent.Client.Core.Exceptions
 {
     public class NotPairedException : Exception
     {
