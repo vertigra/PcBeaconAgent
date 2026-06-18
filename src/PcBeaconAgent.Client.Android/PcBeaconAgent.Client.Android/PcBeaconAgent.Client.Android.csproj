@@ -14,7 +14,7 @@
     <AssemblyName>PcBeaconAgent.Client.Android</AssemblyName>
     <RootNamespace>PcBeaconAgent.Client.Android</RootNamespace>
     <ApplicationTitle>BeaconClient</ApplicationTitle>
-    <ApplicationId>com.companyname.beaconclient</ApplicationId>
+    <ApplicationId>com.vertigra.beaconclient</ApplicationId>
     <ApplicationVersion Condition="'$(AppVersionCode)' == ''">1</ApplicationVersion>
     <ApplicationVersion Condition="'$(AppVersionCode)' != ''">$(AppVersionCode)</ApplicationVersion>
 

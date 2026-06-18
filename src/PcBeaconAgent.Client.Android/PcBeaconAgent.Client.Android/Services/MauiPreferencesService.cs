@@ -18,10 +18,6 @@ namespace PcBeaconAgent.Client.Android.Services
 
             try
             {
-                // FIX: защита от повреждённого/несовместимого JSON (например, после
-                // обновления приложения изменилась форма модели) — раньше необработанное
-                // исключение тут было фатальным, т.к. MainViewModel.LoadDevice() вызывает
-                // это синхронно из конструктора.
                 return JsonSerializer.Deserialize<T>(json) ?? defaultValue;
             }
             catch (JsonException)
