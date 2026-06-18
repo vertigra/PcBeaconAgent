@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PcBeaconAgent.Service.Configuration;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.IO;
 using System.Linq;
@@ -18,7 +19,7 @@ public static class ConfigurationExtensions
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: false)
             .Build();
 
         var settings = new AppSettings();
@@ -27,9 +28,11 @@ public static class ConfigurationExtensions
         builder.Services.AddSingleton(settings);
 
         string fullLogPath = Path.Combine(AppContext.BaseDirectory, settings.Log.FilePath);
-        
+
+        var minimumLevel = ParseMinimumLevel(configuration["Logging:LogLevel:Default"]);
+
         var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.Debug()
+            .MinimumLevel.Is(minimumLevel)
             .WriteTo.File(fullLogPath, rollingInterval: RollingInterval.Day);
 
         if (!silentMode)
@@ -44,5 +47,19 @@ public static class ConfigurationExtensions
         Log.Information("PcBeaconAgent initialized. Silent mode: {SilentMode}", silentMode);
 
         return settings;
+    }
+
+    private static LogEventLevel ParseMinimumLevel(string? value)
+    {
+        return (value ?? "Information").Trim().ToLowerInvariant() switch
+        {
+            "trace" or "verbose" => LogEventLevel.Verbose,
+            "debug" => LogEventLevel.Debug,
+            "information" or "info" => LogEventLevel.Information,
+            "warning" or "warn" => LogEventLevel.Warning,
+            "error" => LogEventLevel.Error,
+            "critical" or "fatal" => LogEventLevel.Fatal,
+            _ => LogEventLevel.Information
+        };
     }
 }

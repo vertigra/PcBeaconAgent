@@ -11,6 +11,7 @@
         public string Host { get; set; } = "0.0.0.0";
         public int ApiPort { get; set; } = 5000;
         public int DiscoveryPort { get; set; } = 8888;
+        public string ApiKey { get; set; } = string.Empty;
     }
 
     public class LogSettings

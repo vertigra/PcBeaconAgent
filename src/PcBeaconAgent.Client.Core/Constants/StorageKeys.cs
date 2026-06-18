@@ -4,5 +4,6 @@
     {
         public const string KnownDevices = "known_devices";
         public const string DiscoveryPort = "discovery_port";
+        public const string ApiKey = "api_key";
     }
 }

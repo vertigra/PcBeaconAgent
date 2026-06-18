@@ -7,7 +7,7 @@ namespace PcBeaconAgent.Client.Core.Interfaces
     /// <summary>
     /// Defines a contract for discovering network devices via UDP broadcast.
     /// </summary>
-    public interface IUdpBeaconScanner
+    public interface IUdpBeaconScannerService
     {
         /// <summary>
         /// Event triggered when a beacon device is successfully discovered.

@@ -14,7 +14,7 @@
     <AssemblyName>PcBeaconAgent.Client.Android</AssemblyName>
     <RootNamespace>PcBeaconAgent.Client.Android</RootNamespace>
     <ApplicationTitle>BeaconClient</ApplicationTitle>
-    <ApplicationId>com.companyname.beaconclient</ApplicationId>
+    <ApplicationId>com.vertigra.beaconclient</ApplicationId>
     <ApplicationVersion Condition="'$(AppVersionCode)' == ''">1</ApplicationVersion>
     <ApplicationVersion Condition="'$(AppVersionCode)' != ''">$(AppVersionCode)</ApplicationVersion>
 
@@ -28,10 +28,10 @@
   
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
     <PackageReference Include="CommunityToolkit.Maui" Version="14.2.0" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.70" />
-    <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.70" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.71" />
+    <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.71" />
   </ItemGroup>
   
   <ItemGroup>

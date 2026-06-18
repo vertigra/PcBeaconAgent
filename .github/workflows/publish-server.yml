@@ -72,7 +72,6 @@ jobs:
     needs: [build, smoke-test]
     runs-on: windows-latest
     steps:
-      # fetch-depth: 0 критически важно для git-cliff
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -95,7 +94,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2.0.1
         with:
-          # Жесткая привязка имени файла через output версии
           files: PcBeaconAgent.Service-${{ needs.build.outputs.version }}-win-x64.zip
           name: Server Release ${{ needs.build.outputs.version }}
           body_path: RELEASE_NOTES.md

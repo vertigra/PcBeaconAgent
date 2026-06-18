@@ -2,8 +2,11 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
+using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Stores;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -13,55 +16,66 @@ namespace PcBeaconAgent.Client.Android.ViewModels;
 
 public partial class MainViewModel : ObservableObject, IDisposable
 {
-    private readonly IUdpBeaconScanner mScanner;
-    private readonly ISignalRService mSignalRService;
+    private readonly IUdpBeaconScannerService mScanner;
+    private readonly ISignalService mSignalService;
     private readonly ILogger<MainViewModel> mLogger;
-    private readonly IDeviceStorageService mStorage;
+    private readonly DeviceStore mDeviceStore;
 
-    [ObservableProperty]
+    [ObservableProperty] 
     public partial bool IsScanning { get; set; }
 
-    public ObservableCollection<BeaconDevice> Devices { get; } = [];
+    public ObservableCollection<BeaconDevice> DiscoveredDevices { get; } = [];
+    public ObservableCollection<ManagedDevice> ManagedDevices => mDeviceStore.ManagedDevices;
 
-    public MainViewModel(IUdpBeaconScanner scanner, ISignalRService signalRService, IDeviceStorageService storage, ILogger<MainViewModel> logger)
+    public MainViewModel(DeviceStore store, IUdpBeaconScannerService scanner, ISignalService signalRService, ILogger<MainViewModel> logger)
     {
+        mDeviceStore = store;
         mScanner = scanner;
-        mSignalRService = signalRService;
-        mStorage = storage; 
+        mSignalService = signalRService;
         mLogger = logger;
-        
+
         mScanner.OnBeaconFound += OnBeaconFound;
-
-        mSignalRService.DeviceDetailsReceived += OnDeviceDetailsReceived;
-        mSignalRService.ServerRequestedDisconnect += OnServerRequestedDisconnect;
-
-        LoadDevice();
+        mSignalService.DeviceDetailsReceived += OnDeviceDetailsReceived;
+        mSignalService.DeviceStatusChanged += OnDeviceStatusChanged;
     }
 
-    private void LoadDevice()
+    private void OnDeviceStatusChanged(string ipAddress, bool isOnline)
     {
-        foreach (var device in mStorage.LoadDevices())
-        {
-            Devices.Add(device);
-        }
+        var device = ManagedDevices.FirstOrDefault(d => d.Device.IpAddress == ipAddress);
+        
+        if (device == null)
+            return;
+        
+        device.IsOnline = isOnline;
     }
 
     private void OnBeaconFound(DiscoveredBeacon beacon)
     {
         MainThread.BeginInvokeOnMainThread(async () =>
         {
-            if (Devices.Any(d => d.IpAddress == beacon.IpAddress)) return;
+            if (ManagedDevices.Any(d => d.Device.IpAddress == beacon.IpAddress))
+                return; 
 
-            var newDevice = new BeaconDevice
+            if (DiscoveredDevices.Any(d => d.IpAddress == beacon.IpAddress))
+                return;
+
+            var newDevice = new BeaconDevice { IpAddress = beacon.IpAddress, ApiPort = beacon.Port };
+            DiscoveredDevices.Add(newDevice);
+
+            try
             {
-                IpAddress = beacon.IpAddress,
-                ApiPort = beacon.Port
-            };
-
-            Devices.Add(newDevice);
-
-            string hubUrl = $"http://{newDevice.IpAddress}:{newDevice.ApiPort}/beaconHub";
-            await mSignalRService.ConnectAsync(newDevice.IpAddress, hubUrl);
+                await mSignalService.ReceiveDeviceDetailsAndCloseAsync(newDevice);
+            }
+            catch (NotPairedException)
+            {
+                await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Try to scan the network again.", "OK");
+                DiscoveredDevices.Remove(newDevice);
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogWarning(ex, "Failed to connect to discovered device at {Ip}", newDevice.IpAddress);
+                DiscoveredDevices.Remove(newDevice);
+            }
         });
     }
 
@@ -69,58 +83,66 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            BeaconDevice? device = Devices.FirstOrDefault(d => d.IpAddress == ipAddress);
-
-            if (device != null)
+            var discovered = DiscoveredDevices.FirstOrDefault(d => d.IpAddress == ipAddress);
+            if (discovered != null)
             {
-                device.MachineName = data.MachineName;
-                device.MacAddress = data.MacAddress;
-                device.InterfaceType = data.InterfaceType;
-                device.InterfaceName = data.InterfaceName;
-
-                mStorage.SaveDevices(Devices);
+                UpdateDeviceInfo(discovered, data);
+                int idx = DiscoveredDevices.IndexOf(discovered);
+                DiscoveredDevices[idx] = discovered;
 
                 mLogger.LogInformation("Updated UI for {Ip}", ipAddress);
             }
         });
     }
 
-    private async void OnServerRequestedDisconnect(string ipAddress)
+    private static void UpdateDeviceInfo(BeaconDevice target, BeaconDevice source)
     {
-        mLogger.LogInformation("Disconnecting from {Ip} per server request", ipAddress);
-        await mSignalRService.DisconnectAsync(ipAddress);
-
-        /*MainThread.BeginInvokeOnMainThread(() =>
-        {
-            var device = Devices.FirstOrDefault(d => d.IpAddress == ipAddress);
-            if (device != null) Devices.Remove(device);
-        });*/
+        target.MachineName = source.MachineName;
+        target.MacAddress = source.MacAddress;
+        target.InterfaceType = source.InterfaceType;
+        target.InterfaceName = source.InterfaceName;
     }
 
     [RelayCommand]
     public async Task StartScanAsync()
     {
-        if (IsScanning) return;
-
         IsScanning = true;
-        Devices.Clear();
+        DiscoveredDevices.Clear();
+        await mScanner.ScanAsync(3000);
+        IsScanning = false;
+    }
 
+    [RelayCommand]
+    public async Task Remember(BeaconDevice device)
+    {
         try
         {
-            await mScanner.ScanAsync(3000);
+            mDeviceStore.RememberDevice(device);
+            await mSignalService.ConnectToBeaconHubAsync(device);
+            DiscoveredDevices.Remove(device);
         }
-        finally
+        catch (NotPairedException)
         {
-            IsScanning = false;
+            await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Try to scan the network again.", "OK");
+            mDeviceStore.ForgetDevice(device);
+        }
+        catch (Exception ex)
+        {
+            mLogger.LogWarning(ex, "Failed to remember discovered device at {Ip}", device.IpAddress);
         }
     }
+
+    [RelayCommand]
+    public async Task Forget(ManagedDevice device) 
+    {
+        await mSignalService.DisconnectBeaconHubAsync(device.Device);
+        mDeviceStore.ForgetDevice(device.Device);
+    } 
 
     public void Dispose()
     {
         mScanner.OnBeaconFound -= OnBeaconFound;
-        mSignalRService.DeviceDetailsReceived -= OnDeviceDetailsReceived;
-        mSignalRService.ServerRequestedDisconnect -= OnServerRequestedDisconnect;
-
-        mLogger.LogInformation("MainViewModel disposed");
+        mSignalService.DeviceDetailsReceived -= OnDeviceDetailsReceived;
+        mSignalService.DeviceStatusChanged -= OnDeviceStatusChanged;
     }
 }

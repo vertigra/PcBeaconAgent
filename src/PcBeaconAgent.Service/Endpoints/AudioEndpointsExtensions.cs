@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc; 
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Service.Configuration;
+using PcBeaconAgent.Service.Extensions;
 using System.Linq;
 
 namespace PcBeaconAgent.Service.Endpoints
@@ -16,12 +18,10 @@ namespace PcBeaconAgent.Service.Endpoints
             services.AddSingleton<CoreAudioController>();
             return services;
         }
-
-        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app)
+        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
         {
-            var audioGroup = app.MapGroup("/api/audio");
+            var audioGroup = app.MapGroup("/api/audio").RequireApiKey(settings);
 
-            // GET /api/audio/devices
             audioGroup.MapGet("/devices", ([FromServices] CoreAudioController controller) =>
             {
                 var devices = controller.GetPlaybackDevices(DeviceState.Active)
@@ -29,14 +29,12 @@ namespace PcBeaconAgent.Service.Endpoints
                 return Results.Ok(devices);
             });
 
-            // GET /api/audio/default-device
             audioGroup.MapGet("/default-device", ([FromServices] CoreAudioController controller) =>
             {
                 var device = controller.DefaultPlaybackDevice;
                 return device != null ? Results.Ok(new { id = device.Id.ToString() }) : Results.NotFound();
             });
 
-            // POST /api/audio/set?id=...
             audioGroup.MapPost("/set", ([FromQuery] string id, [FromServices] CoreAudioController controller) =>
             {
                 var device = controller.GetPlaybackDevices().FirstOrDefault(d => d.Id.ToString() == id);
