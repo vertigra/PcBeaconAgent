@@ -45,10 +45,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
   </ItemGroup>
 </Project>
