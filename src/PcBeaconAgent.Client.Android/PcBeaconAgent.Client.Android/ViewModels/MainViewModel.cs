@@ -1,8 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
+using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
 using System.Collections.ObjectModel;
@@ -15,6 +18,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IUdpBeaconScannerService mScanner;
     private readonly ISignalService mSignalService;
+    private readonly ILogger<MainViewModel> mLogger;
     private readonly DeviceStore mDeviceStore;
 
     [ObservableProperty] 
@@ -23,11 +27,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public ObservableCollection<BeaconDevice> DiscoveredDevices { get; } = [];
     public ObservableCollection<ManagedDevice> ManagedDevices => mDeviceStore.ManagedDevices;
 
-    public MainViewModel(DeviceStore store, IUdpBeaconScannerService scanner, ISignalService signalRService)
+    public MainViewModel(DeviceStore store, IUdpBeaconScannerService scanner, ISignalService signalRService, ILogger<MainViewModel> logger)
     {
         mDeviceStore = store;
         mScanner = scanner;
         mSignalService = signalRService;
+        mLogger = logger;
 
         mScanner.OnBeaconFound += OnBeaconFound;
         mSignalService.DeviceDetailsReceived += OnDeviceDetailsReceived;
@@ -56,7 +61,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             var newDevice = new BeaconDevice { IpAddress = beacon.IpAddress, ApiPort = beacon.Port };
             DiscoveredDevices.Add(newDevice);
-            await mSignalService.ReceiveDeviceDetailsAndCloseAsync(newDevice);
+
+            // FIX: эта лямбда фактически "async void" (BeginInvokeOnMainThread принимает
+            // Action). Раньше исключение из ConnectAsync (недоступный хост, отказ в
+            // соединении и т.п.) вылетало необработанным и могло уронить приложение —
+            // причём это самый частый случай (маяк перестал отвечать между обнаружением
+            // и подключением). Теперь ошибка логируется, а "недополученное" устройство
+            // убирается из списка вместо того, чтобы висеть там без данных.
+            try
+            {
+                await mSignalService.ReceiveDeviceDetailsAndCloseAsync(newDevice);
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogWarning(ex, "Failed to connect to discovered device at {Ip}", newDevice.IpAddress);
+                DiscoveredDevices.Remove(newDevice);
+            }
         });
     }
 
@@ -69,7 +89,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
             {
                 UpdateDeviceInfo(discovered, data);
                 int idx = DiscoveredDevices.IndexOf(discovered);
-                DiscoveredDevices[idx] = discovered; 
+                DiscoveredDevices[idx] = discovered;
+
+                mLogger.LogInformation("Updated UI for {Ip}", ipAddress);
             }
         });
     }

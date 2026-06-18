@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
+using PcBeaconAgent.Client.Core.Constants;
+using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Services;
 
-public class SignalService(ILogger<SignalService> mLogger) : ISignalService
+public class SignalService(ILogger<SignalService> mLogger, IPreferencesService mPrefs) : ISignalService
 {
     public event Action<string, BeaconDevice>? DeviceDetailsReceived;
     public event Action<string, bool>? DeviceStatusChanged;
@@ -97,8 +98,15 @@ public class SignalService(ILogger<SignalService> mLogger) : ISignalService
 
     private HubConnection CreateConnection(string ipAddress, string hubUrl)
     {
+        var apiKey = mPrefs.Get(StorageKeys.ApiKey, string.Empty) ?? string.Empty;
         var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
+             .WithUrl(hubUrl, options =>
+             {
+                 if (!string.IsNullOrEmpty(apiKey))
+                 {
+                     options.Headers["X-Api-Key"] = apiKey;
+                 }
+             })
             .WithAutomaticReconnect()
             .Build();
 
@@ -120,7 +128,19 @@ public class SignalService(ILogger<SignalService> mLogger) : ISignalService
             return Task.CompletedTask;
         };
 
-        connection.On<BeaconDevice>("ReceiveDeviceDetails", data => DeviceDetailsReceived?.Invoke(ipAddress, data));
+        connection.On<BeaconDevice>("ReceiveDeviceDetails", (device) =>
+        {
+            try
+            {
+                if (device != null)
+                    DeviceDetailsReceived?.Invoke(ipAddress, device);
+            }
+            catch (Exception ex)
+            {
+                LogHandleDetailsError(ipAddress, ex);
+            }
+        });
+
         connection.On("CloseConnection", async () => await DisconnectBeaconHubAsync(ipAddress));
 
         return connection;
@@ -136,9 +156,16 @@ public class SignalService(ILogger<SignalService> mLogger) : ISignalService
     private static readonly Action<ILogger, string, Exception?> LogStoppedAction =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, "ConnectionStopped"), "Connection stopped for {IpAddress}");
 
+    private static readonly Action<ILogger, string, Exception?> LogHandleDetailsErrorAction =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(4, "HandleDetailsError"), "Failed to handle device details for {Id}");
+
     private void LogConnectionError(string ip, Exception ex) => LogErrorAction(mLogger, ip, ex.Message, ex);
 
     private void LogConnectionStarted(string ip) => LogStartedAction(mLogger, ip, null);
 
     private void LogConnectionStopped(string ip) => LogStoppedAction(mLogger, ip, null);
+
+    private void LogHandleDetailsError(string ip, Exception ex) => LogHandleDetailsErrorAction(mLogger, ip, ex);
+
+
 }
