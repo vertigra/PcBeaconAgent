@@ -148,7 +148,25 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             }
         });
 
-        connection.On("CloseConnection", async () => await DisconnectBeaconHubAsync(ipAddress));
+        // FIX: ранее лямбда была async () => await DisconnectBeaconHubAsync(...).
+        // SignalR регистрирует обработчик On как Action (не Func<Task>), поэтому
+        // async-лямбда компилируется в async void — исключение из DisconnectBeaconHubAsync
+        // становится unobserved и может уронить процесс. Теперь Task запускается через
+        // Task.Run с явным перехватом исключений.
+        connection.On("CloseConnection", () =>
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await DisconnectBeaconHubAsync(ipAddress);
+                }
+                catch (Exception ex)
+                {
+                    LogConnectionError(ipAddress, ex);
+                }
+            });
+        });
 
         return connection;
     }
