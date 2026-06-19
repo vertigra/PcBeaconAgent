@@ -15,10 +15,6 @@ public class UdpBeaconScannerService : IUdpBeaconScannerService
 
     public event Action<DiscoveredBeacon>? OnBeaconFound;
 
-    // FIX: убрана зависимость от IPreferencesService — сервис сканирования больше
-    // не читает и не сохраняет ключ из UDP-ответа. Ключ теперь конфигурируется
-    // вручную пользователем через SettingsPage. Ответственность за хранение ключа
-    // полностью перенесена на SettingsViewModel + MauiPreferencesService.
     public UdpBeaconScannerService(IPreferencesService preferences)
     {
         mDiscoveryPort = preferences.Get(StorageKeys.DiscoveryPort, 8888);
@@ -41,9 +37,6 @@ public class UdpBeaconScannerService : IUdpBeaconScannerService
             {
                 var result = await client.ReceiveAsync(cts.Token);
 
-                // FIX: разбираем только pong (0x02) + 2 байта порта.
-                // Ранее здесь ещё читались байты ключа (buffer[3..]) и записывались
-                // в preferences — это и создавало дыру в безопасности.
                 if (result.Buffer.Length >= 3 && result.Buffer[0] == 0x02)
                 {
                     var beacon = new DiscoveredBeacon

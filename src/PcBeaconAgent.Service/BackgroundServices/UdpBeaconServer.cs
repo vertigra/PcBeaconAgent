@@ -17,11 +17,6 @@ public class UdpBeaconServer : BackgroundService
     private const byte ping = 0x01;
     private const byte pong = 0x02;
 
-    // FIX: убрана зависимость от IBeaconAnnouncementService — ключ больше не
-    // передаётся через UDP. UDP-ответ снова содержит только маркер pong и порт API
-    // (3 байта), как в исходной версии. Распределение ключа через broadcast-канал
-    // делало защиту бессмысленной: любое устройство в сегменте сети могло
-    // отправить ping и получить действующий ключ в ответе.
     public UdpBeaconServer(AppSettings settings, ILogger<UdpBeaconServer> logger)
     {
         mSettings = settings;
@@ -42,9 +37,6 @@ public class UdpBeaconServer : BackgroundService
 
                 if (result.Buffer.Length > 0 && result.Buffer[0] == ping)
                 {
-                    // FIX: ответ содержит только pong + port (3 байта).
-                    // Ключ не передаётся — он конфигурируется вручную на обеих сторонах
-                    // через SettingsPage клиента и appsettings.json / server.key сервера.
                     byte[] portBytes = BitConverter.GetBytes((ushort)mSettings.Server.ApiPort);
                     byte[] response = [pong, portBytes[0], portBytes[1]];
 
