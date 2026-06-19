@@ -91,9 +91,12 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 * **Pipeline Output:** A standalone, signed optimization architecture `.apk` package.
 * **Version Code Calculation:** Android requires a monotonically increasing integer for its `versionCode`. The pipeline automatically computes this value on the fly from your tag using a positioning multiplier formula:
 
-      $$	ext{VersionCode} = (	ext{Major} 	imes 10000) + (	ext{Minor} 	imes 100) + 	ext{Build}$$
+    The formula used is:
+    `VersionCode = (Major × 1,000,000) + (Minor × 1,000) + Build`
 
-* *Example:* Pushing tag `client.v.2.4.12` instantly compiles an APK injected with `versionCode="20412"` and `versionName="2.4.12"`.
+    *Example:* Tag `client.v.2.4.12` results in:
+    - `versionCode` = `2,004,012`
+    - `versionName` = `2.4.12`
 
 ---
 ## 🤝 Development Standards
