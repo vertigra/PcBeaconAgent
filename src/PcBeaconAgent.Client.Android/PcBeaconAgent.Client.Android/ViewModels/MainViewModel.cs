@@ -21,17 +21,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly ILogger<MainViewModel> mLogger;
     private readonly DeviceStore mDeviceStore;
 
-    [ObservableProperty] 
+    [ObservableProperty]
     public partial bool IsScanning { get; set; }
 
     public ObservableCollection<BeaconDevice> DiscoveredDevices { get; } = [];
     public ObservableCollection<ManagedDevice> ManagedDevices => mDeviceStore.ManagedDevices;
 
-    public MainViewModel(DeviceStore store, IUdpBeaconScannerService scanner, ISignalService signalRService, ILogger<MainViewModel> logger)
+    public MainViewModel(
+        DeviceStore store,
+        IUdpBeaconScannerService scanner,
+        ISignalService signalService,
+        ILogger<MainViewModel> logger)
     {
         mDeviceStore = store;
         mScanner = scanner;
-        mSignalService = signalRService;
+        mSignalService = signalService;
         mLogger = logger;
 
         mScanner.OnBeaconFound += OnBeaconFound;
@@ -42,10 +46,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void OnDeviceStatusChanged(string ipAddress, bool isOnline)
     {
         var device = ManagedDevices.FirstOrDefault(d => d.Device.IpAddress == ipAddress);
-        
+
         if (device == null)
             return;
-        
+
         device.IsOnline = isOnline;
     }
 
@@ -53,11 +57,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         MainThread.BeginInvokeOnMainThread(async () =>
         {
-            if (ManagedDevices.Any(d => d.Device.IpAddress == beacon.IpAddress))
-                return; 
-
-            if (DiscoveredDevices.Any(d => d.IpAddress == beacon.IpAddress))
-                return;
+            if (ManagedDevices.Any(d => d.Device.IpAddress == beacon.IpAddress)) return;
+            if (DiscoveredDevices.Any(d => d.IpAddress == beacon.IpAddress)) return;
 
             var newDevice = new BeaconDevice { IpAddress = beacon.IpAddress, ApiPort = beacon.Port };
             DiscoveredDevices.Add(newDevice);
@@ -68,12 +69,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
             }
             catch (NotPairedException)
             {
-                await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Try to scan the network again.", "OK");
+                await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Configure it in Settings.", "OK");
                 DiscoveredDevices.Remove(newDevice);
             }
             catch (Exception ex)
             {
-                mLogger.LogWarning(ex, "Failed to connect to discovered device at {Ip}", newDevice.IpAddress);
+                mLogger.LogWarning(ex, "Failed to get details from {Ip}", newDevice.IpAddress);
                 DiscoveredDevices.Remove(newDevice);
             }
         });
@@ -89,7 +90,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 UpdateDeviceInfo(discovered, data);
                 int idx = DiscoveredDevices.IndexOf(discovered);
                 DiscoveredDevices[idx] = discovered;
-
                 mLogger.LogInformation("Updated UI for {Ip}", ipAddress);
             }
         });
@@ -106,10 +106,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task StartScanAsync()
     {
+        if (IsScanning) return;
+
         IsScanning = true;
         DiscoveredDevices.Clear();
-        await mScanner.ScanAsync(3000);
-        IsScanning = false;
+
+        // FIX: возвращён try/finally, убранный в предыдущей итерации. Без него
+        // исключение из ScanAsync (например, сокет недоступен) оставляло IsScanning = true
+        // навсегда — кнопка "Start Scan" блокировалась до перезапуска приложения.
+        try
+        {
+            await mScanner.ScanAsync(3000);
+        }
+        finally
+        {
+            IsScanning = false;
+        }
     }
 
     [RelayCommand]
@@ -123,21 +135,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (NotPairedException)
         {
-            await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Try to scan the network again.", "OK");
+            await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Configure it in Settings.", "OK");
             mDeviceStore.ForgetDevice(device);
         }
         catch (Exception ex)
         {
-            mLogger.LogWarning(ex, "Failed to remember discovered device at {Ip}", device.IpAddress);
+            mLogger.LogWarning(ex, "Failed to remember device at {Ip}", device.IpAddress);
         }
     }
 
     [RelayCommand]
-    public async Task Forget(ManagedDevice device) 
+    public async Task Forget(ManagedDevice device)
     {
         await mSignalService.DisconnectBeaconHubAsync(device.Device);
         mDeviceStore.ForgetDevice(device.Device);
-    } 
+    }
 
     public void Dispose()
     {
