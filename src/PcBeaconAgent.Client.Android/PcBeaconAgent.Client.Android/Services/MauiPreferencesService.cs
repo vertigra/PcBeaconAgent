@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Storage;
+using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -9,9 +10,20 @@ namespace PcBeaconAgent.Client.Android.Services
     {
         public void Set<T>(string key, T value)
         {
-            if (key == "api_key" && value is string apiKey)
+            if (key == StorageKeys.ApiKey && value is string apiKey)
             {
-                Task.Run(async () => await SecureStorage.Default.SetAsync(key, apiKey));
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await SecureStorage.Default.SetAsync(key, apiKey);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"SecureStorage.SetAsync failed for key '{key}': {ex.Message}");
+                    }
+                });
                 return;
             }
 
@@ -20,15 +32,28 @@ namespace PcBeaconAgent.Client.Android.Services
 
         public T? Get<T>(string key, T defaultValue)
         {
-            if (key == "api_key")
+            if (key == StorageKeys.ApiKey)
             {
-                var task = SecureStorage.Default.GetAsync(key);
-                task.Wait();
-                return (T)(task.Result ?? (object)(defaultValue ?? default!));
+                try
+                {
+                    var result = Task.Run(async () =>
+                        await SecureStorage.Default.GetAsync(key))
+                        .GetAwaiter().GetResult();
+
+                    if (result is T typedResult)
+                        return typedResult;
+
+                    return defaultValue;
+                }
+                catch
+                {
+                    return defaultValue;
+                }
             }
 
             var json = Preferences.Default.Get(key, string.Empty);
-            if (string.IsNullOrEmpty(json)) return defaultValue;
+            if (string.IsNullOrEmpty(json))
+                return defaultValue;
 
             try
             {
