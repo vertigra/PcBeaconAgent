@@ -18,6 +18,7 @@ namespace PcBeaconAgent.Service.Endpoints
             services.AddSingleton<CoreAudioController>();
             return services;
         }
+
         public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
         {
             var audioGroup = app.MapGroup("/api/audio").RequireApiKey(settings);
