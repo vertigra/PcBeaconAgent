@@ -1,11 +1,13 @@
 ﻿using Microsoft.Maui;
 using Microsoft.Maui.Controls;
+using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
 namespace PcBeaconAgent.Client.Android;
 
@@ -13,14 +15,16 @@ public partial class App : Application
 {
     private readonly ISignalService mSignalService;
     private readonly DeviceStore mDeviceStore;
+    private readonly ILogger<App> mLogger;
+
     public ObservableCollection<ManagedDevice> ManagedDevices => mDeviceStore.ManagedDevices;
 
-    public App(DeviceStore store, ISignalService signalRService)
+    public App(DeviceStore store, ISignalService signalRService, ILogger<App> logger)
     {
         InitializeComponent();
-
         mSignalService = signalRService;
         mDeviceStore = store;
+        mLogger = logger;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -30,31 +34,49 @@ public partial class App : Application
 
     protected override void OnStart()
     {
-        Task.Run(ConnectToManagedDevices);
+        _ = Task.Run(ConnectToManagedDevicesAsync);
         base.OnStart();
     }
 
     protected override void OnSleep()
     {
-        foreach (var device in ManagedDevices.Select(x => x.Device))
-        {
-            mSignalService.DisconnectBeaconHubAsync(device);
-        }
-
+        _ = Task.Run(DisconnectAllAsync);
         base.OnSleep();
     }
 
     protected override void OnResume()
     {
-        Task.Run(ConnectToManagedDevices);
+        _ = Task.Run(ConnectToManagedDevicesAsync);
         base.OnResume();
     }
 
-    private void ConnectToManagedDevices()
+    private async Task ConnectToManagedDevicesAsync()
     {
-        foreach(var device in ManagedDevices.Select(x=>x.Device))
+        foreach (var device in ManagedDevices.Select(x => x.Device).ToList())
         {
-            mSignalService.ConnectToBeaconHubAsync(device);
+            try
+            {
+                await mSignalService.ConnectToBeaconHubAsync(device);
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogWarning(ex, "Failed to reconnect to {Ip} on resume", device.IpAddress);
+            }
+        }
+    }
+
+    private async Task DisconnectAllAsync()
+    {
+        foreach (var device in ManagedDevices.Select(x => x.Device).ToList())
+        {
+            try
+            {
+                await mSignalService.DisconnectBeaconHubAsync(device);
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogWarning(ex, "Failed to disconnect from {Ip} on sleep", device.IpAddress);
+            }
         }
     }
 }
