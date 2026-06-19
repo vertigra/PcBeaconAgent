@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             x:Class="PcBeaconAgent.Client.Android.PairingPage"
+             x:DataType="vm:PairingViewModel"
+             Title="Pair Device"
+             BackgroundColor="#121212">
+
+    <VerticalStackLayout Padding="28" Spacing="20" VerticalOptions="Center">
+
+        <!-- Server info -->
+        <VerticalStackLayout Spacing="4">
+            <Label Text="Server found:" TextColor="#BDBDBD" FontSize="13"/>
+            <Label FontSize="16" FontAttributes="Bold" TextColor="White">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="{Binding ServerIp}" TextColor="#D0BCFF"/>
+                        <Span Text=":" TextColor="#BDBDBD"/>
+                        <Span Text="{Binding ServerPort}" TextColor="#D0BCFF"/>
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+        </VerticalStackLayout>
+
+        <BoxView HeightRequest="1" BackgroundColor="#2C2C2C"/>
+
+        <!-- Instructions -->
+        <Label TextColor="#BDBDBD" FontSize="14" LineBreakMode="WordWrap">
+            <Label.FormattedText>
+                <FormattedString>
+                    <Span Text="Look at the server console or log file for a line starting with" TextColor="#BDBDBD"/>
+                    <Span Text=" PAIRING PIN" TextColor="#D0BCFF" FontAttributes="Bold"/>
+                    <Span Text=", then enter the 6-digit code below." TextColor="#BDBDBD"/>
+                </FormattedString>
+            </Label.FormattedText>
+        </Label>
+
+        <!-- PIN input -->
+        <Entry Placeholder="● ● ● ● ● ●"
+               Text="{Binding Pin}"
+               Keyboard="Numeric"
+               MaxLength="6"
+               FontSize="32"
+               HorizontalTextAlignment="Center"
+               CharacterSpacing="12"
+               PlaceholderColor="#424242"
+               TextColor="White"
+               BackgroundColor="#1E1E1E"/>
+
+        <!-- Error message -->
+        <Label Text="{Binding ErrorMessage}"
+               TextColor="#F44336"
+               FontSize="13"
+               HorizontalOptions="Center"
+               IsVisible="{Binding ErrorMessage, Converter={x:Static x:String.IsNullOrEmpty}}"/>
+
+        <!-- Pair button -->
+        <Button Text="Pair"
+                Command="{Binding PairCommand}"
+                BackgroundColor="#6750A4"
+                TextColor="White"
+                CornerRadius="12"
+                HeightRequest="52"
+                FontSize="16"/>
+
+        <!-- Regenerate PIN link -->
+        <Button Text="Regenerate PIN on server"
+                Command="{Binding RegeneratePinCommand}"
+                
+                BackgroundColor="Transparent"
+                TextColor="#BDBDBD"
+                FontSize="13"
+                BorderWidth="0"/>
+
+    </VerticalStackLayout>
+
+</ContentPage>

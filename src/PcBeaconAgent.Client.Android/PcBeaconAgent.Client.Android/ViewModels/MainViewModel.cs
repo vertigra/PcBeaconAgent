@@ -69,8 +69,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
             }
             catch (NotPairedException)
             {
-                await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Configure it in Settings.", "OK");
-                DiscoveredDevices.Remove(newDevice);
+                // Ключ не сохранён — открываем экран паринга, передавая IP и порт
+                // найденного устройства через Shell query parameters.
+                // PairingViewModel получит их через [QueryProperty].
+                //await Shell.Current.GoToAsync(
+                    //$"{nameof(PairingPage)}?ip={newDevice.IpAddress}&port={newDevice.ApiPort}");
+
+                //DiscoveredDevices.Remove(newDevice);
             }
             catch (Exception ex)
             {
@@ -111,9 +116,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IsScanning = true;
         DiscoveredDevices.Clear();
 
-        // FIX: возвращён try/finally, убранный в предыдущей итерации. Без него
-        // исключение из ScanAsync (например, сокет недоступен) оставляло IsScanning = true
-        // навсегда — кнопка "Start Scan" блокировалась до перезапуска приложения.
         try
         {
             await mScanner.ScanAsync(3000);
@@ -135,8 +137,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (NotPairedException)
         {
-            await Shell.Current.DisplayAlertAsync("Error", "Access key not found. Configure it in Settings.", "OK");
-            mDeviceStore.ForgetDevice(device);
+            // То же самое при ручном нажатии "Remember" — если ключ исчез из хранилища.
+            await Shell.Current.GoToAsync(
+                $"{nameof(PairingPage)}?ip={device.IpAddress}&port={device.ApiPort}");
+
+            //mDeviceStore.ForgetDevice(device);
         }
         catch (Exception ex)
         {

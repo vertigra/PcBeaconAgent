@@ -7,14 +7,21 @@
 
     <TabBar>
         <ShellContent Title="Devices"
-                      Icon="dotnet_bot.png"
                       ContentTemplate="{DataTemplate local:MainPage}"
                       Route="MainPage"/>
 
         <ShellContent Title="Settings"
-                      Icon="dotnet_bot.png"
                       ContentTemplate="{DataTemplate local:SettingsPage}"
                       Route="SettingsPage"/>
     </TabBar>
+
+    <!--
+        PairingPage регистрируется как отдельный маршрут (не вкладка) — открывается
+        программно через Shell.GoToAsync("PairingPage?ip=...&port=...") из MainViewModel
+        при NotPairedException. Параметры ip и port передаются через query string
+        и биндятся через [QueryProperty] в PairingViewModel.
+    -->
+    <Shell.RouteFactories>
+    </Shell.RouteFactories>
 
 </Shell>
