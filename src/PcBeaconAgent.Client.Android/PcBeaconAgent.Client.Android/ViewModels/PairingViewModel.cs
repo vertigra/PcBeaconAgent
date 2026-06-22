@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Android.Telephony;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Constants;
@@ -31,8 +32,14 @@ public partial class PairingViewModel : ObservableObject
     [ObservableProperty]
     public partial string Pin { get; set; } = string.Empty;
 
+    // FIX: добавлен [NotifyPropertyChangedFor(nameof(HasError))] — при изменении
+    // ErrorMessage автоматически уведомляется и HasError, на который теперь
+    // подписан IsVisible в XAML вместо невалидного x:Static-конвертера.
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
     public partial string ErrorMessage { get; set; } = string.Empty;
+
+    public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
