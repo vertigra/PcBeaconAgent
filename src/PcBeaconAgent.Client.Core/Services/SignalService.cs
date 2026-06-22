@@ -57,13 +57,55 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     }
 
     /// <inheritdoc />
-    public async Task ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice)
+    public async Task<BeaconDevice> ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice, CancellationToken ct = default)
     {
         string hubUrl = $"http://{beaconDevice.IpAddress}:{beaconDevice.ApiPort}/hubs/beacon";
-        await ConnectAsync(beaconDevice.IpAddress, hubUrl);
-        await SendCommandAsync(beaconDevice.IpAddress, "ReceiveDeviceDetailsAndClose");
+
+        // FIX: раньше метод просто делал ConnectAsync + SendCommandAsync и завершался —
+        // SendCommandAsync дожидается лишь отправки сообщения, а не прихода ответа
+        // ReceiveDeviceDetails. Теперь подписываемся на общее событие DeviceDetailsReceived
+        // временно, только на время этого вызова, и фильтруем по IP — это даёт детерминированную
+        // точку синхронизации "данные точно получены", без блокирующих ожиданий.
+        var tcs = new TaskCompletionSource<BeaconDevice>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void OnDetailsReceived(string ip, BeaconDevice data)
+        {
+            if (ip == beaconDevice.IpAddress)
+                tcs.TrySetResult(data);
+        }
+
+        DeviceDetailsReceived += OnDetailsReceived;
+
+        try
+        {
+            await ConnectAsync(beaconDevice.IpAddress, hubUrl, ct);
+            await SendCommandAsync(beaconDevice.IpAddress, "ReceiveDeviceDetailsAndClose");
+
+            // FIX: явный таймаут — без него зависший/неотвечающий сервер (например,
+            // PIN ввели верно, но устройство сразу ушло из сети) подвесил бы Remember()
+            // навечно, так как await tcs.Task ничем не ограничен по времени.
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(DeviceDetailsTimeout);
+
+            using var registration = timeoutCts.Token.Register(() =>
+                tcs.TrySetException(new TimeoutException(
+                    $"Timed out waiting for device details from {beaconDevice.IpAddress}.")));
+
+            return await tcs.Task;
+        }
+        finally
+        {
+            // FIX: обязательная отписка — иначе при повторных вызовах (например,
+            // пользователь несколько раз жмёт "Remember" на разные устройства)
+            // накопились бы "висящие" обработчики, каждый сравнивающий чужой IP.
+            DeviceDetailsReceived -= OnDetailsReceived;
+        }
     }
 
+    // Сколько ждать ответа сервера на запрос деталей устройства, прежде чем считать
+    // это сетевой ошибкой/таймаутом. 5 секунд — достаточно для локальной сети,
+    // но не настолько долго, чтобы UI казался "подвисшим" при нажатии Remember.
+    private static readonly TimeSpan DeviceDetailsTimeout = TimeSpan.FromSeconds(5);
     /// <inheritdoc />
     public async Task ForgetAsync(string ipAddress)
     {

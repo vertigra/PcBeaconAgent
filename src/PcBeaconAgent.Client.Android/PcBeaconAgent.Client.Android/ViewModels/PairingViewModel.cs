@@ -1,9 +1,11 @@
 ﻿using Android.Telephony;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.Messages;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -77,6 +79,12 @@ public partial class PairingViewModel : ObservableObject
                 if (result?.ApiKey is { Length: > 0 } key)
                 {
                     mPrefs.Set(StorageKeys.ApiKeyFor(ServerIp), key);
+
+                    // FIX: уведомляем того, кто инициировал паринг (MainViewModel.Remember),
+                    // что ключ теперь доступен — это позволяет автоматически повторить
+                    // Remember() вместо того, чтобы заставлять пользователя нажимать кнопку
+                    // ещё раз вручную после возврата на главный экран.
+                    WeakReferenceMessenger.Default.Send(new PairingSucceededMessage(ServerIp));
 
                     await Shell.Current.GoToAsync("//MainPage");
                 }

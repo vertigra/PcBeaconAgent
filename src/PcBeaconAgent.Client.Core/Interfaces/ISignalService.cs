@@ -1,72 +1,36 @@
-﻿using PcBeaconAgent.Client.Core.Models;
-using System;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Interfaces;
 
-/// <summary>
-/// Provides a centralized service for managing multiple SignalR hub connections.
-/// Handles connection lifecycles, event routing, and data transmission.
-/// </summary>
 public interface ISignalService
 {
-    /// <summary>
-    /// Triggered when detailed information about a device is received from the hub.
-    /// </summary>
     event Action<string, BeaconDevice>? DeviceDetailsReceived;
-
-    /// <summary>
-    /// Triggered when the online/offline status of a specific device changes.
-    /// </summary>
     event Action<string, bool>? DeviceStatusChanged;
 
-
-    /// <summary>
-    /// Establishes a connection to the beacon hub using the provided <see cref="BeaconDevice"/> model.
-    /// </summary>
-    /// <param name="beaconDevice">The device containing network configuration details.</param>
     Task ConnectToBeaconHubAsync(BeaconDevice beaconDevice);
-
-    /// <summary>
-    /// Gracefully closes and disposes of the connection associated with the given IP address.
-    /// </summary>
-    /// <param name="ipAddress">The IP address of the device to disconnect.</param>
     Task DisconnectBeaconHubAsync(string ipAddress);
-
-    /// <summary>
-    /// Gracefully closes and disposes of the connection for the specified device.
-    /// </summary>
-    /// <param name="beaconDevice">The device to disconnect.</param>
     Task DisconnectBeaconHubAsync(BeaconDevice beaconDevice);
+    Task ForgetAsync(string ipAddress);
 
-    /// <summary>
-    /// Sends a command to the specified hub along with accompanying data.
-    /// </summary>
-    /// <param name="ipAddress">The IP address of the target device.</param>
-    /// <param name="command">The name of the hub method to invoke.</param>
-    /// <param name="data">The object payload to send.</param>
     Task SendCommandAsync(string ipAddress, string command, object data);
-
-    /// <summary>
-    /// Sends a command to the specified hub without additional data.
-    /// </summary>
-    /// <param name="ipAddress">The IP address of the target device.</param>
-    /// <param name="command">The name of the hub method to invoke.</param>
     Task SendCommandAsync(string ipAddress, string command);
 
     /// <summary>
-    /// Establishes a connection, requests device details, and immediately closes the connection.
-    /// Useful for single-shot state snapshots.
+    /// Establishes a connection, requests device details, and waits for the
+    /// actual <c>ReceiveDeviceDetails</c> reply to arrive before returning —
+    /// not just for the request to be sent. The connection is closed by the
+    /// server immediately after sending the reply.
     /// </summary>
-    /// <param name="beaconDevice">The device to query.</param>
-    Task ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice);
-
-    /// <summary>
-    /// Disconnects (if currently connected) and permanently removes the stored
-    /// pairing key for the given device. Use this specifically when the user
-    /// explicitly forgets a device — a plain Disconnect (e.g. triggered by app
-    /// sleep) must NOT remove the key, otherwise the device would require
-    /// re-pairing every time the app goes to background.
-    /// </summary>
-    Task ForgetAsync(string ipAddress);
+    /// <returns>The device data received from the server.</returns>
+    /// <exception cref="Exceptions.NotPairedException">No API key stored for this device.</exception>
+    /// <exception cref="TimeoutException">No reply within the timeout window.</exception>
+    // FIX: было Task (без возвращаемого значения). SendCommandAsync внутри
+    // дожидается только отправки сообщения по сети, а не обработки его сервером —
+    // вызывающий код мог продолжить работу (например, RememberDevice) с устройством,
+    // у которого ещё не было реальных данных. Теперь метод возвращает Task<BeaconDevice>
+    // и резолвится только когда ответ действительно получен.
+    Task<BeaconDevice> ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice, CancellationToken ct = default);
 }
