@@ -69,10 +69,8 @@ public partial class PairingViewModel : ObservableObject
 
                 if (result?.ApiKey is { Length: > 0 } key)
                 {
-                    // Store in SecureStorage via MauiPreferencesService.
-                    mPrefs.Set(StorageKeys.ApiKey, key);
+                    mPrefs.Set(StorageKeys.ApiKeyFor(ServerIp), key);
 
-                    // Navigate back to main page; scan will retry automatically.
                     await Shell.Current.GoToAsync("//MainPage");
                 }
                 else
@@ -104,6 +102,7 @@ public partial class PairingViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+            Pin = string.Empty;
         }
     }
 
