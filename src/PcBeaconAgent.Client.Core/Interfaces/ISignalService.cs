@@ -1,7 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using PcBeaconAgent.Client.Core.Models;
+using System;
 using System.Threading.Tasks;
-using PcBeaconAgent.Client.Core.Models;
 
 namespace PcBeaconAgent.Client.Core.Interfaces;
 
@@ -61,4 +60,13 @@ public interface ISignalService
     /// </summary>
     /// <param name="beaconDevice">The device to query.</param>
     Task ReceiveDeviceDetailsAndCloseAsync(BeaconDevice beaconDevice);
+
+    /// <summary>
+    /// Disconnects (if currently connected) and permanently removes the stored
+    /// pairing key for the given device. Use this specifically when the user
+    /// explicitly forgets a device — a plain Disconnect (e.g. triggered by app
+    /// sleep) must NOT remove the key, otherwise the device would require
+    /// re-pairing every time the app goes to background.
+    /// </summary>
+    Task ForgetAsync(string ipAddress);
 }

@@ -27,11 +27,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public ObservableCollection<BeaconDevice> DiscoveredDevices { get; } = [];
     public ObservableCollection<ManagedDevice> ManagedDevices => mDeviceStore.ManagedDevices;
 
-    public MainViewModel(
-        DeviceStore store,
-        IUdpBeaconScannerService scanner,
-        ISignalService signalService,
-        ILogger<MainViewModel> logger)
+    public MainViewModel(DeviceStore store, IUdpBeaconScannerService scanner, ISignalService signalService, ILogger<MainViewModel> logger)
     {
         mDeviceStore = store;
         mScanner = scanner;
@@ -66,16 +62,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
             try
             {
                 await mSignalService.ReceiveDeviceDetailsAndCloseAsync(newDevice);
-            }
-            catch (NotPairedException)
-            {
-                // Ключ не сохранён — открываем экран паринга, передавая IP и порт
-                // найденного устройства через Shell query parameters.
-                // PairingViewModel получит их через [QueryProperty].
-                //await Shell.Current.GoToAsync(
-                    //$"{nameof(PairingPage)}?ip={newDevice.IpAddress}&port={newDevice.ApiPort}");
-
-                //DiscoveredDevices.Remove(newDevice);
             }
             catch (Exception ex)
             {
@@ -137,11 +123,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (NotPairedException)
         {
-            // То же самое при ручном нажатии "Remember" — если ключ исчез из хранилища.
             await Shell.Current.GoToAsync(
                 $"{nameof(PairingPage)}?ip={device.IpAddress}&port={device.ApiPort}");
-
-            //mDeviceStore.ForgetDevice(device);
         }
         catch (Exception ex)
         {
@@ -152,7 +135,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task Forget(ManagedDevice device)
     {
-        await mSignalService.DisconnectBeaconHubAsync(device.Device);
+        await mSignalService.ForgetAsync(device.Device.IpAddress);
         mDeviceStore.ForgetDevice(device.Device);
     }
 

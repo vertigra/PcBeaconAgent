@@ -1,5 +1,4 @@
 ﻿using Microsoft.Maui.Storage;
-using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -8,9 +7,11 @@ namespace PcBeaconAgent.Client.Android.Services
 {
     public class MauiPreferencesService : IPreferencesService
     {
+        private const string ApiKeyPrefix = "api_key";
+
         public void Set<T>(string key, T value)
         {
-            if (key == StorageKeys.ApiKey && value is string apiKey)
+            if (key.StartsWith(ApiKeyPrefix) && value is string apiKey)
             {
                 _ = Task.Run(async () =>
                 {
@@ -32,7 +33,7 @@ namespace PcBeaconAgent.Client.Android.Services
 
         public T? Get<T>(string key, T defaultValue)
         {
-            if (key == StorageKeys.ApiKey)
+            if (key.StartsWith(ApiKeyPrefix))
             {
                 try
                 {
@@ -63,6 +64,19 @@ namespace PcBeaconAgent.Client.Android.Services
             {
                 return defaultValue;
             }
+        }
+
+        // FIX (новый метод): SecureStorage.Remove синхронный (в отличие от
+        // Get/SetAsync), поэтому Task.Run здесь не нужен.
+        public void Remove(string key)
+        {
+            if (key.StartsWith(ApiKeyPrefix))
+            {
+                SecureStorage.Default.Remove(key);
+                return;
+            }
+
+            Preferences.Default.Remove(key);
         }
     }
 }

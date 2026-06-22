@@ -64,6 +64,18 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
         await SendCommandAsync(beaconDevice.IpAddress, "ReceiveDeviceDetailsAndClose");
     }
 
+    /// <inheritdoc />
+    public async Task ForgetAsync(string ipAddress)
+    {
+        // FIX (новый метод): отличается от DisconnectBeaconHubAsync тем, что
+        // дополнительно удаляет сохранённый ключ. Обычный Disconnect (например, при
+        // уходе приложения в фон) НЕ должен трогать ключ — иначе устройство пришлось
+        // бы перепаривать после каждого OnSleep/OnResume.
+        await DisconnectBeaconHubAsync(ipAddress);
+        mPrefs.Remove(StorageKeys.ApiKeyFor(ipAddress));
+        LogKeyForgotten(ipAddress);
+    }
+
     /// <summary>
     /// Establishes a new connection to a hub at the specified address.
     /// Supports automatic reconnection.
@@ -148,11 +160,6 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             }
         });
 
-        // FIX: ранее лямбда была async () => await DisconnectBeaconHubAsync(...).
-        // SignalR регистрирует обработчик On как Action (не Func<Task>), поэтому
-        // async-лямбда компилируется в async void — исключение из DisconnectBeaconHubAsync
-        // становится unobserved и может уронить процесс. Теперь Task запускается через
-        // Task.Run с явным перехватом исключений.
         connection.On("CloseConnection", () =>
         {
             _ = Task.Run(async () =>
@@ -184,6 +191,9 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     private static readonly Action<ILogger, string, Exception?> LogHandleDetailsErrorAction =
         LoggerMessage.Define<string>(LogLevel.Error, new EventId(4, "HandleDetailsError"), "Failed to handle device details for {Id}");
 
+    private static readonly Action<ILogger, string, Exception?> LogKeyForgottenAction =
+    LoggerMessage.Define<string>(LogLevel.Information, new EventId(5, "KeyForgotten"), "Removed stored pairing key for {IpAddress}");
+
     private void LogConnectionError(string ip, Exception ex) => LogErrorAction(mLogger, ip, ex.Message, ex);
 
     private void LogConnectionStarted(string ip) => LogStartedAction(mLogger, ip, null);
@@ -191,4 +201,6 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     private void LogConnectionStopped(string ip) => LogStoppedAction(mLogger, ip, null);
 
     private void LogHandleDetailsError(string ip, Exception ex) => LogHandleDetailsErrorAction(mLogger, ip, ex);
+
+    private void LogKeyForgotten(string ip) => LogKeyForgottenAction(mLogger, ip, null);
 }
