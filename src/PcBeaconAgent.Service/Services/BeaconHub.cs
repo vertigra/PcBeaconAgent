@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Service.Services
 {
-    public class BeaconHub(IBeaconAnnouncementService mBeaconService, ILogger<BeaconHub> mLogger) : Hub
+    public class BeaconHub(IBeaconAnnouncementService mBeaconService,ILogger<BeaconHub> mLogger) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -21,6 +21,7 @@ namespace PcBeaconAgent.Service.Services
             }
 
             LogClientConnected();
+
             await base.OnConnectedAsync();
         }
 
@@ -30,12 +31,7 @@ namespace PcBeaconAgent.Service.Services
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task ReceiveDeviceDetailsAndClose()
-        {
-            var deviceData = GetLocalDeviceData();
-            await Clients.Caller.SendAsync("ReceiveDeviceDetails", deviceData);
-            await Clients.Caller.SendAsync("CloseConnection");
-        }
+        public BeaconDevice GetDeviceDetails() => GetLocalDeviceData();
 
         private bool IsAuthorized()
         {

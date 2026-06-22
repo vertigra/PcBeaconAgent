@@ -19,6 +19,29 @@ public class DeviceStore
         LoadRememberDevices();
     }
 
+    public ManagedDevice RememberDevice(BeaconDevice device)
+    {
+        var existing = ManagedDevices.FirstOrDefault(m => m.Device.Equals(device));
+        if (existing != null)
+            return existing;
+
+        var managed = mFactory.Create(device);
+        ManagedDevices.Add(managed);
+        Persist(); 
+
+        return managed;
+    }
+
+    public void ForgetDevice(BeaconDevice device)
+    {
+        var exiting = ManagedDevices.FirstOrDefault(m => m.Device.Equals(device));
+        if (exiting != null)
+        {
+            ManagedDevices.Remove(exiting);
+            Persist();
+        }
+    }
+
     private void LoadRememberDevices()
     {
         var saved = mStorage.LoadDevices();
@@ -29,21 +52,5 @@ public class DeviceStore
         }
     }
 
-    public void RememberDevice(BeaconDevice beacon)
-    {
-        if (ManagedDevices.Any(m => m.Device.Equals(beacon))) return;
-
-        ManagedDevices.Add(mFactory.Create(beacon));
-        mStorage.SaveDevices(ManagedDevices.Select(m => m.Device));
-    }
-
-    public void ForgetDevice(BeaconDevice beacon)
-    {
-        var device = ManagedDevices.FirstOrDefault(m => m.Device.Equals(beacon));
-        if (device != null)
-        {
-            ManagedDevices.Remove(device);
-            mStorage.SaveDevices(ManagedDevices.Select(m => m.Device));
-        }
-    }
+    private void Persist() => mStorage.SaveDevices(ManagedDevices.Select(m => m.Device));
 }
