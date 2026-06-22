@@ -67,10 +67,6 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     /// <inheritdoc />
     public async Task ForgetAsync(string ipAddress)
     {
-        // FIX (новый метод): отличается от DisconnectBeaconHubAsync тем, что
-        // дополнительно удаляет сохранённый ключ. Обычный Disconnect (например, при
-        // уходе приложения в фон) НЕ должен трогать ключ — иначе устройство пришлось
-        // бы перепаривать после каждого OnSleep/OnResume.
         await DisconnectBeaconHubAsync(ipAddress);
         mPrefs.Remove(StorageKeys.ApiKeyFor(ipAddress));
         LogKeyForgotten(ipAddress);
@@ -111,7 +107,7 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
 
     private HubConnection CreateConnection(string ipAddress, string hubUrl)
     {
-        var apiKey = mPrefs.Get(StorageKeys.ApiKey, string.Empty);
+        var apiKey = ResolveApiKey(ipAddress);
 
         if (string.IsNullOrEmpty(apiKey))
         {
@@ -176,6 +172,15 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
         });
 
         return connection;
+    }
+    private string? ResolveApiKey(string ipAddress)
+    {
+        var scoped = mPrefs.Get(StorageKeys.ApiKeyFor(ipAddress), string.Empty);
+        if (!string.IsNullOrEmpty(scoped))
+            return scoped;
+
+        var global = mPrefs.Get(StorageKeys.ApiKey, string.Empty);
+        return string.IsNullOrEmpty(global) ? null : global;
     }
 
 

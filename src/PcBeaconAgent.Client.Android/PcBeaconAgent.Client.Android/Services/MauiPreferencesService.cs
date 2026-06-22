@@ -66,8 +66,6 @@ namespace PcBeaconAgent.Client.Android.Services
             }
         }
 
-        // FIX (новый метод): SecureStorage.Remove синхронный (в отличие от
-        // Get/SetAsync), поэтому Task.Run здесь не нужен.
         public void Remove(string key)
         {
             if (key.StartsWith(ApiKeyPrefix))
