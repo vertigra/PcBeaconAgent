@@ -13,8 +13,6 @@
     <ApplicationIcon>beacon.ico</ApplicationIcon>
 
     <PublishSingleFile>true</PublishSingleFile>
-    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
-    <IsAspNetCoreApp>false</IsAspNetCoreApp>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
