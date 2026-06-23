@@ -18,11 +18,6 @@ namespace PcBeaconAgent.Client.Android.Services
         {
             if (key.StartsWith(ApiKeyPrefix) && value is string apiKey)
             {
-                // FIX: фактическая запись теперь вынесена в общий приватный метод
-                // WriteApiKeyAsync — он же используется в SetSecureAsync ниже.
-                // Здесь, в синхронном Set<T>, оборачиваем в try/catch и логируем —
-                // вызывающая сторона не ждёт результат и не должна получить
-                // необработанное исключение из фонового Task.Run.
                 _ = Task.Run(async () =>
                 {
                     try
@@ -44,13 +39,8 @@ namespace PcBeaconAgent.Client.Android.Services
         /// <inheritdoc />
         public Task SetSecureAsync(string key, string value)
         {
-            // FIX (новый метод): в отличие от Set<T>, здесь исключение НЕ
-            // перехватывается — оно должно дойти до вызывающей стороны
-            // (PairingViewModel), чтобы при сбое записи не отправлялось
-            // уведомление об "успешном" паринге, которого на самом деле не было.
             if (!key.StartsWith(ApiKeyPrefix))
-                throw new ArgumentException(
-                    $"SetSecureAsync supports only '{ApiKeyPrefix}*' keys.", nameof(key));
+                throw new ArgumentException($"SetSecureAsync supports only '{ApiKeyPrefix}*' keys.", nameof(key));
 
             return WriteApiKeyAsync(key, value);
         }
@@ -111,9 +101,6 @@ namespace PcBeaconAgent.Client.Android.Services
             }
         }
 
-        // FIX (новый общий метод): единственное место, где реально пишем в
-        // SecureStorage и обновляем индекс. Используется и из fire-and-forget
-        // Set<T>, и из awaited SetSecureAsync — без дублирования кода записи.
         private static async Task WriteApiKeyAsync(string key, string value)
         {
             await SecureStorage.Default.SetAsync(key, value);

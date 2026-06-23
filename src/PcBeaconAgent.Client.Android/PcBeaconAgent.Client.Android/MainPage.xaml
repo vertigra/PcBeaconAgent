@@ -31,10 +31,7 @@
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                <Label Text="{Binding MachineName, TargetNullValue='Unknown'}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
                                 <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
-                                <Label Text="{Binding MacAddress, StringFormat='MAC: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
-                                <Label Text="{Binding InterfaceName, StringFormat='Interface: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
                             </VerticalStackLayout>
 
                             <Button Grid.Column="1" Text="Remember" 
@@ -59,7 +56,8 @@
                                 <Label Text="{Binding Device.MachineName, TargetNullValue='Unknown'}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
                                 <Label Text="{Binding Device.IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
                                 <Label Text="{Binding Device.MacAddress, StringFormat='MAC: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
-                                <Label Text="{Binding Device.InterfaceName, StringFormat='Interface: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.InterfaceName, StringFormat='Interface name: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.InterfaceType, StringFormat='Interface type: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
