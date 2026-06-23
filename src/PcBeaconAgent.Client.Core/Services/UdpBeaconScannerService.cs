@@ -1,5 +1,6 @@
 ﻿namespace PcBeaconAgent.Client.Core.Services;
 
+using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
@@ -11,23 +12,25 @@ using System.Threading.Tasks;
 
 public class UdpBeaconScannerService : IUdpBeaconScannerService
 {
-    private readonly int mDiscoveryPort;
-
     public event Action<DiscoveredBeacon>? OnBeaconFound;
 
-    public UdpBeaconScannerService(IPreferencesService preferences)
+    private readonly int mDiscoveryPort;
+    private readonly ILogger<UdpBeaconScannerService> mLogger;
+
+    public UdpBeaconScannerService(IPreferencesService preferences, ILogger<UdpBeaconScannerService> logger)
     {
         mDiscoveryPort = preferences.Get(StorageKeys.DiscoveryPort, 8888);
+        mLogger = logger;
     }
 
     public async Task ScanAsync(int timeoutMs = 2000)
     {
         using var client = new UdpClient();
+        client.Client.Bind(new IPEndPoint(IPAddress.Any, 0));
         client.EnableBroadcast = true;
 
-        byte[] request = { 0x01 };
-        await client.SendAsync(request, request.Length,
-            new IPEndPoint(IPAddress.Broadcast, mDiscoveryPort));
+        byte[] request = [0x01];
+        await client.SendAsync(request, request.Length, new IPEndPoint(IPAddress.Broadcast, mDiscoveryPort));
 
         using var cts = new CancellationTokenSource(timeoutMs);
 
@@ -48,10 +51,14 @@ public class UdpBeaconScannerService : IUdpBeaconScannerService
                     OnBeaconFound?.Invoke(beacon);
                 }
             }
-            catch (OperationCanceledException) { break; }
+            catch (OperationCanceledException)
+            {
+                mLogger.LogDebug("Discovery scan timed out.");
+                break;
+            }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Scan error: {ex.Message}");
+                mLogger.LogError(ex, "Error during beacon discovery");
             }
         }
     }

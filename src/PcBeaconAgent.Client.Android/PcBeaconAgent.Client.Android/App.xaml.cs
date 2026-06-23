@@ -54,14 +54,6 @@ public partial class App : Application
 
     private async Task ConnectToManagedDevicesAsync()
     {
-        // FIX: раньше NotPairedException для уже запомненного устройства попадал в
-        // общий catch (Exception) ниже — просто логировался как warning, и устройство
-        // оставалось "offline" навсегда без какого-либо пути восстановления из UI
-        // (кроме Forget → повторный поиск в сети → Remember заново).
-        // Типичная причина: ключ этого устройства был перезаписан при паринге с
-        // другим сервером (до фикса per-IP хранения) либо ключ на сервере сменился
-        // (например, удалён server.key).
-        // Теперь для первого такого устройства открывается экран паринга.
         BeaconDevice? firstNotPairedDevice = null;
 
         foreach (var device in ManagedDevices.Select(x => x.Device).ToList())
@@ -83,11 +75,6 @@ public partial class App : Application
 
         if (firstNotPairedDevice != null)
         {
-            // FIX: навигация через Shell должна выполняться на UI-потоке, а этот
-            // метод запускается в фоне через Task.Run из OnStart/OnResume.
-            // Если несколько устройств одновременно без ключа — открываем паринг
-            // только для первого; остальные останутся "offline" до следующего
-            // resume, когда пользователь сможет повторить процесс по очереди.
             await MainThread.InvokeOnMainThreadAsync(() =>
                 Shell.Current.GoToAsync(
                     $"{nameof(PairingPage)}?ip={firstNotPairedDevice.IpAddress}&port={firstNotPairedDevice.ApiPort}"));

@@ -8,8 +8,6 @@ namespace PcBeaconAgent.Client.Android
         {
             InitializeComponent();
 
-            // PairingPage регистрируется здесь, а не в XAML, потому что это
-            // модальный/навигационный маршрут с query-параметрами, а не постоянная вкладка.
             Routing.RegisterRoute(nameof(PairingPage), typeof(PairingPage));
         }
     }

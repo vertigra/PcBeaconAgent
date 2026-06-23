@@ -21,10 +21,6 @@ public partial class SettingsViewModel : ObservableObject
 
     public ObservableCollection<StoredKeyEntry> StoredKeys { get; } = [];
 
-    // FIX: добавлена зависимость IDeviceStorageService — нужна, чтобы по IP
-    // (которым проиндексирован ключ) найти запомненное устройство и подтянуть
-    // его MachineName/MacAddress. Сервис уже зарегистрирован как Singleton в
-    // MauiProgram.cs — добавление параметра в конструктор ничего больше не требует.
     public SettingsViewModel(IPreferencesService prefs, IDeviceStorageService deviceStorage)
     {
         mPrefs = prefs;
@@ -33,9 +29,6 @@ public partial class SettingsViewModel : ObservableObject
         LoadStoredKeys();
     }
 
-    // FIX (новый публичный метод): тонкая обёртка над приватным LoadStoredKeys —
-    // вызывается из SettingsPage.OnAppearing при каждом показе страницы, а не
-    // только из конструктора.
     public void RefreshStoredKeys() => LoadStoredKeys();
 
     private void LoadStoredKeys()
@@ -102,10 +95,4 @@ public partial class SettingsViewModel : ObservableObject
     }
 }
 
-// FIX: добавлены MachineName и MacAddress — оба nullable, так как для "global"
-// записи (ручной fallback-ключ без привязки к конкретному устройству) их
-// просто нет, а для per-device записи устройство теоретически могло быть
-// "забыто" (Forget) после того как ключ для него уже был сохранён где-то ещё
-// (например, вручную через SettingsPage под тем же IP) — в этом случае
-// совпадения в knownDevices не найдётся, и оба поля останутся null.
 public sealed record StoredKeyEntry(string Identifier, string Value, string? MachineName, string? MacAddress);
