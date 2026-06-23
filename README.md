@@ -8,26 +8,6 @@ A solution designed to monitor PC status and manage it remotely. It consists of 
 
 The **PcBeaconAgent.Service** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
 
-### 🧠 System Architecture
-
-The project is structured into distinct layers to ensure loose coupling, high testability, and a clear separation of concerns.
-
-* **Core (`PcBeaconAgent.Client.Core`)**: Contains business logic, service abstractions (e.g., `IPreferencesService`), and domain models (`BeaconDevice`). This layer is platform-agnostic and does not depend on specific UI frameworks.
-* **Platform Implementation**: Contains concrete platform-specific implementations of the Core interfaces (e.g., `MauiPreferencesService` implemented for Android).
-* **Dependency Injection**: Service lifecycles are managed via the MAUI DI container in `MauiProgram.cs`, facilitating easy testing and future-proofing.
-
-**Data Flow (UDP to Persistent Storage):**
-1. **UDP Beacon**: The scanner identifies a network device and initializes a base `BeaconDevice` DTO.
-2. **SignalR Handshake**: The client establishes a connection to the agent and retrieves full device metadata.
-3. **Storage Sync**: The device identity is persisted via `IDeviceStorageService`, which abstracts physical storage access.
-4. **Identity Tracking**: The model utilizes robust `Equals`/`GetHashCode` overrides to ensure consistent identity tracking even if the network configuration changes.
-
-
-### ⚙️ Build Features
-* **Single-File Executable**: The service compiles into a single, self-contained `.exe` file.
-* **Trimmed**: All unused code is automatically removed during compilation to optimize production binary size.
-* **Self-Contained**: The .NET 10 runtime is packed inside the executable, meaning no external .NET SDK installation is required on the target machine.
-
 ### 💻 CLI Arguments (Silent Mode)
 By default, the agent duplicates all logs directly to the console window. For background or scripted execution, you can completely suppress terminal output using the following flags:
 
@@ -36,6 +16,37 @@ By default, the agent duplicates all logs directly to the console window. For ba
 
     or:
     ./PcBeaconAgent.Service.exe --silent
+
+### 🧠 System Architecture
+
+The project is structured into distinct layers to ensure loose coupling, high testability, and a clear separation of concerns.
+
+* **Core (`PcBeaconAgent.Client.Core`)**: Contains business logic, service abstractions (e.g., `IPreferencesService`), and domain models (`BeaconDevice`). This layer is platform-agnostic and does not depend on specific UI frameworks.
+* **Platform Implementation**: Contains concrete platform-specific implementations of the Core interfaces (e.g., `MauiPreferencesService` implemented for Android).
+* **Dependency Injection**: Service lifecycles are managed via the MAUI DI container in `MauiProgram.cs`, facilitating easy testing and future-proofing.
+
+**Data Flow & Security:**
+The architecture follows a clear "Discovery-to-RPC" lifecycle to maintain security while ensuring network flexibility.
+
+1. **UDP Beacon (Discovery)**: The scanner identifies network devices via UDP broadcast. At this stage, only raw `IP:Port` metadata is available. This phase is unauthenticated.
+2. **SignalR RPC (Request-Response)**: Once the user initiates a connection ("Remember"), the client establishes a persistent SignalR connection. Instead of event-based push patterns, the system uses **authenticated RPC calls** (`InvokeAsync`) to fetch device metadata. This ensures deterministic state management and tight control over data exposure.
+3. **Storage Sync & Indexing**: Device identities are persisted via `IDeviceStorageService`. To maintain integrity, the system uses a **thread-safe index** (`IndexLock`) of stored keys, allowing for granular management and preventing data corruption during concurrent pairing operations.
+4. **Identity Tracking**: The `BeaconDevice` model utilizes robust `Equals`/`GetHashCode` overrides to ensure consistent identity tracking even if the network configuration changes.
+ 
+### 🔐 Security & Pairing
+The system utilizes a secure, PIN-based pairing mechanism to ensure that only authorized clients can access device metadata or control signals. The pairing process is designed with the "Principle of Least Privilege":
+
+* **No Secret Exposure**: Discovery over UDP carries only `IP:Port`. API keys are never broadcasted.
+* **Isolated Trust**: Each client stores an IP-scoped key. Compromising one device does not grant access to others.
+* **Non-Persistent Discovery**: Listing devices does not require credentials; authentication is only triggered when a user explicitly initiates a connection ("Remember").
+* **Key Lifecycle Management**: The client maintains a local index of stored API keys, allowing for granular "Forget" operations. This ensures that when a device is removed, its associated credentials are fully purged from the local Android Keystore, preventing "orphaned" trust entries.
+
+For a technical deep-dive into the state machine, failure modes, and cryptographic storage isolation, refer to the **[PIN Pairing Algorithm Reference](docs/pairing-reference.md)**.
+
+### ⚙️ Build Features
+* **Single-File Executable**: The service compiles into a single, self-contained `.exe` file.
+* **Trimmed**: All unused code is automatically removed during compilation to optimize production binary size.
+* **Self-Contained**: The .NET 10 runtime is packed inside the executable, meaning no external .NET SDK installation is required on the target machine.
 
 ## 🚀 CI/CD Automation & Releases
 
@@ -91,9 +102,12 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 * **Pipeline Output:** A standalone, signed optimization architecture `.apk` package.
 * **Version Code Calculation:** Android requires a monotonically increasing integer for its `versionCode`. The pipeline automatically computes this value on the fly from your tag using a positioning multiplier formula:
 
-      $$	ext{VersionCode} = (	ext{Major} 	imes 10000) + (	ext{Minor} 	imes 100) + 	ext{Build}$$
+    The formula used is:
+    `VersionCode = (Major × 1,000,000) + (Minor × 1,000) + Build`
 
-* *Example:* Pushing tag `client.v.2.4.12` instantly compiles an APK injected with `versionCode="20412"` and `versionName="2.4.12"`.
+    *Example:* Tag `client.v.2.4.12` results in:
+    - `versionCode` = `2,004,012`
+    - `versionName` = `2.4.12`
 
 ---
 ## 🤝 Development Standards

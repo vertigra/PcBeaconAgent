@@ -9,8 +9,12 @@ namespace PcBeaconAgent.Service.Services
     {
         public string ApiKey { get; }
 
+        public int ApiPort { get; }
+
         public BeaconAnnouncementService(AppSettings settings)
         {
+            ApiPort = settings.Server.ApiPort;
+
             if (!string.IsNullOrEmpty(settings.Server.ApiKey))
             {
                 ApiKey = settings.Server.ApiKey;
@@ -20,7 +24,7 @@ namespace PcBeaconAgent.Service.Services
                 string keyPath = "server.key";
                 if (File.Exists(keyPath))
                 {
-                    ApiKey = File.ReadAllText(keyPath);
+                    ApiKey = File.ReadAllText(keyPath).Trim();
                 }
                 else
                 {

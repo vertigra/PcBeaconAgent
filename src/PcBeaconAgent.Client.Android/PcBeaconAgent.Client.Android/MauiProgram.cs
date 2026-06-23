@@ -30,10 +30,20 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<IUdpBeaconScannerService, UdpBeaconScannerService>();
         builder.Services.AddSingleton<ISignalService, SignalService>();
-        
+
         builder.Services.AddSingleton<App>();
+
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddTransient<MainViewModel>();
+
+        builder.Services.AddTransient<SettingsPage>();
+        builder.Services.AddTransient<SettingsViewModel>();
+
+        // PairingPage и ViewModel регистрируются как Transient:
+        // каждый раз создаётся новый экземпляр с чистым состоянием PIN/Error,
+        // потому что страница открывается под конкретный IP:Port из OnBeaconFound.
+        builder.Services.AddTransient<PairingPage>();
+        builder.Services.AddTransient<PairingViewModel>();
 
         return builder.Build();
     }

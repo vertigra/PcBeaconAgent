@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="PcBeaconAgent.Client.Android.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:PcBeaconAgent.Client.Android"
-    Title="PcBeaconAgent.Client.Android">
+<Shell x:Class="PcBeaconAgent.Client.Android.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:PcBeaconAgent.Client.Android"
+       Title="BeaconClient">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent Title="Devices"
+                      ContentTemplate="{DataTemplate local:MainPage}"
+                      Route="MainPage"/>
+
+        <ShellContent Title="Settings"
+                      ContentTemplate="{DataTemplate local:SettingsPage}"
+                      Route="SettingsPage"/>
+    </TabBar>
+
+    <!--
+        PairingPage регистрируется как отдельный маршрут (не вкладка) — открывается
+        программно через Shell.GoToAsync("PairingPage?ip=...&port=...") из MainViewModel
+        при NotPairedException. Параметры ip и port передаются через query string
+        и биндятся через [QueryProperty] в PairingViewModel.
+    -->
+    <Shell.RouteFactories>
+    </Shell.RouteFactories>
 
 </Shell>

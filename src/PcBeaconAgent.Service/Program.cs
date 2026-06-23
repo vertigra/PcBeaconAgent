@@ -36,13 +36,29 @@ namespace PcBeaconAgent.Service
 
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
+
+                // Register PIN-based pairing service.
+                builder.Services.AddPairingService();
+
                 builder.Services.AddWebApi();
 
+
+
                 var app = builder.Build();
+
+
+                // Force eager instantiation of PairingService so the PIN appears in
+                // the log before the first request, not lazily on the first /api/pair call.
+                // Without this, a Windows Service running in silent mode would generate
+                // the PIN only when the client connects — too late for the user to see it.
+                _ = app.Services.GetRequiredService<IPairingService>();
+
+
                 app.MapSignalHubs();
                 app.ConfigureWebApi();
                 app.MapAudioServiceEndpoints(settings);
-                
+                app.MapPairingEndpoints();
+
                 await app.RunAsync();
             }
             catch (Exception ex)
