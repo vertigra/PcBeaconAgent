@@ -2,11 +2,13 @@
 using AudioSwitcher.AudioApi.CoreAudio;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc; 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Extensions;
+using PcBeaconAgent.Service.JsonContext;
+using PcBeaconAgent.Service.Models;
 using System.Linq;
 
 namespace PcBeaconAgent.Service.Endpoints
@@ -26,14 +28,18 @@ namespace PcBeaconAgent.Service.Endpoints
             audioGroup.MapGet("/devices", ([FromServices] CoreAudioController controller) =>
             {
                 var devices = controller.GetPlaybackDevices(DeviceState.Active)
-                                        .Select(d => new { d.Id, d.FullName });
-                return Results.Ok(devices);
+                                        .Select(d => new AudioDeviceDto(d.Id.ToString(), d.FullName))
+                                        .ToList();
+
+                return Results.Json(devices, BeaconJsonContext.Default.ListAudioDeviceDto);
             });
 
             audioGroup.MapGet("/default-device", ([FromServices] CoreAudioController controller) =>
             {
                 var device = controller.DefaultPlaybackDevice;
-                return device != null ? Results.Ok(new { id = device.Id.ToString() }) : Results.NotFound();
+                return device != null
+                    ? Results.Json(new DefaultDeviceResponse(device.Id.ToString()), BeaconJsonContext.Default.DefaultDeviceResponse)
+                    : Results.NotFound();
             });
 
             audioGroup.MapPost("/set", ([FromQuery] string id, [FromServices] CoreAudioController controller) =>
@@ -42,8 +48,9 @@ namespace PcBeaconAgent.Service.Endpoints
                 if (device != null)
                 {
                     device.SetAsDefault();
-                    return Results.Ok(new { message = "Default device changed" });
+                    return Results.Json(new MessageResponse("Default device changed"), BeaconJsonContext.Default.MessageResponse);
                 }
+
                 return Results.NotFound();
             });
 
