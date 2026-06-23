@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Service.Interfaces;
 using PcBeaconAgent.Service.Services;
+using System.Text.Json.Serialization;
 
 namespace PcBeaconAgent.Service.Endpoints
 {
@@ -12,7 +13,6 @@ namespace PcBeaconAgent.Service.Endpoints
     {
         public static IServiceCollection AddPairingService(this IServiceCollection services)
         {
-            // Singleton: one PIN state for the lifetime of the process.
             services.AddSingleton<IPairingService, PairingService>();
             return services;
         }

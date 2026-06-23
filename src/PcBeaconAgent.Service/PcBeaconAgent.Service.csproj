@@ -13,6 +13,8 @@
     <ApplicationIcon>beacon.ico</ApplicationIcon>
 
     <PublishSingleFile>true</PublishSingleFile>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <IsAspNetCoreApp>false</IsAspNetCoreApp>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
@@ -24,6 +26,12 @@
     <AssemblyVersion Condition="'$(AppVersionName)' == ''">1.0.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(AppVersionName)' != ''">$(AppVersionName).0</AssemblyVersion>
   </PropertyGroup>
+
+  <Target Name="RemoveIisFiles" AfterTargets="Publish">
+    <Delete Files="$(PublishDir)aspnetcorev2_inprocess.dll" />
+    <Delete Files="$(PublishDir)aspnetcorev2_inprocess.so" />
+    <Delete Files="$(PublishDir)aspnetcorev2_inprocess.dylib" />
+  </Target>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -47,4 +55,6 @@
   <ItemGroup>
     <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
   </ItemGroup>
+
+
 </Project>
