@@ -5,6 +5,7 @@ namespace PcBeaconAgent.Service.JsonContext;
 
 [JsonSerializable(typeof(PairRequest))]
 [JsonSerializable(typeof(PairResponse))]
+[JsonSerializable(typeof(SimpleMessageResponse))]
 internal partial class AppJsonSerializerContext : JsonSerializerContext
 {
 }

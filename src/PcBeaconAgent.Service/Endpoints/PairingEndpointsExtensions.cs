@@ -46,7 +46,7 @@ namespace PcBeaconAgent.Service.Endpoints
             app.MapPost("/api/pair/regenerate", ([FromServices] IPairingService pairing) =>
             {
                 pairing.RegeneratePin();
-                return Results.Ok(new { message = "New PIN generated. Check the server console." });
+                return Results.Ok(new SimpleMessageResponse("New PIN generated. Check the server console."));
             });
 
             return app;
@@ -55,4 +55,5 @@ namespace PcBeaconAgent.Service.Endpoints
 
     public record PairRequest(string Pin);
     public record PairResponse(string ApiKey);
+    public record SimpleMessageResponse(string Message);
 }
