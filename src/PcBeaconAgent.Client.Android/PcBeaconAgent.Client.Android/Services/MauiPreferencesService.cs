@@ -1,5 +1,6 @@
 ﻿using Microsoft.Maui.Storage;
 using PcBeaconAgent.Client.Core.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -11,33 +12,24 @@ namespace PcBeaconAgent.Client.Android.Services
     {
         private const string ApiKeyPrefix = "api_key";
         private const string ApiKeyIndexStorageKey = "api_key_index";
-
-        // FIX (новое): блокировка вокруг операций "прочитать индекс → изменить →
-        // записать обратно". Без неё два почти одновременных Set/Remove (например,
-        // быстрый паринг двух устройств подряд) могут оба прочитать один и тот же
-        // снимок индекса, и тот, кто запишет последним, затрёт изменение другого —
-        // одна из записей в индексе потеряется, хотя сам ключ в SecureStorage
-        // останется на месте (несоответствие между индексом и реальным хранилищем).
-        //
-        // Обычный `lock` (а не SemaphoreSlim/асинхронная блокировка) осознанно —
-        // под блокировкой нет ни одного await: и Preferences.Default.Get/Set, и
-        // сериализация JSON выполняются синхронно и быстро, поэтому удерживание
-        // потока на это время безопасно и не создаёт риска deadlock'а, который
-        // возник бы при попытке await'ить что-то внутри lock-блока.
         private static readonly object IndexLock = new();
 
         public void Set<T>(string key, T value)
         {
             if (key.StartsWith(ApiKeyPrefix) && value is string apiKey)
             {
+                // FIX: фактическая запись теперь вынесена в общий приватный метод
+                // WriteApiKeyAsync — он же используется в SetSecureAsync ниже.
+                // Здесь, в синхронном Set<T>, оборачиваем в try/catch и логируем —
+                // вызывающая сторона не ждёт результат и не должна получить
+                // необработанное исключение из фонового Task.Run.
                 _ = Task.Run(async () =>
                 {
                     try
                     {
-                        await SecureStorage.Default.SetAsync(key, apiKey);
-                        AddToIndex(key);
+                        await WriteApiKeyAsync(key, apiKey);
                     }
-                    catch (System.Exception ex)
+                    catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine(
                             $"SecureStorage.SetAsync failed for key '{key}': {ex.Message}");
@@ -47,6 +39,20 @@ namespace PcBeaconAgent.Client.Android.Services
             }
 
             Preferences.Default.Set(key, JsonSerializer.Serialize(value));
+        }
+
+        /// <inheritdoc />
+        public Task SetSecureAsync(string key, string value)
+        {
+            // FIX (новый метод): в отличие от Set<T>, здесь исключение НЕ
+            // перехватывается — оно должно дойти до вызывающей стороны
+            // (PairingViewModel), чтобы при сбое записи не отправлялось
+            // уведомление об "успешном" паринге, которого на самом деле не было.
+            if (!key.StartsWith(ApiKeyPrefix))
+                throw new ArgumentException(
+                    $"SetSecureAsync supports only '{ApiKeyPrefix}*' keys.", nameof(key));
+
+            return WriteApiKeyAsync(key, value);
         }
 
         public T? Get<T>(string key, T defaultValue)
@@ -99,19 +105,20 @@ namespace PcBeaconAgent.Client.Android.Services
         /// <inheritdoc />
         public IReadOnlyList<string> GetStoredApiKeyIdentifiers()
         {
-            // FIX: чтение индекса тоже под блокировкой — без этого чтение могло
-            // бы застать индекс в промежуточном состоянии относительно
-            // одновременно идущей записи (хотя сам Preferences.Default.Get
-            // атомарен на уровне одного вызова, нам нужна согласованность с
-            // именно нашей операцией добавления/удаления, а не просто отсутствие
-            // повреждённого JSON).
             lock (IndexLock)
             {
                 return ReadIndex().Select(StripApiKeyPrefix).ToList();
             }
         }
 
-        // --- ведение индекса ---
+        // FIX (новый общий метод): единственное место, где реально пишем в
+        // SecureStorage и обновляем индекс. Используется и из fire-and-forget
+        // Set<T>, и из awaited SetSecureAsync — без дублирования кода записи.
+        private static async Task WriteApiKeyAsync(string key, string value)
+        {
+            await SecureStorage.Default.SetAsync(key, value);
+            AddToIndex(key);
+        }
 
         private static void AddToIndex(string fullKey)
         {

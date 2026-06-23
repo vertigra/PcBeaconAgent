@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Interfaces
 {
@@ -7,12 +8,14 @@ namespace PcBeaconAgent.Client.Core.Interfaces
         void Set<T>(string key, T value);
         T? Get<T>(string key, T defaultValue);
         void Remove(string key);
-
-        // FIX (новый метод): SecureStorage не даёт перечислить хранящиеся в нём
-        // ключи — единственный способ узнать "что там есть" — вести отдельный
-        // индекс самостоятельно. Возвращает идентификаторы (IP-адреса серверов,
-        // либо строка "global" для ключа, введённого вручную) для которых СЕЙЧАС
-        // есть сохранённый ключ.
         IReadOnlyList<string> GetStoredApiKeyIdentifiers();
+
+        // FIX (новый метод): аналог Set для "api_key*"-ключей, но дожидается
+        // реальной записи в SecureStorage перед возвратом, вместо fire-and-forget.
+        // Нужен там, где дальнейший код полагается на немедленную видимость
+        // записанного значения — конкретно: PairingViewModel должен дождаться
+        // этого ДО уведомления через WeakReferenceMessenger, иначе обработчик
+        // в MainViewModel может прочитать ключ раньше, чем он реально появится.
+        Task SetSecureAsync(string key, string value);
     }
 }

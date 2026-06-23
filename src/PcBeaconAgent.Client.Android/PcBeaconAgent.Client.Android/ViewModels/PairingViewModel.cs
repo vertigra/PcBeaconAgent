@@ -78,12 +78,17 @@ public partial class PairingViewModel : ObservableObject
 
                 if (result?.ApiKey is { Length: > 0 } key)
                 {
-                    mPrefs.Set(StorageKeys.ApiKeyFor(ServerIp), key);
+                    // FIX: было mPrefs.Set(...) — fire-and-forget запись. Send() ниже синхронно
+                    // вызывает обработчик в MainViewModel, который сразу пытается читать этот
+                    // же ключ через Remember() — реальная запись в SecureStorage к этому
+                    // моменту почти никогда не успевала завершиться, авто-ретрай получал
+                    // NotPairedException и тихо уходил на PairingPage. Устройство оставалось
+                    // висеть в DiscoveredDevices до следующего ручного нажатия Remember, когда
+                    // запись уже успевала закончиться. Теперь запись дожидается явно, и только
+                    // после этого отправляется уведомление — гонка устранена детерминированно,
+                    // а не "обычно успевает".
+                    await mPrefs.SetSecureAsync(StorageKeys.ApiKeyFor(ServerIp), key);
 
-                    // FIX: уведомляем того, кто инициировал паринг (MainViewModel.Remember),
-                    // что ключ теперь доступен — это позволяет автоматически повторить
-                    // Remember() вместо того, чтобы заставлять пользователя нажимать кнопку
-                    // ещё раз вручную после возврата на главный экран.
                     WeakReferenceMessenger.Default.Send(new PairingSucceededMessage(ServerIp));
 
                     await Shell.Current.GoToAsync("//MainPage");
