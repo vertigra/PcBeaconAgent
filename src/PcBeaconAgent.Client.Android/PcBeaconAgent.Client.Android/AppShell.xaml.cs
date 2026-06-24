@@ -9,6 +9,7 @@ namespace PcBeaconAgent.Client.Android
             InitializeComponent();
 
             Routing.RegisterRoute(nameof(PairingPage), typeof(PairingPage));
+            Routing.RegisterRoute(nameof(AudioControlPage), typeof(AudioControlPage));
         }
     }
 }

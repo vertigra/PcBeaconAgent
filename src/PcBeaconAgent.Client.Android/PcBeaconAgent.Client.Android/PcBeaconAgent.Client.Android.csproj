@@ -49,6 +49,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <MauiXaml Update="AudioControlPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="PairingPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

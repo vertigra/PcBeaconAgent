@@ -82,6 +82,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    public async Task ManageAudio(ManagedDevice device)
+    {
+        // FIX (новая команда): передаём только IP — AudioControlViewModel сам найдёт
+        // нужный ManagedDevice в DeviceStore и возьмёт уже готовый, привязанный к этому
+        // устройству IAudioController, вместо создания второго параллельного экземпляра.
+        await Shell.Current.GoToAsync(
+            $"{nameof(AudioControlPage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
     public async Task StartScanAsync()
     {
         if (IsScanning) return;

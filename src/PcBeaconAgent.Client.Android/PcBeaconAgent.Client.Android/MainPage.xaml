@@ -66,12 +66,24 @@
                                              Fill="{Binding IsOnline, Converter={StaticResource BoolToColorConverter}}" 
                                              VerticalOptions="Center"/>
 
+
                                     <Label Text="{Binding IsOnline, Converter={StaticResource BoolToTextConverter}}" 
                                            FontSize="10" 
                                            TextColor="#BDBDBD" 
                                            VerticalOptions="Center"/>
 
                                 </HorizontalStackLayout>
+
+
+                                <!-- FIX (новая кнопка): переход на экран управления аудио устройства.
+                                         Доступна независимо от IsOnline — если соединение разорвано,
+                                         пользователь всё равно может открыть экран и увидеть осмысленную
+                                         ошибку через ErrorMessage, а не недоумевать, почему кнопки нет. -->
+                                <Button Text="Audio"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageAudioCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#6750A4" TextColor="White"
+                                            HeightRequest="40" WidthRequest="110" CornerRadius="8"/>
 
                                 <Button Text="Forget" 
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}" 
