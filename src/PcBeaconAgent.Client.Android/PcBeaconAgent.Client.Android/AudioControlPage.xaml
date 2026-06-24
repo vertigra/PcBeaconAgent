@@ -5,8 +5,8 @@
              xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
              x:Class="PcBeaconAgent.Client.Android.AudioControlPage"
              x:DataType="vm:AudioControlViewModel"
-             Title="Audio Devices"
-
+             Title="Audio Devices">
+    
     <ContentPage.Resources>
         <ResourceDictionary>
             <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
