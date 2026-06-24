@@ -8,7 +8,7 @@
     <AssemblyName>PcBeaconAgent.Service</AssemblyName>
     <RootNamespace>PcBeaconAgent.Service</RootNamespace>
     <UserSecretsId>dotnet-PcBeaconAgent-cfec9708-b427-4f85-9e98-3cf8c1748e58</UserSecretsId>
-    <NoWarn>$(NoWarn);NU1701</NoWarn>
+    <NoWarn>$(NoWarn);NU1701;NETSDK1128;IL2026;IL2104</NoWarn>
 
     <ApplicationIcon>beacon.ico</ApplicationIcon>
 
@@ -23,6 +23,9 @@
 
     <AssemblyVersion Condition="'$(AppVersionName)' == ''">1.0.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(AppVersionName)' != ''">$(AppVersionName).0</AssemblyVersion>
+
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <EnableComHosting>true</EnableComHosting>
   </PropertyGroup>
 
   <Target Name="RemoveIisFiles" AfterTargets="Publish">
@@ -33,6 +36,7 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+	<TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
   </ItemGroup>
 
   <ItemGroup>
