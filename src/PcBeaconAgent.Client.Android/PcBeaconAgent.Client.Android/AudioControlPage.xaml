@@ -6,10 +6,7 @@
              x:Class="PcBeaconAgent.Client.Android.AudioControlPage"
              x:DataType="vm:AudioControlViewModel"
              Title="Audio Devices"
-             BackgroundColor="#121212">
 
-    <!-- FIX: конвертер объявлен локально на странице — урок из бага с PairingPage:
-         StaticResource не резолвится через границы страниц в MAUI Shell. -->
     <ContentPage.Resources>
         <ResourceDictionary>
             <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />

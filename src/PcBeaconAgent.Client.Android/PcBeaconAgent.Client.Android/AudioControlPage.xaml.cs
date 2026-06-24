@@ -13,9 +13,6 @@ public partial class AudioControlPage : ContentPage
         BindingContext = mViewModel = viewModel;
     }
 
-    // FIX: загрузка происходит здесь, а не в конструкторе ViewModel — DeviceIp
-    // проставляется Shell'ом через QueryProperty уже ПОСЛЕ создания экземпляра,
-    // но ДО OnAppearing (тот же паттерн, что чинили для SettingsPage ранее).
     protected override async void OnAppearing()
     {
         base.OnAppearing();
