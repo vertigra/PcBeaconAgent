@@ -2,7 +2,7 @@
 using PcBeaconAgent.Service.Models;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using DefaultDeviceResponse = PcBeaconAgent.Client.Core.Models.DefaultDeviceResponse;
+using DefaultDeviceResponse = PcBeaconAgent.Service.Models.DefaultDeviceResponse;
 
 
 namespace PcBeaconAgent.Service.JsonContext
