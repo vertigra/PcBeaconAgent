@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;

@@ -1,4 +1,5 @@
 ﻿using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.Models;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;

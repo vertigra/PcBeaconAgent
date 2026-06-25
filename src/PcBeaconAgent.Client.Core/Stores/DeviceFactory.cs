@@ -1,5 +1,6 @@
 ﻿using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Client.Core.Services;
 using System.Net.Http;
 

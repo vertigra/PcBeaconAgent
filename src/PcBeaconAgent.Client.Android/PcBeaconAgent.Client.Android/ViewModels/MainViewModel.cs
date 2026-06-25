@@ -8,6 +8,7 @@ using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Messages; 
 using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
 using System.Collections.ObjectModel;

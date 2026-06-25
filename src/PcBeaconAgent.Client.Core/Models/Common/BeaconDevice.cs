@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace PcBeaconAgent.Client.Core.Models
+namespace PcBeaconAgent.Client.Core.Models.Common
 {
 
     /// <summary>
