@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.Interfaces;
 using PcBeaconAgent.Service.JsonContext;
-using PcBeaconAgent.Service.Models;
 using PcBeaconAgent.Service.Services;
 
 namespace PcBeaconAgent.Service.Endpoints
@@ -22,13 +22,13 @@ namespace PcBeaconAgent.Service.Endpoints
         {
             var pairingGroup = app.MapGroup("/api/pair");
 
-            pairingGroup.MapPost("/", ([FromBody] PairRequest request, [FromServices] IPairingService pairing) =>
+            pairingGroup.MapPost("/", ([FromBody] PairRequestDto request, [FromServices] IPairingService pairing) =>
             {
                 if (!pairing.IsPairingActive)
                 {
                     return Results.Json(
-                        new SimpleMessageResponse("Pairing mode is not active. PIN may have expired or already been used."),
-                        ServerJsonContext.Default.SimpleMessageResponse,
+                        new MessageDto("Pairing mode is not active. PIN may have expired or already been used."),
+                        ServerJsonContext.Default.MessageDto,
                         statusCode: StatusCodes.Status403Forbidden);
                 }
 
@@ -37,14 +37,14 @@ namespace PcBeaconAgent.Service.Endpoints
                 if (apiKey is null)
                 {
                     return Results.Json(
-                        new SimpleMessageResponse("Invalid PIN or pairing locked due to too many failed attempts."),
-                        ServerJsonContext.Default.SimpleMessageResponse,
+                        new MessageDto("Invalid PIN or pairing locked due to too many failed attempts."),
+                        ServerJsonContext.Default.MessageDto,
                         statusCode: StatusCodes.Status401Unauthorized);
                 }
 
                 return Results.Json(
-                    new PairResponse(apiKey),
-                    ServerJsonContext.Default.PairResponse,
+                    new PairResponseDto(apiKey),
+                    ServerJsonContext.Default.PairResponseDto,
                     statusCode: StatusCodes.Status200OK);
             });
 
@@ -52,8 +52,8 @@ namespace PcBeaconAgent.Service.Endpoints
             {
                 pairing.RegeneratePin();
                 return Results.Json(
-                    new SimpleMessageResponse("New PIN generated. Check the server console."),
-                    ServerJsonContext.Default.SimpleMessageResponse,
+                    new MessageDto("New PIN generated. Check the server console."),
+                    ServerJsonContext.Default.MessageDto,
                     statusCode: StatusCodes.Status200OK);
             });
 

@@ -29,7 +29,7 @@ namespace PcBeaconAgent.Service.Endpoints
             {
                 try
                 {
-                    return Results.Json(controller.GetDisplays(), ServerJsonContext.Default.ListDisplayDeviceDtos, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(controller.GetDisplays(), ServerJsonContext.Default.ListDisplayDeviceDto, statusCode: StatusCodes.Status200OK);
                 }
                 catch(Exception ex)
                 {
@@ -37,7 +37,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 }
             });
 
-            displayGroup.MapPost("/disable", async ([FromBody] DisableRequest request, [FromServices] DisplayController controller) =>
+            displayGroup.MapPost("/disable", async ([FromBody] DisableRequestDto request, [FromServices] DisplayController controller) =>
             {
                 try
                 {

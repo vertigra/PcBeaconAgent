@@ -16,7 +16,7 @@ namespace PcBeaconAgent.Service.Services
         private bool mIsTopologyOverridden;
         private readonly SemaphoreSlim mDisplayLock = new(1, 1);
 
-        public List<DisplayDeviceDtos> GetDisplays()
+        public List<DisplayDeviceDto> GetDisplays()
         {
             try
             {
@@ -26,7 +26,7 @@ namespace PcBeaconAgent.Service.Services
 
                 return [.. PathDisplayTarget.GetDisplayTargets()
                     .Where(t => t.IsAvailable)
-                    .Select(t => new DisplayDeviceDtos(
+                    .Select(t => new DisplayDeviceDto(
                         Id: t.DevicePath,
                         FriendlyName: t.FriendlyName,
                         IsActive: activeTargets.Contains(t)))];

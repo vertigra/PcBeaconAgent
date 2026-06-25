@@ -6,17 +6,16 @@ using System.Text.Json.Serialization;
 
 namespace PcBeaconAgent.Service.JsonContext
 {
-    [JsonSerializable(typeof(PairRequest))]
-    [JsonSerializable(typeof(PairResponse))]
-    [JsonSerializable(typeof(SimpleMessageResponse))]
+    [JsonSerializable(typeof(PairRequestDto))]
+    [JsonSerializable(typeof(PairResponseDto))]
     [JsonSerializable(typeof(BeaconDevice))]
     [JsonSerializable(typeof(List<AudioDeviceDto>))] 
     [JsonSerializable(typeof(DefaultDeviceDto))]
+    [JsonSerializable(typeof(List<DisplayDeviceDto>))]
+    [JsonSerializable(typeof(DisableRequestDto))]
     [JsonSerializable(typeof(MessageDto))]
-    [JsonSerializable(typeof(List<DisplayDeviceDtos>))]
-    [JsonSerializable(typeof(DisableRequest))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]
-    internal partial class ServerJsonContext : JsonSerializerContext
+    public partial class ServerJsonContext : JsonSerializerContext
     {
     }
 }

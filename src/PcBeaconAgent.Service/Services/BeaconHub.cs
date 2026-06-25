@@ -50,8 +50,7 @@ namespace PcBeaconAgent.Service.Services
         {
             var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
             var activeInterface = networkInterfaces
-                .FirstOrDefault(ni =>
-                    ni.OperationalStatus == OperationalStatus.Up &&
+                .FirstOrDefault(ni => ni.OperationalStatus == OperationalStatus.Up &&
                     (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
                      ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211));
 
@@ -59,8 +58,7 @@ namespace PcBeaconAgent.Service.Services
             {
                 MachineName = Environment.MachineName,
                 ApiPort = mBeaconService.ApiPort,
-                MacAddress = activeInterface?.GetPhysicalAddress().ToString()
-                             ?? "00:00:00:00:00:00",
+                MacAddress = activeInterface?.GetPhysicalAddress().ToString() ?? "00:00:00:00:00:00",
                 InterfaceName = activeInterface?.Name ?? "Unknown",
                 InterfaceType = activeInterface?.NetworkInterfaceType.ToString() ?? "Unknown",
             };
