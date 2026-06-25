@@ -17,7 +17,7 @@ namespace PcBeaconAgent.Service.JsonContext
     [JsonSerializable(typeof(List<DisplayDeviceDtos>))]
     [JsonSerializable(typeof(DisableRequest))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]
-    internal partial class BeaconJsonContext : JsonSerializerContext
+    internal partial class ServerJsonContext : JsonSerializerContext
     {
     }
 }

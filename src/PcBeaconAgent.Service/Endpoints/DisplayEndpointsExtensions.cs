@@ -28,7 +28,7 @@ namespace PcBeaconAgent.Service.Endpoints
             {
                 try
                 {
-                    return Results.Json(controller.GetDisplays(), BeaconJsonContext.Default.ListDisplayDeviceDtos, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(controller.GetDisplays(), ServerJsonContext.Default.ListDisplayDeviceDtos, statusCode: StatusCodes.Status200OK);
                 }
                 catch(Exception ex)
                 {
@@ -41,7 +41,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 try
                 {
                     await controller.DisableAsync(request.Id);
-                    return Results.Json(new MessageResponse("Display disabled"), BeaconJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(new MessageResponse("Display disabled"), ServerJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
                 }
                 catch (Exception ex)
                 {
@@ -54,7 +54,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 try
                 {
                     await controller.RestoreAll();
-                    return Results.Json(new MessageResponse("Displays restored"), BeaconJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(new MessageResponse("Displays restored"), ServerJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
                 }
                 catch(Exception ex)
                 {
