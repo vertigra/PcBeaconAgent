@@ -1,7 +1,7 @@
 ﻿using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Helpres;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -17,13 +17,6 @@ namespace PcBeaconAgent.Client.Core.Services
         private readonly string mIpAddress;
         private readonly IPreferencesService mPrefs;
 
-        // FIX: было ip/port/HttpClient без какой-либо авторизации — ни один вызов
-        // к /api/audio/* не смог бы пройти RequireApiKey-проверку на сервере.
-        // Теперь IPreferencesService читается на каждый запрос отдельно (см.
-        // CreateRequest), а не один раз в конструкторе — это сделано намеренно,
-        // чтобы после повторного паринга (новый PIN → новый ключ) уже созданный
-        // экземпляр сразу подхватывал новое значение, а не продолжал слать старый
-        // ключ из DefaultRequestHeaders до перезапуска приложения.
         public AudioController(string ip, int port, IPreferencesService prefs, HttpClient client)
         {
             mClient = client;
@@ -32,13 +25,13 @@ namespace PcBeaconAgent.Client.Core.Services
             mBaseUrl = UrlHelpers.BuildUrl(ip, port, "audio");
         }
 
-        public async Task<IReadOnlyList<AudioDeviceInfo>> GetDevicesAsync()
+        public async Task<IReadOnlyList<AudioDeviceDto>> GetDevicesAsync()
         {
             using var request = CreateRequest(HttpMethod.Get, $"{mBaseUrl}/devices");
             using var response = await mClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<List<AudioDeviceInfo>>();
+            var result = await response.Content.ReadFromJsonAsync<List<AudioDeviceDto>>();
             return result ?? [];
         }
 
@@ -50,7 +43,7 @@ namespace PcBeaconAgent.Client.Core.Services
             if (!response.IsSuccessStatusCode)
                 return null;
 
-            var dto = await response.Content.ReadFromJsonAsync<DefaultDeviceResponse>();
+            var dto = await response.Content.ReadFromJsonAsync<DefaultDeviceDto>();
             return dto?.Id;
         }
 
@@ -61,9 +54,6 @@ namespace PcBeaconAgent.Client.Core.Services
             response.EnsureSuccessStatusCode();
         }
 
-        // FIX (новый метод): единая точка, где собирается запрос с актуальным
-        // на этот момент ключом. StorageKeys.ApiKeyFor(ip) — тот же индексируемый
-        // per-device ключ, что используется и для SignalR-подключений.
         private HttpRequestMessage CreateRequest(HttpMethod method, string url)
         {
             var request = new HttpRequestMessage(method, url);

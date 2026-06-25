@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Extensions;
 using PcBeaconAgent.Service.JsonContext;
@@ -32,7 +33,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 }
                 catch(Exception ex)
                 {
-                    return Results.BadRequest(new MessageResponse(ex.Message));
+                    return Results.BadRequest(new MessageDto(ex.Message));
                 }
             });
 
@@ -41,11 +42,11 @@ namespace PcBeaconAgent.Service.Endpoints
                 try
                 {
                     await controller.DisableAsync(request.Id);
-                    return Results.Json(new MessageResponse("Display disabled"), ServerJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(new MessageDto("Display disabled"), ServerJsonContext.Default.MessageDto, statusCode: StatusCodes.Status200OK);
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(new MessageResponse(ex.Message));
+                    return Results.BadRequest(new MessageDto(ex.Message));
                 }
             });
 
@@ -54,11 +55,11 @@ namespace PcBeaconAgent.Service.Endpoints
                 try
                 {
                     await controller.RestoreAll();
-                    return Results.Json(new MessageResponse("Displays restored"), ServerJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(new MessageDto("Displays restored"), ServerJsonContext.Default.MessageDto, statusCode: StatusCodes.Status200OK);
                 }
                 catch(Exception ex)
                 {
-                    return Results.BadRequest(new MessageResponse(ex.Message));
+                    return Results.BadRequest(new MessageDto(ex.Message));
                 }
             });
 

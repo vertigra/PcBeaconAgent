@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Extensions;
 using PcBeaconAgent.Service.JsonContext;
-using PcBeaconAgent.Service.Models;
 using System.Linq;
 
 namespace PcBeaconAgent.Service.Endpoints
@@ -38,7 +38,7 @@ namespace PcBeaconAgent.Service.Endpoints
             {
                 var device = controller.DefaultPlaybackDevice;
                 return device != null
-                    ? Results.Json(new DefaultDeviceResponse(device.Id.ToString()), ServerJsonContext.Default.DefaultDeviceResponse, statusCode: StatusCodes.Status200OK)
+                    ? Results.Json(new DefaultDeviceDto(device.Id.ToString()), ServerJsonContext.Default.DefaultDeviceDto, statusCode: StatusCodes.Status200OK)
                     : Results.NotFound();
             });
 
@@ -48,7 +48,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 if (device != null)
                 {
                     device.SetAsDefault();
-                    return Results.Json(new MessageResponse("Default device changed"), ServerJsonContext.Default.MessageResponse, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(new MessageDto("Default device changed"), ServerJsonContext.Default.MessageDto, statusCode: StatusCodes.Status200OK);
                 }
 
                 return Results.NotFound();

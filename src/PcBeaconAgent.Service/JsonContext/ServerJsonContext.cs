@@ -1,9 +1,7 @@
-﻿using PcBeaconAgent.Client.Core.Models;
-using PcBeaconAgent.Client.Core.Models.Common;
+﻿using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.Models;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using DefaultDeviceResponse = PcBeaconAgent.Service.Models.DefaultDeviceResponse;
 
 
 namespace PcBeaconAgent.Service.JsonContext
@@ -13,8 +11,8 @@ namespace PcBeaconAgent.Service.JsonContext
     [JsonSerializable(typeof(SimpleMessageResponse))]
     [JsonSerializable(typeof(BeaconDevice))]
     [JsonSerializable(typeof(List<AudioDeviceDto>))] 
-    [JsonSerializable(typeof(DefaultDeviceResponse))]
-    [JsonSerializable(typeof(MessageResponse))]
+    [JsonSerializable(typeof(DefaultDeviceDto))]
+    [JsonSerializable(typeof(MessageDto))]
     [JsonSerializable(typeof(List<DisplayDeviceDtos>))]
     [JsonSerializable(typeof(DisableRequest))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]

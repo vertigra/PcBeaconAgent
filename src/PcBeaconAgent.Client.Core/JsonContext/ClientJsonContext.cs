@@ -9,7 +9,7 @@ namespace PcBeaconAgent.Client.Core.JsonContext
     [JsonSerializable(typeof(PairRequest))]
     [JsonSerializable(typeof(PairResponse))]
     [JsonSerializable(typeof(List<AudioDeviceInfo>))]
-    [JsonSerializable(typeof(DefaultDeviceResponse))]
+    [JsonSerializable(typeof(DefaultDeviceDto))]
     [JsonSerializable(typeof(List<DisplayDeviceInfo>))]
     [JsonSerializable(typeof(DisableDisplayRequest))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]
