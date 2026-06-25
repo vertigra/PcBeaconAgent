@@ -2,7 +2,7 @@
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models.Common;
 
-namespace PcBeaconAgent.Client.Core.Models
+namespace PcBeaconAgent.Client.Core.Models.Client
 {
     public partial class ManagedDevice(BeaconDevice device, IAudioController audio, IMonitorController monitor) : ObservableObject
     {

@@ -1,5 +1,5 @@
 ﻿using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Client;
 using PcBeaconAgent.Client.Core.Models.Common;
 using System.Collections.ObjectModel;
 using System.Linq;

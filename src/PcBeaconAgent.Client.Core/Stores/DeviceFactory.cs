@@ -1,15 +1,11 @@
 ﻿using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Client;
 using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Client.Core.Services;
 using System.Net.Http;
 
 namespace PcBeaconAgent.Client.Core.Stores
 {
-    // FIX: добавлена зависимость IPreferencesService — пробрасывается в
-    // AudioController для динамического чтения ключа на каждый запрос (см. выше).
-    // DI-контейнер разрешит её автоматически, т.к. IPreferencesService уже
-    // зарегистрирован в MauiProgram.cs — менять регистрацию самого DeviceFactory не нужно.
     public class DeviceFactory(IHttpClientFactory mHttpClientFactory, IPreferencesService mPrefs)
     {
         public ManagedDevice Create(BeaconDevice beacon)
