@@ -13,7 +13,7 @@ namespace PcBeaconAgent.Client.Core.Stores
             return new ManagedDevice(
                 beacon,
                 new AudioController(beacon.IpAddress, beacon.ApiPort, mPrefs, mHttpClientFactory.CreateClient()),
-                new MonitorController(beacon.IpAddress, beacon.ApiPort, mHttpClientFactory.CreateClient())
+                new DisplayController(beacon.IpAddress, beacon.ApiPort, mHttpClientFactory.CreateClient())
             );
         }
     }
