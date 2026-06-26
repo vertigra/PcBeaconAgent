@@ -32,9 +32,6 @@ namespace PcBeaconAgent.Client.Core.Services
             using var response = await mClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
-            // FIX: было ReadFromJsonAsync<List<AudioDeviceInfo>>() — регистрозависимая
-            // десериализация по умолчанию ломалась на camelCase-ответе сервера ("id" не
-            // матчился с "Id"). Теперь — явный JsonTypeInfo из общего контекста.
             var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.ListAudioDeviceDto);
             return result ?? [];
         }

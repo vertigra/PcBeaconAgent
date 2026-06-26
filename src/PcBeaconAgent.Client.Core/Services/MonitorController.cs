@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Services
 {
-    public class MonitorController : IMonitorController
+    public class MonitorController : IDisplayController
     {
         private readonly HttpClient mClient;
         private readonly string mBaseUrl;
