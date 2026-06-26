@@ -35,6 +35,7 @@ namespace PcBeaconAgent.Service
                 builder.Services.AddHostedService<UdpBeaconServer>();
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
+                builder.Services.AddDisplayService();
                 builder.Services.AddPairingService();
                 builder.Services.AddWebApi();
 
@@ -49,6 +50,7 @@ namespace PcBeaconAgent.Service
                 app.MapSignalHubs();
                 app.ConfigureWebApi();
                 app.MapAudioServiceEndpoints(settings);
+                app.MapDisplayServiceEndpoints(settings);
                 app.MapPairingEndpoints();
 
                 await app.RunAsync();

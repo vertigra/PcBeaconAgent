@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 
 namespace PcBeaconAgent.Client.Core.Interfaces;
 

@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Extensions;
 using PcBeaconAgent.Service.JsonContext;
-using PcBeaconAgent.Service.Models;
 using System.Linq;
 
 namespace PcBeaconAgent.Service.Endpoints
@@ -31,14 +31,14 @@ namespace PcBeaconAgent.Service.Endpoints
                                         .Select(d => new AudioDeviceDto(d.Id.ToString(), d.FullName))
                                         .ToList();
 
-                return Results.Json(devices, BeaconJsonContext.Default.ListAudioDeviceDto);
+                return Results.Json(devices, ProjectJsonContext.Default.ListAudioDeviceDto, statusCode: StatusCodes.Status200OK);
             });
 
             audioGroup.MapGet("/default-device", ([FromServices] CoreAudioController controller) =>
             {
                 var device = controller.DefaultPlaybackDevice;
                 return device != null
-                    ? Results.Json(new DefaultDeviceResponse(device.Id.ToString()), BeaconJsonContext.Default.DefaultDeviceResponse)
+                    ? Results.Json(new DefaultDeviceDto(device.Id.ToString()), ProjectJsonContext.Default.DefaultDeviceDto, statusCode: StatusCodes.Status200OK)
                     : Results.NotFound();
             });
 
@@ -48,7 +48,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 if (device != null)
                 {
                     device.SetAsDefault();
-                    return Results.Json(new MessageResponse("Default device changed"), BeaconJsonContext.Default.MessageResponse);
+                    return Results.Json(new MessageDto("Default device changed"), ProjectJsonContext.Default.MessageDto, statusCode: StatusCodes.Status200OK);
                 }
 
                 return Results.NotFound();

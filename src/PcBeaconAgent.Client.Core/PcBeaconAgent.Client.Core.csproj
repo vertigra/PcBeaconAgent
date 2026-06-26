@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>PcBeaconAgent.Client.Core</AssemblyName>
     <RootNamespace>PcBeaconAgent.Client.Core</RootNamespace>
+    <NoWarn>$(NoWarn);IL2026</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

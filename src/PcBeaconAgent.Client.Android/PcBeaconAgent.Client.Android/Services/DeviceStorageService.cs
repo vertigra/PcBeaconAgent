@@ -1,6 +1,6 @@
 ﻿using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using System.Collections.Generic;
 
 namespace PcBeaconAgent.Client.Android.Services
@@ -10,7 +10,6 @@ namespace PcBeaconAgent.Client.Android.Services
         private readonly IPreferencesService mPrefs = prefs;
 
         public void SaveDevices(IEnumerable<BeaconDevice> devices) => mPrefs.Set(StorageKeys.KnownDevices, devices);
-        public IEnumerable<BeaconDevice> LoadDevices()
-            => mPrefs.Get(StorageKeys.KnownDevices, new List<BeaconDevice>()) ?? [];
+        public IEnumerable<BeaconDevice> LoadDevices() => mPrefs.Get(StorageKeys.KnownDevices, new List<BeaconDevice>()) ?? [];
     }
 }

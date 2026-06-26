@@ -2,7 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
-             xmlns:models="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
+             xmlns:modelsCommon="clr-namespace:PcBeaconAgent.Client.Core.Models.Common;assembly=PcBeaconAgent.Client.Core"
+             xmlns:modelsClient="clr-namespace:PcBeaconAgent.Client.Core.Models.Client;assembly=PcBeaconAgent.Client.Core"
              xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
              x:Class="PcBeaconAgent.Client.Android.MainPage"
              x:DataType="vm:MainViewModel"
@@ -27,7 +28,7 @@
 
         <CollectionView Grid.Row="2" ItemsSource="{Binding DiscoveredDevices}">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:BeaconDevice">
+                <DataTemplate x:DataType="modelsCommon:BeaconDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
@@ -49,7 +50,7 @@
 
         <CollectionView Grid.Row="4" ItemsSource="{Binding ManagedDevices}">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:ManagedDevice">
+                <DataTemplate x:DataType="modelsClient:ManagedDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#322F35" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
@@ -66,12 +67,25 @@
                                              Fill="{Binding IsOnline, Converter={StaticResource BoolToColorConverter}}" 
                                              VerticalOptions="Center"/>
 
+
                                     <Label Text="{Binding IsOnline, Converter={StaticResource BoolToTextConverter}}" 
                                            FontSize="10" 
                                            TextColor="#BDBDBD" 
                                            VerticalOptions="Center"/>
 
                                 </HorizontalStackLayout>
+
+                                <Button Text="Audio"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageAudioCommand}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        HeightRequest="40" WidthRequest="110" CornerRadius="8"/>
+
+                                <Button Text="Displays"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageDisplayCommand}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        HeightRequest="40" WidthRequest="110" CornerRadius="8"/>
 
                                 <Button Text="Forget" 
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}" 

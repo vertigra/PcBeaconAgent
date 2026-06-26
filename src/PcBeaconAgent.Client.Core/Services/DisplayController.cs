@@ -1,9 +1,8 @@
 ﻿using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Helpres;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Service.JsonContext;
-using System;
+using PcBeaconAgent.Service.Models;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -11,46 +10,43 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Services
 {
-    public class AudioController : IAudioController
+    public class DisplayController : IDisplayController
     {
         private readonly HttpClient mClient;
         private readonly string mBaseUrl;
         private readonly string mIpAddress;
         private readonly IPreferencesService mPrefs;
 
-        public AudioController(string ip, int port, IPreferencesService prefs, HttpClient client)
+        public DisplayController(string ip, int port, IPreferencesService prefs, HttpClient client)
         {
             mClient = client;
             mIpAddress = ip;
             mPrefs = prefs;
-            mBaseUrl = UrlHelpers.BuildUrl(ip, port, "audio");
+            mBaseUrl = UrlHelpers.BuildUrl(ip, port, "display");
         }
 
-        public async Task<IReadOnlyList<AudioDeviceDto>> GetDevicesAsync()
+        public async Task<IReadOnlyList<DisplayDeviceDto>> GetDisplaysAsync()
         {
-            using var request = CreateRequest(HttpMethod.Get, $"{mBaseUrl}/devices");
+            using var request = CreateRequest(HttpMethod.Get, $"{mBaseUrl}/list");
             using var response = await mClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.ListAudioDeviceDto);
+            var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.ListDisplayDeviceDto);
             return result ?? [];
         }
 
-        public async Task<string?> GetDefaultDeviceIdAsync()
+        public async Task DisableAsync(string id)
         {
-            using var request = CreateRequest(HttpMethod.Get, $"{mBaseUrl}/default-device");
+            using var request = CreateRequest(HttpMethod.Post, $"{mBaseUrl}/disable");            
+            request.Content = JsonContent.Create(new DisableRequestDto(id), ProjectJsonContext.Default.DisableRequestDto);
+
             using var response = await mClient.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            var dto = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.DefaultDeviceDto);
-            return dto?.Id;
+            response.EnsureSuccessStatusCode();
         }
 
-        public async Task SetDefaultAsync(string id)
+        public async Task RestoreAllAsync()
         {
-            using var request = CreateRequest(HttpMethod.Post, $"{mBaseUrl}/set?id={Uri.EscapeDataString(id)}");
+            using var request = CreateRequest(HttpMethod.Post, $"{mBaseUrl}/restore");
             using var response = await mClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
         }

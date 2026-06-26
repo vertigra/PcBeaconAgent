@@ -12,14 +12,14 @@ namespace PcBeaconAgent.Service.Extensions
             services.ConfigureHttpJsonOptions(options =>
             {
                 options.SerializerOptions.TypeInfoResolverChain.Clear();
-                options.SerializerOptions.TypeInfoResolverChain.Add(BeaconJsonContext.Default);
+                options.SerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
             });
 
             services.AddSignalR()
             .AddJsonProtocol(options =>
              {
                  options.PayloadSerializerOptions.TypeInfoResolverChain.Clear();
-                 options.PayloadSerializerOptions.TypeInfoResolverChain.Add(BeaconJsonContext.Default);
+                 options.PayloadSerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
              });
             return services;
         }

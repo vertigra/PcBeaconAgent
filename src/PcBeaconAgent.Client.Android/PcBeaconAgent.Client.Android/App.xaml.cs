@@ -1,15 +1,16 @@
-﻿using Microsoft.Maui;
-using Microsoft.Maui.ApplicationModel; // FIX: добавлено для MainThread
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Maui;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
-using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Models.Client;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Client.Core.Stores;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System;
 
 namespace PcBeaconAgent.Client.Android;
 

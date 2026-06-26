@@ -1,0 +1,3 @@
+<linker>
+  <assembly fullname="AudioSwitcher.AudioApi.CoreAudio" preserve="all" />
+</linker>

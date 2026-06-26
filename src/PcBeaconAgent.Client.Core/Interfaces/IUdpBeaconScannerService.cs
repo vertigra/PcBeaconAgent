@@ -1,4 +1,4 @@
-﻿using PcBeaconAgent.Client.Core.Models;
+﻿using PcBeaconAgent.Client.Core.Models.Common;
 using System;
 using System.Threading.Tasks;
 

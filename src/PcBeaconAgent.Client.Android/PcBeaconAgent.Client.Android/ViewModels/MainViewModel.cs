@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging; 
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Messages; 
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Messages;
+using PcBeaconAgent.Client.Core.Models.Client;
+using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
 using System.Collections.ObjectModel;
@@ -79,6 +80,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
         target.MacAddress = source.MacAddress;
         target.InterfaceType = source.InterfaceType;
         target.InterfaceName = source.InterfaceName;
+    }
+
+    [RelayCommand]
+    public async Task ManageAudio(ManagedDevice device)
+    {
+        await Shell.Current.GoToAsync($"{nameof(AudioControlPage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
+    public async Task ManageDisplay(ManagedDevice device)
+    {
+        await Shell.Current.GoToAsync($"{nameof(DisplayControlPage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]
