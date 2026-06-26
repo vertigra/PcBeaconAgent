@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Service.JsonContext;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -126,6 +128,15 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             .WithUrl(hubUrl, options =>
             {
                 options.Headers["X-Api-Key"] = apiKey;
+            })
+            // FIX: без этого клиентский HubConnection использует дефолтный, reflection-based
+            // JSON-протокол SignalR — при trimming сборки Android-клиента десериализация
+            // BeaconDevice через InvokeAsync<BeaconDevice>("GetDeviceDetails") рисковала
+            // упасть с тем же NotSupportedException, что лечили на сервере.
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.TypeInfoResolverChain.Clear();
+                options.PayloadSerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
             })
             .WithAutomaticReconnect()
             .Build();

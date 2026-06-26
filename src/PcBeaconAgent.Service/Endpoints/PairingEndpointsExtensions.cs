@@ -28,7 +28,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 {
                     return Results.Json(
                         new MessageDto("Pairing mode is not active. PIN may have expired or already been used."),
-                        ServerJsonContext.Default.MessageDto,
+                        ProjectJsonContext.Default.MessageDto,
                         statusCode: StatusCodes.Status403Forbidden);
                 }
 
@@ -38,13 +38,13 @@ namespace PcBeaconAgent.Service.Endpoints
                 {
                     return Results.Json(
                         new MessageDto("Invalid PIN or pairing locked due to too many failed attempts."),
-                        ServerJsonContext.Default.MessageDto,
+                        ProjectJsonContext.Default.MessageDto,
                         statusCode: StatusCodes.Status401Unauthorized);
                 }
 
                 return Results.Json(
                     new PairResponseDto(apiKey),
-                    ServerJsonContext.Default.PairResponseDto,
+                    ProjectJsonContext.Default.PairResponseDto,
                     statusCode: StatusCodes.Status200OK);
             });
 
@@ -53,7 +53,7 @@ namespace PcBeaconAgent.Service.Endpoints
                 pairing.RegeneratePin();
                 return Results.Json(
                     new MessageDto("New PIN generated. Check the server console."),
-                    ServerJsonContext.Default.MessageDto,
+                    ProjectJsonContext.Default.MessageDto,
                     statusCode: StatusCodes.Status200OK);
             });
 

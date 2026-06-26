@@ -15,7 +15,7 @@ namespace PcBeaconAgent.Service.JsonContext
     [JsonSerializable(typeof(DisableRequestDto))]
     [JsonSerializable(typeof(MessageDto))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]
-    public partial class ServerJsonContext : JsonSerializerContext
+    public partial class ProjectJsonContext : JsonSerializerContext
     {
     }
 }

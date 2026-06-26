@@ -63,11 +63,11 @@ public partial class PairingViewModel : ObservableObject
         {
             HttpClient client = mHttpFactory.CreateClient();
             string url = $"http://{ServerIp}:{ServerPort}/api/pair";
-            HttpResponseMessage response = await client.PostAsJsonAsync(url, new PairRequestDto(Pin), ServerJsonContext.Default.PairRequestDto);
+            HttpResponseMessage response = await client.PostAsJsonAsync(url, new PairRequestDto(Pin), ProjectJsonContext.Default.PairRequestDto);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync(ServerJsonContext.Default.PairResponseDto);
+                var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.PairResponseDto);
 
                 if (result?.ApiKey is { Length: > 0 } key)
                 {
