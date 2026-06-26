@@ -29,7 +29,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<DeviceFactory>();
         builder.Services.AddSingleton<DeviceStore>();
 
-        builder.Services.AddSingleton<IUdpBeaconScannerService, UdpBeaconScannerService>();
+        builder.Services.AddSingleton<IBeaconClient, BeaconClient>();
         builder.Services.AddSingleton<ISignalService, SignalService>();
 
         builder.Services.AddSingleton<App>();

@@ -10,14 +10,14 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class UdpBeaconScannerService : IUdpBeaconScannerService
+public class BeaconClient : IBeaconClient
 {
     public event Action<DiscoveredBeacon>? OnBeaconFound;
 
     private readonly int mDiscoveryPort;
-    private readonly ILogger<UdpBeaconScannerService> mLogger;
+    private readonly ILogger<BeaconClient> mLogger;
 
-    public UdpBeaconScannerService(IPreferencesService preferences, ILogger<UdpBeaconScannerService> logger)
+    public BeaconClient(IPreferencesService preferences, ILogger<BeaconClient> logger)
     {
         mDiscoveryPort = preferences.Get(StorageKeys.DiscoveryPort, 8888);
         mLogger = logger;

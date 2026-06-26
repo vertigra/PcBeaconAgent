@@ -20,7 +20,7 @@ namespace PcBeaconAgent.Client.Android.ViewModels;
 
 public partial class MainViewModel : ObservableObject, IDisposable
 {
-    private readonly IUdpBeaconScannerService mScanner;
+    private readonly IBeaconClient mScanner;
     private readonly ISignalService mSignalService;
     private readonly ILogger<MainViewModel> mLogger;
     private readonly DeviceStore mDeviceStore;
@@ -33,7 +33,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public MainViewModel(
         DeviceStore store,
-        IUdpBeaconScannerService scanner,
+        IBeaconClient scanner,
         ISignalService signalService,
         ILogger<MainViewModel> logger)
     {

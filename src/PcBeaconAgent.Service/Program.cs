@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
+using PcBeaconAgent.Service.BackgroundServices;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Endpoints;
 using PcBeaconAgent.Service.Extensions;
@@ -32,7 +33,7 @@ namespace PcBeaconAgent.Service
                 });
 
                 builder.Services.AddSingleton<IBeaconAnnouncementService, BeaconAnnouncementService>();
-                builder.Services.AddHostedService<UdpBeaconServer>();
+                builder.Services.AddHostedService<BeaconServer>();
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
                 builder.Services.AddDisplayService();
