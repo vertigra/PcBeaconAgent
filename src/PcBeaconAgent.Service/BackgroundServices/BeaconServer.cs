@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Service.Configuration;
+﻿using Microsoft.Extensions.Logging;
+using PcBeaconAgent.Client.Core.Configuration;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -9,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Service.BackgroundServices
 {
-    public class BeaconServer : BackgroundService
+    public class BeaconServer : IBeaconServer 
     {
-        private readonly AppSettings mSettings;
+        private readonly BeaconServerOptions mBeaconServerOptions;
+        private readonly WebApiOptions mWebApiOptions;
         private readonly ILogger<BeaconServer> mLogger;
 
         public event Action<IPEndPoint, int>? OnResponseSent;
@@ -19,17 +19,18 @@ namespace PcBeaconAgent.Service.BackgroundServices
         private const byte ping = 0x01;
         private const byte pong = 0x02;
 
-        public BeaconServer(AppSettings settings, ILogger<BeaconServer> logger)
+        public BeaconServer(BeaconServerOptions beaconServerOptions, WebApiOptions webApiOptions, ILogger<BeaconServer> logger)
         {
-            mSettings = settings;
+            mBeaconServerOptions = beaconServerOptions;
+            mWebApiOptions = webApiOptions;
             mLogger = logger;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public async Task StartAsync(CancellationToken stoppingToken)
         {
             using var udpServer = new UdpClient();
             udpServer.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            udpServer.Client.Bind(new IPEndPoint(IPAddress.Any, mSettings.Server.DiscoveryPort));
+            udpServer.Client.Bind(new IPEndPoint(IPAddress.Parse(mBeaconServerOptions.BindingIp), mBeaconServerOptions.DiscoveryPort));
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -39,15 +40,14 @@ namespace PcBeaconAgent.Service.BackgroundServices
 
                     if (result.Buffer.Length > 0 && result.Buffer[0] == ping)
                     {
-                        byte[] portBytes = BitConverter.GetBytes((ushort)mSettings.Server.ApiPort);
+                        byte[] portBytes = BitConverter.GetBytes((ushort)mWebApiOptions.ApiPort);
                         byte[] response = [pong, portBytes[0], portBytes[1]];
 
                         await udpServer.SendAsync(response, response.Length, result.RemoteEndPoint);
 
-                        mLogger.LogInformation("Sent API port {Port} to {EndPoint}",
-                            mSettings.Server.ApiPort, result.RemoteEndPoint);
+                        mLogger.LogInformation("Sent API port {Port} to {EndPoint}", mWebApiOptions.ApiPort, result.RemoteEndPoint);
 
-                        OnResponseSent?.Invoke(result.RemoteEndPoint, mSettings.Server.ApiPort);
+                        OnResponseSent?.Invoke(result.RemoteEndPoint, mWebApiOptions.ApiPort);
                     }
                 }
                 catch (OperationCanceledException)

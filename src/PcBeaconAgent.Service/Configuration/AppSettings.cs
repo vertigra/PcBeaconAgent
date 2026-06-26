@@ -1,4 +1,6 @@
-﻿namespace PcBeaconAgent.Service.Configuration
+﻿using PcBeaconAgent.Client.Core.Configuration;
+
+namespace PcBeaconAgent.Service.Configuration
 {
     public class AppSettings
     {
@@ -8,9 +10,24 @@
 
     public class ServerSettings
     {
+        /// <summary>
+        /// beacon server settings
+        /// </summary>
         public string Host { get; set; } = "0.0.0.0";
-        public int ApiPort { get; set; } = 5000;
+
+        /// <summary>
+        /// beacon server settings
+        /// </summary>
         public int DiscoveryPort { get; set; } = 8888;
+
+        /// <summary>
+        /// WebApi settings
+        /// </summary>
+        public int ApiPort { get; set; } = 5000;
+
+        /// <summary>
+        /// WebApi settings
+        /// </summary>
         public string ApiKey { get; set; } = string.Empty;
     }
 

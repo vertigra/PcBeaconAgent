@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
+using PcBeaconAgent.Client.Core.Configuration;
 using PcBeaconAgent.Service.BackgroundServices;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Endpoints;
@@ -21,8 +22,16 @@ namespace PcBeaconAgent.Service
         {
             try
             {
+                
                 var builder = WebApplication.CreateSlimBuilder(args);
                 AppSettings settings = builder.AddApplicationConfiguration(args);
+
+                var beaconOptions = new BeaconServerOptions(settings.Server.Host, settings.Server.DiscoveryPort);
+                var apiOptions = new WebApiOptions(settings.Server.ApiPort, settings.Server.ApiKey);
+
+                builder.Services.AddSingleton(beaconOptions);
+                builder.Services.AddSingleton(apiOptions);
+
                 ShowSecurityWarning(settings);
 
                 builder.WebHost.UseUrls($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
@@ -32,8 +41,11 @@ namespace PcBeaconAgent.Service
                     options.ServiceName = "PcBeaconAgent";
                 });
 
+                builder.Services.AddSingleton<IBeaconServer, BeaconServer>();
+                builder.Services.AddHostedService<BeaconBackgroundService>();
+
                 builder.Services.AddSingleton<IBeaconAnnouncementService, BeaconAnnouncementService>();
-                builder.Services.AddHostedService<BeaconServer>();
+               
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
                 builder.Services.AddDisplayService();
