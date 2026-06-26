@@ -6,6 +6,8 @@ using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Messages;
+using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Service.JsonContext;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -13,11 +15,6 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Android.ViewModels;
 
-/// <summary>
-/// Handles PIN-based pairing with a discovered server.
-/// Receives the server IP and port via Shell query parameters,
-/// submits the PIN to POST /api/pair, and stores the returned ApiKey.
-/// </summary>
 [QueryProperty(nameof(ServerIp), "ip")]
 [QueryProperty(nameof(ServerPort), "port")]
 public partial class PairingViewModel : ObservableObject
@@ -34,9 +31,6 @@ public partial class PairingViewModel : ObservableObject
     [ObservableProperty]
     public partial string Pin { get; set; } = string.Empty;
 
-    // FIX: добавлен [NotifyPropertyChangedFor(nameof(HasError))] — при изменении
-    // ErrorMessage автоматически уведомляется и HasError, на который теперь
-    // подписан IsVisible в XAML вместо невалидного x:Static-конвертера.
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasError))]
     public partial string ErrorMessage { get; set; } = string.Empty;
@@ -67,26 +61,16 @@ public partial class PairingViewModel : ObservableObject
 
         try
         {
-            var client = mHttpFactory.CreateClient();
-            var url = $"http://{ServerIp}:{ServerPort}/api/pair";
-
-            var response = await client.PostAsJsonAsync(url, new { Pin });
+            HttpClient client = mHttpFactory.CreateClient();
+            string url = $"http://{ServerIp}:{ServerPort}/api/pair";
+            HttpResponseMessage response = await client.PostAsJsonAsync(url, new PairRequestDto(Pin), ServerJsonContext.Default.PairRequestDto);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<PairResponse>();
+                var result = await response.Content.ReadFromJsonAsync(ServerJsonContext.Default.PairResponseDto);
 
                 if (result?.ApiKey is { Length: > 0 } key)
                 {
-                    // FIX: было mPrefs.Set(...) — fire-and-forget запись. Send() ниже синхронно
-                    // вызывает обработчик в MainViewModel, который сразу пытается читать этот
-                    // же ключ через Remember() — реальная запись в SecureStorage к этому
-                    // моменту почти никогда не успевала завершиться, авто-ретрай получал
-                    // NotPairedException и тихо уходил на PairingPage. Устройство оставалось
-                    // висеть в DiscoveredDevices до следующего ручного нажатия Remember, когда
-                    // запись уже успевала закончиться. Теперь запись дожидается явно, и только
-                    // после этого отправляется уведомление — гонка устранена детерминированно,
-                    // а не "обычно успевает".
                     await mPrefs.SetSecureAsync(StorageKeys.ApiKeyFor(ServerIp), key);
 
                     WeakReferenceMessenger.Default.Send(new PairingSucceededMessage(ServerIp));
@@ -151,6 +135,4 @@ public partial class PairingViewModel : ObservableObject
             IsBusy = false;
         }
     }
-
-    private sealed record PairResponse(string ApiKey);
 }
