@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
+using PcBeaconAgent.Client.Android.Pages;
 
 namespace PcBeaconAgent.Client.Android
 {

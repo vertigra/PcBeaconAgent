@@ -3,18 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
              xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
-             x:Class="PcBeaconAgent.Client.Android.DisplayControlPage"
-             x:DataType="vm:DisplayControlViewModel"
-             Title="Displays"
-             BackgroundColor="#121212">
-
+             x:Class="PcBeaconAgent.Client.Android.Pages.AudioControlPage"
+             x:DataType="vm:AudioControlViewModel"
+             Title="Audio Devices">
+    
     <ContentPage.Resources>
         <ResourceDictionary>
             <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, Auto, Auto, *" Padding="20" RowSpacing="12">
+    <Grid RowDefinitions="Auto, Auto, *" Padding="20" RowSpacing="12">
 
         <Label Grid.Row="0" FontSize="16" FontAttributes="Bold" TextColor="White">
             <Label.FormattedText>
@@ -32,48 +31,40 @@
                 BackgroundColor="#6750A4" TextColor="White"
                 CornerRadius="10" HeightRequest="44"/>
 
-        <Button Grid.Row="2"
-                Text="Restore All"
-                Command="{Binding RestoreAllCommand}"
-                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                BackgroundColor="#4CAF50" TextColor="White"
-                CornerRadius="10" HeightRequest="44"/>
-
-        <Label Grid.Row="3"
+        <Label Grid.Row="2"
                Text="{Binding ErrorMessage}"
                TextColor="#F44336" FontSize="13"
-               HorizontalOptions="Center" VerticalOptions="Start"
+               HorizontalOptions="Center"
+               VerticalOptions="Start"
                IsVisible="{Binding HasError}"/>
 
-        <CollectionView Grid.Row="3"
-                        ItemsSource="{Binding Displays}"
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Devices}"
                         IsVisible="{Binding HasError, Converter={StaticResource InvertedBoolConverter}}">
             <CollectionView.EmptyView>
-                <Label Text="No displays found."
+                <Label Text="No audio devices found."
                        TextColor="#757575" HorizontalOptions="Center" Margin="0,20"/>
             </CollectionView.EmptyView>
 
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="vm:DisplayDeviceItem">
+                <DataTemplate x:DataType="vm:AudioDeviceItem">
                     <Border StrokeShape="RoundRectangle 12"
                             BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                <Label Text="{Binding FriendlyName}" FontSize="15" TextColor="White"/>
-                                <Label Text="Active" FontSize="11" TextColor="#4CAF50"
-                                       IsVisible="{Binding IsActive}"/>
-                                <Label Text="Disabled" FontSize="11" TextColor="#757575"
-                                       IsVisible="{Binding IsActive, Converter={StaticResource InvertedBoolConverter}}"/>
+                                <Label Text="{Binding FullName}" FontSize="15" TextColor="White"/>
+                                <Label Text="Default device" FontSize="11" TextColor="#4CAF50"
+                                       IsVisible="{Binding IsDefault}"/>
                             </VerticalStackLayout>
 
                             <Button Grid.Column="1"
-                                    Text="Disable"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DisplayControlViewModel}}, Path=DisableCommand}"
+                                    Text="Set Default"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AudioControlViewModel}}, Path=SetDefaultCommand}"
                                     CommandParameter="{Binding .}"
-                                    IsVisible="{Binding IsActive}"
-                                    BackgroundColor="#B3261E" TextColor="White"
+                                    IsEnabled="{Binding IsDefault, Converter={StaticResource InvertedBoolConverter}}"
+                                    BackgroundColor="#6750A4" TextColor="White"
                                     FontSize="12" CornerRadius="8"
-                                    WidthRequest="100" HeightRequest="38"/>
+                                    WidthRequest="110" HeightRequest="38"/>
                         </Grid>
                     </Border>
                 </DataTemplate>

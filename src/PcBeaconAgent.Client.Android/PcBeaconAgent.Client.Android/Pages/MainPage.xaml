@@ -5,7 +5,7 @@
              xmlns:modelsCommon="clr-namespace:PcBeaconAgent.Client.Core.Models.Common;assembly=PcBeaconAgent.Client.Core"
              xmlns:modelsClient="clr-namespace:PcBeaconAgent.Client.Core.Models.Client;assembly=PcBeaconAgent.Client.Core"
              xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
-             x:Class="PcBeaconAgent.Client.Android.MainPage"
+             x:Class="PcBeaconAgent.Client.Android.Pages.MainPage"
              x:DataType="vm:MainViewModel"
              BackgroundColor="#121212">
 

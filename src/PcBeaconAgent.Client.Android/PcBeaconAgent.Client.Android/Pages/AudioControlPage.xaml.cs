@@ -1,13 +1,13 @@
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Android.ViewModels;
 
-namespace PcBeaconAgent.Client.Android;
+namespace PcBeaconAgent.Client.Android.Pages;
 
-public partial class DisplayControlPage : ContentPage
+public partial class AudioControlPage : ContentPage
 {
-    private readonly DisplayControlViewModel mViewModel;
+    private readonly AudioControlViewModel mViewModel;
 
-    public DisplayControlPage(DisplayControlViewModel viewModel)
+    public AudioControlPage(AudioControlViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = mViewModel = viewModel;

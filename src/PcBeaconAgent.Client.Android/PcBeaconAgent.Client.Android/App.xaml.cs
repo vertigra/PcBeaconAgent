@@ -2,6 +2,7 @@
 using Microsoft.Maui;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using PcBeaconAgent.Client.Android.Pages;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models.Client;
@@ -77,8 +78,7 @@ public partial class App : Application
         if (firstNotPairedDevice != null)
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
-                Shell.Current.GoToAsync(
-                    $"{nameof(PairingPage)}?ip={firstNotPairedDevice.IpAddress}&port={firstNotPairedDevice.ApiPort}"));
+                Shell.Current.GoToAsync($"{nameof(PairingPage)}?ip={firstNotPairedDevice.IpAddress}&port={firstNotPairedDevice.ApiPort}"));
         }
     }
 

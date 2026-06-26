@@ -43,22 +43,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="SettingsPage.xaml.cs">
+    <Compile Update="Pages\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <MauiXaml Update="AudioControlPage.xaml">
+    <MauiXaml Update="Pages\AudioControlPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="DisplayControlPage.xaml">
+    <MauiXaml Update="Pages\DisplayControlPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="PairingPage.xaml">
+    <MauiXaml Update="Pages\PairingPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="SettingsPage.xaml">
+    <MauiXaml Update="Pages\SettingsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
   </ItemGroup>
