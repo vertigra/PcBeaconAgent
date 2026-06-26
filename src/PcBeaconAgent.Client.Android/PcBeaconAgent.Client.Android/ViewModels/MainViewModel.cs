@@ -1,13 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging; 
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Messages; 
-using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Client.Core.Messages;
+using PcBeaconAgent.Client.Core.Models.Client;
 using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
@@ -85,11 +85,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task ManageAudio(ManagedDevice device)
     {
-        // FIX (новая команда): передаём только IP — AudioControlViewModel сам найдёт
-        // нужный ManagedDevice в DeviceStore и возьмёт уже готовый, привязанный к этому
-        // устройству IAudioController, вместо создания второго параллельного экземпляра.
-        await Shell.Current.GoToAsync(
-            $"{nameof(AudioControlPage)}?ip={device.Device.IpAddress}");
+        await Shell.Current.GoToAsync($"{nameof(AudioControlPage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
+    public async Task ManageDisplay(ManagedDevice device)
+    {
+        await Shell.Current.GoToAsync($"{nameof(DisplayControlPage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]

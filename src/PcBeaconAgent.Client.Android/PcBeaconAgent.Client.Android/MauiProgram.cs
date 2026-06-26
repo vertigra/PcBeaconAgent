@@ -45,6 +45,9 @@ public static class MauiProgram
         builder.Services.AddTransient<AudioControlPage>();
         builder.Services.AddTransient<AudioControlViewModel>();
 
+        builder.Services.AddTransient<DisplayControlPage>();     
+        builder.Services.AddTransient<DisplayControlViewModel>(); 
+
         return builder.Build();
     }
 }

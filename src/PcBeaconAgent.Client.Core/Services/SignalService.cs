@@ -129,10 +129,6 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             {
                 options.Headers["X-Api-Key"] = apiKey;
             })
-            // FIX: без этого клиентский HubConnection использует дефолтный, reflection-based
-            // JSON-протокол SignalR — при trimming сборки Android-клиента десериализация
-            // BeaconDevice через InvokeAsync<BeaconDevice>("GetDeviceDetails") рисковала
-            // упасть с тем же NotSupportedException, что лечили на сервере.
             .AddJsonProtocol(options =>
             {
                 options.PayloadSerializerOptions.TypeInfoResolverChain.Clear();

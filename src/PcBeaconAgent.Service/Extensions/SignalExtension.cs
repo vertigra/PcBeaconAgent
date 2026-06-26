@@ -9,18 +9,18 @@ namespace PcBeaconAgent.Service.Extensions
     {
         public static IServiceCollection AddSignal(this IServiceCollection services)
         {
-            services.ConfigureHttpJsonOptions((System.Action<Microsoft.AspNetCore.Http.Json.JsonOptions>)(options =>
+            services.ConfigureHttpJsonOptions(options =>
             {
                 options.SerializerOptions.TypeInfoResolverChain.Clear();
-                options.SerializerOptions.TypeInfoResolverChain.Add((System.Text.Json.Serialization.Metadata.IJsonTypeInfoResolver)ProjectJsonContext.Default);
-            }));
+                options.SerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
+            });
 
             services.AddSignalR()
-            .AddJsonProtocol((System.Action<Microsoft.AspNetCore.SignalR.JsonHubProtocolOptions>)(options =>
+            .AddJsonProtocol(options =>
              {
                  options.PayloadSerializerOptions.TypeInfoResolverChain.Clear();
-                 options.PayloadSerializerOptions.TypeInfoResolverChain.Add((System.Text.Json.Serialization.Metadata.IJsonTypeInfoResolver)ProjectJsonContext.Default);
-             }));
+                 options.PayloadSerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
+             });
             return services;
         }
 

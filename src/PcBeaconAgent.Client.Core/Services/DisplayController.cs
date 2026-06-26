@@ -22,7 +22,7 @@ namespace PcBeaconAgent.Client.Core.Services
             mClient = client;
             mIpAddress = ip;
             mPrefs = prefs;
-            mBaseUrl = UrlHelpers.BuildUrl(ip, port, "monitor");
+            mBaseUrl = UrlHelpers.BuildUrl(ip, port, "display");
         }
 
         public async Task<IReadOnlyList<DisplayDeviceDto>> GetDisplaysAsync()
