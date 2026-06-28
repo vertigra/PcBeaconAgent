@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Services
 {
-    public class BeaconServer : IBeaconServer 
+    public class BeaconServer : IBeaconServer
     {
         private readonly BeaconServerOptions mBeaconServerOptions;
         private readonly WebApiOptions mWebApiOptions;
@@ -46,20 +46,46 @@ namespace PcBeaconAgent.Client.Core.Services
 
                         await udpServer.SendAsync(response, response.Length, result.RemoteEndPoint);
 
-                        mLogger.LogInformation("Sent API port {Port} to {EndPoint}", mWebApiOptions.ApiPort, result.RemoteEndPoint);
+                        LogPortSent(mWebApiOptions.ApiPort, result.RemoteEndPoint);
 
                         OnResponseSent?.Invoke(result.RemoteEndPoint, mWebApiOptions.ApiPort);
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    mLogger.LogInformation("UDP Beacon Server is shutting down...");
+                    LogShuttingDown();
                 }
                 catch (Exception ex)
                 {
-                    mLogger.LogError(ex, "An error occurred while listening for UDP broadcasts");
+                    LogListenError(ex);
                 }
             }
         }
+
+        #region Structured logging definitions (allocation-free)
+
+        private static readonly Action<ILogger, int, IPEndPoint, Exception?> LogPortSentAction =
+            LoggerMessage.Define<int, IPEndPoint>(
+                LogLevel.Information,
+                new EventId(40, "PortSent"),
+                "Sent API port {Port} to {EndPoint}");
+
+        private static readonly Action<ILogger, Exception?> LogShuttingDownAction =
+            LoggerMessage.Define(
+                LogLevel.Information,
+                new EventId(41, "ShuttingDown"),
+                "UDP Beacon Server is shutting down...");
+
+        private static readonly Action<ILogger, Exception?> LogListenErrorAction =
+            LoggerMessage.Define(
+                LogLevel.Error,
+                new EventId(42, "ListenError"),
+                "An error occurred while listening for UDP broadcasts");
+
+        private void LogPortSent(int port, IPEndPoint endPoint) => LogPortSentAction(mLogger, port, endPoint, null);
+        private void LogShuttingDown() => LogShuttingDownAction(mLogger, null);
+        private void LogListenError(Exception ex) => LogListenErrorAction(mLogger, ex);
+
+        #endregion
     }
 }
