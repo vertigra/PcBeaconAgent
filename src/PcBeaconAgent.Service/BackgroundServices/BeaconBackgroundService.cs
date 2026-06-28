@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
+using PcBeaconAgent.Client.Core.Interfaces;
 using System.Threading;
 using System.Threading.Tasks;
 

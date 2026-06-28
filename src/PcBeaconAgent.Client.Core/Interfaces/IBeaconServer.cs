@@ -3,7 +3,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Service.BackgroundServices
+namespace PcBeaconAgent.Client.Core.Interfaces
 {
     public interface IBeaconServer
     {

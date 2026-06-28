@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Configuration;
+using PcBeaconAgent.Client.Core.Interfaces;
 using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Service.BackgroundServices
+namespace PcBeaconAgent.Client.Core.Services
 {
     public class BeaconServer : IBeaconServer 
     {
