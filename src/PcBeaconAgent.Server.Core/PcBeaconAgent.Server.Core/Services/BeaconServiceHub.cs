@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
-    public class BeaconHub(IBeaconServerIdentity mIdentity, ILogger<BeaconHub> mLogger) : Hub
+    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger) : Hub
     {
         public override async Task OnConnectedAsync()
         {

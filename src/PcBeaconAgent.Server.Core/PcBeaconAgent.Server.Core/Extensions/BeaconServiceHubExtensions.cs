@@ -5,7 +5,7 @@ using PcBeaconAgent.Server.Core.Services;
 
 namespace PcBeaconAgent.Server.Core.Extensions
 {
-    public static class SignalExtensions
+    public static class BeaconServiceHubExtensions
     {
         public static IServiceCollection AddSignal(this IServiceCollection services)
         {
@@ -25,7 +25,7 @@ namespace PcBeaconAgent.Server.Core.Extensions
 
         public static WebApplication MapSignalHubs(this WebApplication application)
         {
-            application.MapHub<BeaconHub>("/hubs/beacon");
+            application.MapHub<BeaconServiceHub>("/hubs/beacon");
             return application;
         }
     }
