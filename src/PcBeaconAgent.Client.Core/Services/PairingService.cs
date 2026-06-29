@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Service.Interfaces;
 using System;
 
-namespace PcBeaconAgent.Service.Services
+namespace PcBeaconAgent.Client.Core.Services
 {
-    public class PairingService : IPairingService
+    internal class PairingService : IPairingService
     {
         private readonly IBeaconServerIdentity mIdentity;
         private readonly ILogger<PairingService> mLogger;
@@ -23,10 +22,7 @@ namespace PcBeaconAgent.Service.Services
         // long enough for the user to read it from the console.
         private static readonly TimeSpan PinLifetime = TimeSpan.FromMinutes(5);
 
-        public bool IsPairingActive =>
-            !mPinUsed &&
-            mFailedAttempts < MaxFailedAttempts &&
-            DateTime.UtcNow < mPinExpiry;
+        public bool IsPairingActive => !mPinUsed && mFailedAttempts < MaxFailedAttempts && DateTime.UtcNow < mPinExpiry;
 
         public PairingService(IBeaconServerIdentity identity, ILogger<PairingService> logger)
         {

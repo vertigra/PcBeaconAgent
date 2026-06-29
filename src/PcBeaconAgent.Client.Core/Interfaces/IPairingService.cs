@@ -1,4 +1,4 @@
-﻿namespace PcBeaconAgent.Service.Interfaces
+﻿namespace PcBeaconAgent.Client.Core.Interfaces
 {
     /// <summary>
     /// Manages a single-use, time-limited PIN for initial client pairing.

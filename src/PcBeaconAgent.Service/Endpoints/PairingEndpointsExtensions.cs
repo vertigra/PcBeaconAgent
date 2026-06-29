@@ -2,22 +2,14 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models.Common;
-using PcBeaconAgent.Service.Interfaces;
 using PcBeaconAgent.Service.JsonContext;
-using PcBeaconAgent.Service.Services;
 
 namespace PcBeaconAgent.Service.Endpoints
 {
     public static class PairingEndpointsExtensions
     {
-        public static IServiceCollection AddPairingService(this IServiceCollection services)
-        {
-            services.AddSingleton<IPairingService, PairingService>();
-            return services;
-        }
-
         public static IEndpointRouteBuilder MapPairingEndpoints(this IEndpointRouteBuilder app)
         {
             var pairingGroup = app.MapGroup("/api/pair");

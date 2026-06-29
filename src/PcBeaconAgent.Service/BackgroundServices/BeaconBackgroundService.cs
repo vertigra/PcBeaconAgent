@@ -9,7 +9,7 @@ namespace PcBeaconAgent.Service.BackgroundServices
     {
         private readonly IBeaconServer mServer;
 
-        internal BeaconBackgroundService(IBeaconServer server) => mServer = server;
+        public BeaconBackgroundService(IBeaconServer server) => mServer = server;
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken) => mServer.StartAsync(stoppingToken);
     }

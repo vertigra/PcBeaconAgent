@@ -156,6 +156,8 @@ Consequences:
   separate server-only assembly, raise the question in a PR first — the
   default answer is "stay in Core."
 
+* DI-activated constructors must be public. Microsoft.Extensions.DependencyInjectionresolves constructors via reflection with public binding flags. A classmarked internal can still have a public constructor — the type staysinvisible outside its assembly, but the DI container can instantiate it.Marking the constructor itself internal (or any non-public modifier)makes the service unresolvable and crashes the host at startup with"A suitable constructor could not be located". This is the rule, not arecommendation: if a class is registered in DI through AddSingleton,AddScoped, AddTransient, or AddHostedService, its constructorMUST be public.
+
 ## 4. Async and cancellation
 
 - All async methods return `Task` or `Task<T>`. Avoid `async void` except

@@ -13,7 +13,7 @@ namespace PcBeaconAgent.Client.Core.Services
         public string ApiKey { get; }
         public int ApiPort { get; }
 
-        internal BeaconServerIdentity(WebApiOptions webApiOptions, ILogger<BeaconServerIdentity> logger)
+        public BeaconServerIdentity(WebApiOptions webApiOptions, ILogger<BeaconServerIdentity> logger)
         {
             mLogger = logger;
             ApiPort = webApiOptions.ApiPort;

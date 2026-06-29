@@ -20,7 +20,7 @@ namespace PcBeaconAgent.Client.Core.Services
         private const byte ping = 0x01;
         private const byte pong = 0x02;
 
-        internal BeaconServer(BeaconServerOptions beaconServerOptions, WebApiOptions webApiOptions, ILogger<BeaconServer> logger)
+        public BeaconServer(BeaconServerOptions beaconServerOptions, WebApiOptions webApiOptions, ILogger<BeaconServer> logger)
         {
             mBeaconServerOptions = beaconServerOptions;
             mWebApiOptions = webApiOptions;
