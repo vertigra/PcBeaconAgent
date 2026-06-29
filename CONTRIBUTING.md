@@ -1,6 +1,7 @@
 # Contributing Guidelines
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. This helps us generate automated changelogs and maintain a clean project history.
+For coding conventions (naming, logging, DI, async, JSON), see the **[Coding Guidelines](docs/coding-guidelines.md)**.
 
 ## Commit Message Format
 

@@ -115,3 +115,4 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification to maintain a clean project history and enable automated changelog generation.
 
 * Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on commit message formats, types, and scopes.
+* For coding conventions (naming, logging, DI, async, JSON), see the **[Coding Guidelines](docs/coding-guidelines.md)**.
