@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Configuration;
-using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.IO;
 
-namespace PcBeaconAgent.Client.Core.Services
+namespace PcBeaconAgent.Server.Core.Services
 {
     internal class BeaconServerIdentity : IBeaconServerIdentity
     {

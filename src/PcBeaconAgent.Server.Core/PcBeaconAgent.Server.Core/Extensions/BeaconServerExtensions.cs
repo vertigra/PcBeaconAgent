@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Services;
+using PcBeaconAgent.Server.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Services;
 
-namespace PcBeaconAgent.Client.Core.Extensions
+namespace PcBeaconAgent.Server.Core.Extensions
 {
     public static class BeaconServerExtensions
     {

@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.JsonContext;
 using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Server.Core.Interfaces;
 
 namespace PcBeaconAgent.Service.Endpoints
 {

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 
-namespace PcBeaconAgent.Client.Core.Services
+namespace PcBeaconAgent.Server.Core.Services
 {
     internal class PairingService : IPairingService
     {

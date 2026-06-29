@@ -55,6 +55,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
+    <ProjectReference Include="..\PcBeaconAgent.Server.Core\PcBeaconAgent.Server.Core\PcBeaconAgent.Server.Core.csproj" />
   </ItemGroup>
 
 

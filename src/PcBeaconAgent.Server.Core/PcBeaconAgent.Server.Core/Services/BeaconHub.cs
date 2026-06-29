@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Client.Core.Services
+namespace PcBeaconAgent.Server.Core.Services
 {
     public class BeaconHub(IBeaconServerIdentity mIdentity, ILogger<BeaconHub> mLogger) : Hub
     {
