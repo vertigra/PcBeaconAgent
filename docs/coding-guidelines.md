@@ -94,6 +94,7 @@ check existing ranges and pick the next free one:
 | `MauiPreferencesService`           | 30 – 33    |
 | `BeaconServer`                     | 40 – 42    |
 | `DisplayController`                | 100 – 105  |
+| `AudioController`                  | 110 – 114  |
 
 When adding a new class, claim the next free decade (50, 60, 70, ...) and
 register it in this table.
