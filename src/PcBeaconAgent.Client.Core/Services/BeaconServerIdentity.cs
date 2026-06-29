@@ -1,26 +1,26 @@
 ﻿using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Service.Configuration;
-using PcBeaconAgent.Service.Interfaces;
+using PcBeaconAgent.Client.Core.Configuration;
+using PcBeaconAgent.Client.Core.Interfaces;
 using System;
 using System.IO;
 
-namespace PcBeaconAgent.Service.Services
+namespace PcBeaconAgent.Client.Core.Services
 {
-    public class BeaconServerIdentity : IBeaconServerIdentity
+    internal class BeaconServerIdentity : IBeaconServerIdentity
     {
         private readonly ILogger<BeaconServerIdentity> mLogger;
 
         public string ApiKey { get; }
         public int ApiPort { get; }
 
-        public BeaconServerIdentity(AppSettings settings, ILogger<BeaconServerIdentity> logger)
+        internal BeaconServerIdentity(WebApiOptions webApiOptions, ILogger<BeaconServerIdentity> logger)
         {
             mLogger = logger;
-            ApiPort = settings.Server.ApiPort;
+            ApiPort = webApiOptions.ApiPort;
 
-            if (!string.IsNullOrEmpty(settings.Server.ApiKey))
+            if (!string.IsNullOrEmpty(webApiOptions.ApiKey))
             {
-                ApiKey = settings.Server.ApiKey;
+                ApiKey = webApiOptions.ApiKey;
                 LogKeyLoaded("AppSettings", "Configuration");
             }
             else

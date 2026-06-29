@@ -235,7 +235,7 @@ described in [CONTRIBUTING.md](../CONTRIBUTING.md). Recap:
   initialization helpers.
 - **`ImplicitUsings`:** disabled. Add `using` directives explicitly.
 - **Primary constructors:** preferred for classes with simple DI needs
-  (`BeaconHub(IBeaconAnnouncementService svc, ILogger<BeaconHub> log)`).
+  (`BeaconHub(IBeaconServerIdentity svc, ILogger<BeaconHub> log)`).
   Use the `m` prefix when promoting a primary-constructor parameter to a
   field by capturing it in a method.
 - **Collection expressions:** use `[...]` for newly-allocated collections

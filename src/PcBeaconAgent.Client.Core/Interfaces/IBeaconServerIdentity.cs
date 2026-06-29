@@ -1,4 +1,4 @@
-﻿namespace PcBeaconAgent.Service.Interfaces
+﻿namespace PcBeaconAgent.Client.Core.Interfaces
 {
     public interface IBeaconServerIdentity
     {

@@ -4,16 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
 using PcBeaconAgent.Client.Core.Configuration;
+using PcBeaconAgent.Client.Core.Extensions;
 using PcBeaconAgent.Service.BackgroundServices;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Endpoints;
 using PcBeaconAgent.Service.Extensions;
 using PcBeaconAgent.Service.Interfaces;
-using PcBeaconAgent.Service.Services;
 using Serilog;
 using System;
 using System.Threading.Tasks;
-using PcBeaconAgent.Client.Core.Extensions;
 
 namespace PcBeaconAgent.Service
 {
@@ -44,7 +43,7 @@ namespace PcBeaconAgent.Service
                 builder.Services.AddBeaconServer();
                 builder.Services.AddHostedService<BeaconBackgroundService>();
 
-                builder.Services.AddSingleton<IBeaconServerIdentity, BeaconServerIdentity>();
+                builder.Services.AddBeaconServerIdentity();
                
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
