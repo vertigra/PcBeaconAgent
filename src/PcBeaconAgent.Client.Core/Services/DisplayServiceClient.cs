@@ -10,14 +10,14 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Services
 {
-    public class DisplayController : IDisplayController
+    public class DisplayServiceClient : IDisplayServiceClient
     {
         private readonly HttpClient mClient;
         private readonly string mBaseUrl;
         private readonly string mIpAddress;
         private readonly IPreferencesService mPrefs;
 
-        public DisplayController(string ip, int port, IPreferencesService prefs, HttpClient client)
+        public DisplayServiceClient(string ip, int port, IPreferencesService prefs, HttpClient client)
         {
             mClient = client;
             mIpAddress = ip;

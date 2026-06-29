@@ -16,7 +16,7 @@ public partial class DisplayControlViewModel : ObservableObject
 {
     private readonly DeviceStore mDeviceStore;
     private readonly ILogger<DisplayControlViewModel> mLogger;
-    private IDisplayController? mDisplay;
+    private IDisplayServiceClient? mDisplay;
 
     [ObservableProperty]
     public partial string DeviceIp { get; set; } = string.Empty;

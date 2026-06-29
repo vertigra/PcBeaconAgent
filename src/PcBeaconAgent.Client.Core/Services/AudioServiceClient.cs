@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Services
 {
-    public class AudioController : IAudioController
+    public class AudioServiceClient : IAudioServiceClient
     {
         private readonly HttpClient mClient;
         private readonly string mBaseUrl;
         private readonly string mIpAddress;
         private readonly IPreferencesService mPrefs;
 
-        public AudioController(string ip, int port, IPreferencesService prefs, HttpClient client)
+        public AudioServiceClient(string ip, int port, IPreferencesService prefs, HttpClient client)
         {
             mClient = client;
             mIpAddress = ip;

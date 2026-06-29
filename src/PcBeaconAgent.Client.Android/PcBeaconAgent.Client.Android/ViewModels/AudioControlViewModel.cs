@@ -11,19 +11,12 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Android.ViewModels;
 
-// FIX (новый файл): по структуре аналогичен PairingViewModel — QueryProperty для
-// параметра навигации, IsBusy/ErrorMessage с HasError, команды через [RelayCommand].
 [QueryProperty(nameof(DeviceIp), "ip")]
 public partial class AudioControlViewModel : ObservableObject
 {
     private readonly DeviceStore mDeviceStore;
     private readonly ILogger<AudioControlViewModel> mLogger;
-
-    // Не создаём новый AudioController здесь — переиспользуем тот, что уже лежит
-    // в соответствующем ManagedDevice.Audio (создан один раз в DeviceFactory).
-    // Это гарантирует, что других мест с "параллельным" экземпляром контроллера
-    // для того же устройства не появится.
-    private IAudioController? mAudio;
+    private IAudioServiceClient? mAudio;
 
     [ObservableProperty]
     public partial string DeviceIp { get; set; } = string.Empty;
@@ -48,9 +41,6 @@ public partial class AudioControlViewModel : ObservableObject
         mLogger = logger;
     }
 
-    // Вызывается из AudioControlPage.OnAppearing — DeviceIp к этому моменту уже
-    // проставлен через [QueryProperty] (Shell применяет query-параметры до
-    // срабатывания жизненного цикла страницы).
     public async Task LoadAsync()
     {
         if (string.IsNullOrEmpty(DeviceIp)) 

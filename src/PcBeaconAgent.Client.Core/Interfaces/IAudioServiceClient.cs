@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Interfaces
 {
-    public interface IAudioController
+    public interface IAudioServiceClient
     {
         Task<IReadOnlyList<AudioDeviceDto>> GetDevicesAsync();
         Task<string?> GetDefaultDeviceIdAsync();

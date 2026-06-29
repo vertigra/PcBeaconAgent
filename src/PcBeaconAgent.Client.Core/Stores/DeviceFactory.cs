@@ -11,8 +11,8 @@ namespace PcBeaconAgent.Client.Core.Stores
         public ManagedDevice Create(BeaconDevice beacon)
         {
             return new ManagedDevice(beacon,
-                new AudioController(beacon.IpAddress, beacon.ApiPort, mPrefs, mHttpClientFactory.CreateClient()),
-                new DisplayController(beacon.IpAddress, beacon.ApiPort, mPrefs, mHttpClientFactory.CreateClient())
+                new AudioServiceClient(beacon.IpAddress, beacon.ApiPort, mPrefs, mHttpClientFactory.CreateClient()),
+                new DisplayServiceClient(beacon.IpAddress, beacon.ApiPort, mPrefs, mHttpClientFactory.CreateClient())
             );
         }
     }
