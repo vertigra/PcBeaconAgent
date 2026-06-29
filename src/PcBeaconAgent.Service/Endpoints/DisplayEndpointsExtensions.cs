@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using PcBeaconAgent.Client.Core.JsonContext;
 using PcBeaconAgent.Client.Core.Models.Common;
-using PcBeaconAgent.Client.Core.Services;
+using PcBeaconAgent.Server.Core.Services;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Extensions;
 using System;

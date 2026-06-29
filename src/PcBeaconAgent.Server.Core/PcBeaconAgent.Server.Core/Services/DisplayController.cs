@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using WindowsDisplayAPI.DisplayConfig;
 using WindowsDisplayAPI.Native.DisplayConfig;
 
-namespace PcBeaconAgent.Client.Core.Services
+namespace PcBeaconAgent.Server.Core.Services
 {
     public class DisplayController
     {

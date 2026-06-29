@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PcBeaconAgent.Client.Core.Services
+namespace PcBeaconAgent.Server.Core.Services
 {
     public class AudioController
     {

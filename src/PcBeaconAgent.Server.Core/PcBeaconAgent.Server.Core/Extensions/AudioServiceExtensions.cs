@@ -1,19 +1,20 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Client.Core.Services;
+using PcBeaconAgent.Server.Core.Services;
 
 namespace PcBeaconAgent.Client.Core.Extensions
 {
-    public static class DisplayServiceExtensions
+    public static class AudioServiceExtensions
     {
         /// <summary>
-        /// Registers <see cref="DisplayController"/> as a singleton. Intended
+        /// Registers <see cref="AudioController"/> as a singleton. Intended
         /// for the server host only; client projects should not call this —
-        /// the client-side equivalent is <see cref="DisplayServiceClient"/>,
+        /// the client-side equivalent is <see cref="AudioServiceClient"/>,
         /// which is created per-device by DeviceFactory.
         /// </summary>
-        public static IServiceCollection AddDisplayService(this IServiceCollection services)
+        public static IServiceCollection AddAudioService(this IServiceCollection services)
         {
-            services.AddSingleton<DisplayController>();
+            services.AddSingleton<AudioController>();
             return services;
         }
     }
