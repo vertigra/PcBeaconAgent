@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
 using PcBeaconAgent.Client.Core.Configuration;
-using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Service.BackgroundServices;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Endpoints;
@@ -15,6 +13,7 @@ using PcBeaconAgent.Service.Services;
 using Serilog;
 using System;
 using System.Threading.Tasks;
+using PcBeaconAgent.Client.Core.Extensions;
 
 namespace PcBeaconAgent.Service
 {
@@ -24,7 +23,6 @@ namespace PcBeaconAgent.Service
         {
             try
             {
-                
                 var builder = WebApplication.CreateSlimBuilder(args);
                 AppSettings settings = builder.AddApplicationConfiguration(args);
 
@@ -43,7 +41,7 @@ namespace PcBeaconAgent.Service
                     options.ServiceName = "PcBeaconAgent";
                 });
 
-                builder.Services.AddSingleton<IBeaconServer, BeaconServer>();
+                builder.Services.AddBeaconServer();
                 builder.Services.AddHostedService<BeaconBackgroundService>();
 
                 builder.Services.AddSingleton<IBeaconAnnouncementService, BeaconAnnouncementService>();

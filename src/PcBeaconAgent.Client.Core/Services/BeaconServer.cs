@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Core.Services
 {
-    public class BeaconServer : IBeaconServer
+    internal class BeaconServer : IBeaconServer
     {
         private readonly BeaconServerOptions mBeaconServerOptions;
         private readonly WebApiOptions mWebApiOptions;
@@ -20,7 +20,7 @@ namespace PcBeaconAgent.Client.Core.Services
         private const byte ping = 0x01;
         private const byte pong = 0x02;
 
-        public BeaconServer(BeaconServerOptions beaconServerOptions, WebApiOptions webApiOptions, ILogger<BeaconServer> logger)
+        internal BeaconServer(BeaconServerOptions beaconServerOptions, WebApiOptions webApiOptions, ILogger<BeaconServer> logger)
         {
             mBeaconServerOptions = beaconServerOptions;
             mWebApiOptions = webApiOptions;
