@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Service.JsonContext;
-using PcBeaconAgent.Service.Services;
 
-namespace PcBeaconAgent.Service.Extensions
+namespace PcBeaconAgent.Client.Core.Extensions
 {
-    public static class SignalExtension
+    public static class SignalExtensions
     {
         public static IServiceCollection AddSignal(this IServiceCollection services)
         {
@@ -15,12 +15,11 @@ namespace PcBeaconAgent.Service.Extensions
                 options.SerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
             });
 
-            services.AddSignalR()
-            .AddJsonProtocol(options =>
-             {
+            services.AddSignalR().AddJsonProtocol(options =>
+            {
                  options.PayloadSerializerOptions.TypeInfoResolverChain.Clear();
                  options.PayloadSerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
-             });
+            });
             return services;
         }
 

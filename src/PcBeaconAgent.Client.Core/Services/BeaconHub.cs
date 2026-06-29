@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Service.Services
+namespace PcBeaconAgent.Client.Core.Services
 {
     public class BeaconHub(IBeaconServerIdentity mIdentity, ILogger<BeaconHub> mLogger) : Hub
     {
