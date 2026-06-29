@@ -2,25 +2,17 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Service.Configuration;
 using PcBeaconAgent.Service.Extensions;
 using PcBeaconAgent.Service.JsonContext;
-using PcBeaconAgent.Service.Models;
-using PcBeaconAgent.Service.Services;
 using System;
 
 namespace PcBeaconAgent.Service.Endpoints
 {
     public static class DisplayEndpointsExtensions
     {
-        public static IServiceCollection AddDisplayService(this IServiceCollection services)
-        {
-            services.AddSingleton<DisplayController>();
-            return services;
-        }
-
         public static IEndpointRouteBuilder MapDisplayServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
         {
             RouteGroupBuilder displayGroup = app.MapGroup("/api/display").RequireApiKey(settings);

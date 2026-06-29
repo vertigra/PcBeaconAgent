@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Service.Models;
+using PcBeaconAgent.Client.Core.Models.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +8,19 @@ using System.Threading.Tasks;
 using WindowsDisplayAPI.DisplayConfig;
 using WindowsDisplayAPI.Native.DisplayConfig;
 
-namespace PcBeaconAgent.Service.Services
+namespace PcBeaconAgent.Client.Core.Services
 {
-    public class DisplayController(ILogger<DisplayController> mLogger)
+    public class DisplayController
     {
+        private readonly ILogger<DisplayController> mLogger;
         private DisplayConfigTopologyId mActiveDefaultUserTopology = PathInfo.GetCurrentTopology();
         private bool mIsTopologyOverridden;
         private readonly SemaphoreSlim mDisplayLock = new(1, 1);
+
+        public DisplayController(ILogger<DisplayController> logger)
+        {
+            mLogger = logger;
+        }
 
         public List<DisplayDeviceDto> GetDisplays()
         {
