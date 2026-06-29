@@ -1,8 +1,8 @@
 ﻿using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Helpres;
 using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.JsonContext;
 using PcBeaconAgent.Client.Core.Models.Common;
-using PcBeaconAgent.Service.JsonContext;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;

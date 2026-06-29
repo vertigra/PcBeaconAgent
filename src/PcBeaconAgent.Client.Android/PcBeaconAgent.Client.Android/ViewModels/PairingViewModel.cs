@@ -1,13 +1,12 @@
-﻿using Android.Telephony;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.JsonContext;
 using PcBeaconAgent.Client.Core.Messages;
 using PcBeaconAgent.Client.Core.Models.Common;
-using PcBeaconAgent.Service.JsonContext;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;

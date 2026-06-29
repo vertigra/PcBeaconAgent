@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 
-namespace PcBeaconAgent.Service.JsonContext
+namespace PcBeaconAgent.Client.Core.JsonContext
 {
     [JsonSerializable(typeof(PairRequestDto))]
     [JsonSerializable(typeof(PairResponseDto))]
