@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Service.Services
 {
-    public class BeaconHub(IBeaconAnnouncementService mBeaconService,ILogger<BeaconHub> mLogger) : Hub
+    public class BeaconHub(IBeaconServerIdentity mIdentity, ILogger<BeaconHub> mLogger) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -35,7 +35,7 @@ namespace PcBeaconAgent.Service.Services
 
         private bool IsAuthorized()
         {
-            if (string.IsNullOrEmpty(mBeaconService.ApiKey))
+            if (string.IsNullOrEmpty(mIdentity.ApiKey))
                 return true;
 
             var http = Context.GetHttpContext();
@@ -43,7 +43,7 @@ namespace PcBeaconAgent.Service.Services
             if (string.IsNullOrEmpty(provided))
                 provided = http?.Request.Query["api_key"];
 
-            return string.Equals(provided, mBeaconService.ApiKey, StringComparison.Ordinal);
+            return string.Equals(provided, mIdentity.ApiKey, StringComparison.Ordinal);
         }
 
         private BeaconDevice GetLocalDeviceData()
@@ -57,7 +57,7 @@ namespace PcBeaconAgent.Service.Services
             return new BeaconDevice
             {
                 MachineName = Environment.MachineName,
-                ApiPort = mBeaconService.ApiPort,
+                ApiPort = mIdentity.ApiPort,
                 MacAddress = activeInterface?.GetPhysicalAddress().ToString() ?? "00:00:00:00:00:00",
                 InterfaceName = activeInterface?.Name ?? "Unknown",
                 InterfaceType = activeInterface?.NetworkInterfaceType.ToString() ?? "Unknown",

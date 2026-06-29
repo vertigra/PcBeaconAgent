@@ -6,14 +6,14 @@ using System.IO;
 
 namespace PcBeaconAgent.Service.Services
 {
-    public class BeaconAnnouncementService : IBeaconAnnouncementService
+    public class BeaconServerIdentity : IBeaconServerIdentity
     {
-        private readonly ILogger<BeaconAnnouncementService> mLogger;
+        private readonly ILogger<BeaconServerIdentity> mLogger;
 
         public string ApiKey { get; }
         public int ApiPort { get; }
 
-        public BeaconAnnouncementService(AppSettings settings, ILogger<BeaconAnnouncementService> logger)
+        public BeaconServerIdentity(AppSettings settings, ILogger<BeaconServerIdentity> logger)
         {
             mLogger = logger;
             ApiPort = settings.Server.ApiPort;

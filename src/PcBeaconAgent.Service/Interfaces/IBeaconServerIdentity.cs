@@ -1,6 +1,6 @@
 ﻿namespace PcBeaconAgent.Service.Interfaces
 {
-    public interface IBeaconAnnouncementService
+    public interface IBeaconServerIdentity
     {
         string ApiKey { get; }
         int ApiPort { get; }

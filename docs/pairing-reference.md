@@ -113,7 +113,7 @@ Server                                  Client
 ──────                                  ──────
 Service starts
   │
-  ├─ BeaconAnnouncementService
+  ├─ BeaconServerIdentity
   │    resolves ApiKey (appsettings.json
   │    static value, or generates +
   │    persists to server.key)

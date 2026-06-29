@@ -6,7 +6,7 @@ namespace PcBeaconAgent.Service.Services
 {
     public class PairingService : IPairingService
     {
-        private readonly IBeaconAnnouncementService mBeacon;
+        private readonly IBeaconServerIdentity mIdentity;
         private readonly ILogger<PairingService> mLogger;
 
         private string mPin = string.Empty;
@@ -27,9 +27,9 @@ namespace PcBeaconAgent.Service.Services
             mFailedAttempts < MaxFailedAttempts &&
             DateTime.UtcNow < mPinExpiry;
 
-        public PairingService(IBeaconAnnouncementService beacon, ILogger<PairingService> logger)
+        public PairingService(IBeaconServerIdentity identity, ILogger<PairingService> logger)
         {
-            mBeacon = beacon;
+            mIdentity = identity;
             mLogger = logger;
             GeneratePin();
         }
@@ -59,7 +59,7 @@ namespace PcBeaconAgent.Service.Services
             // PIN is correct — single-use: invalidate immediately.
             mPinUsed = true;
             LogPairingSuccess();
-            return mBeacon.ApiKey;
+            return mIdentity.ApiKey;
         }
 
         /// <inheritdoc />

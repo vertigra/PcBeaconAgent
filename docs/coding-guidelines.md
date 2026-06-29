@@ -90,7 +90,7 @@ check existing ranges and pick the next free one:
 | ---------------------------------- | ---------- |
 | `BeaconHub`                        | 1 – 3      |
 | `PairingService`                   | 10 – 14    |
-| `BeaconAnnouncementService`        | 20 – 22    |
+| `BeaconServerIdentity`             | 20 – 22    |
 | `MauiPreferencesService`           | 30 – 33    |
 | `BeaconServer`                     | 40 – 42    |
 | `DisplayController`                | 100 – 105  |

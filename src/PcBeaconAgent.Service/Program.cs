@@ -44,7 +44,7 @@ namespace PcBeaconAgent.Service
                 builder.Services.AddBeaconServer();
                 builder.Services.AddHostedService<BeaconBackgroundService>();
 
-                builder.Services.AddSingleton<IBeaconAnnouncementService, BeaconAnnouncementService>();
+                builder.Services.AddSingleton<IBeaconServerIdentity, BeaconServerIdentity>();
                
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
