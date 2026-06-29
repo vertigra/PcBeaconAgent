@@ -134,6 +134,28 @@ register it in this table.
 - Services receive options via constructor injection — never read
   `AppSettings` directly outside of the composition root.
 
+### 3.4 Assembly boundaries and visibility
+
+The solution is a monorepo: `PcBeaconAgent.Client.Core` is shared by both
+the Service host and the Android client. We do not split Core into separate
+client/server contract libraries — the cost of duplicate contracts and
+extra projects outweighs the benefit of compile-time isolation.
+
+Consequences:
+
+- **`public` vs `internal`** controls visibility across assembly boundaries,
+  not across projects within a solution. A `public` class in Core is
+  reachable from any project that references Core.
+- **`internal` + an extension method** (e.g. `AddBeaconServer()`) is used
+  to discourage direct instantiation of server-only implementation classes
+  from client code. This is a convention, not a hard guarantee — a
+  determined caller can still invoke the public extension.
+- **Server-only classes should not be registered in the client's DI
+  container.** This is enforced by code review and convention, not by the
+  compiler. If you find yourself wanting `InternalsVisibleTo` or a
+  separate server-only assembly, raise the question in a PR first — the
+  default answer is "stay in Core."
+
 ## 4. Async and cancellation
 
 - All async methods return `Task` or `Task<T>`. Avoid `async void` except
