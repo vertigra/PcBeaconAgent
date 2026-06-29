@@ -1,6 +1,4 @@
-﻿using PcBeaconAgent.Client.Core.Configuration;
-
-namespace PcBeaconAgent.Service.Configuration
+﻿namespace PcBeaconAgent.Service.Configuration
 {
     public class AppSettings
     {

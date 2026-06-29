@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Client.Core.Configuration;
+using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Net;

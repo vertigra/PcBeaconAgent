@@ -2,7 +2,7 @@
 using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Server.Core.Services;
 
-namespace PcBeaconAgent.Client.Core.Extensions
+namespace PcBeaconAgent.Server.Core.Extensions
 {
     public static class DisplayServiceExtensions
     {
