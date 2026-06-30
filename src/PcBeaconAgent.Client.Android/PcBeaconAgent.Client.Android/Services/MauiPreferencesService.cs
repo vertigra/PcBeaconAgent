@@ -107,6 +107,8 @@ namespace PcBeaconAgent.Client.Android.Services
 
         public IReadOnlyList<string> GetStoredApiKeyIdentifiers() => [.. ReadIndex().Select(k => k == ApiKeyPrefix ? "global" : k[(ApiKeyPrefix.Length + 1)..])];
 
+        #region Structured logging definitions (allocation-free)
+
         private static readonly Action<ILogger, string, Exception?> LogSetErrorAction =
             LoggerMessage.Define<string>(LogLevel.Error, new EventId(30, "SetError"), "SecureStorage.SetAsync failed: {Key}");
 
@@ -119,5 +121,7 @@ namespace PcBeaconAgent.Client.Android.Services
         private void LogSetError(string key, Exception ex) => LogSetErrorAction(mLogger, key, ex);
         private void LogGetError(string key, Exception ex) => LogGetErrorAction(mLogger, key, ex);
         private void LogKeyWrite(string key) => LogKeyWriteAction(mLogger, key, null);
+
+        #endregion
     }
 }

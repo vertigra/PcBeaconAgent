@@ -64,6 +64,8 @@ namespace PcBeaconAgent.Server.Core.Services
             };
         }
 
+        #region Structured logging definitions (allocation-free)
+
         private static readonly Action<ILogger, string, Exception?> LogUnauthorizedAction =
             LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, "Unauthorized"),
                 "Rejected hub connection {ConnectionId}: invalid or missing API key");
@@ -79,5 +81,7 @@ namespace PcBeaconAgent.Server.Core.Services
         private void LogUnauthorizedConnection(string id) => LogUnauthorizedAction(mLogger, id, null);
         private void LogClientConnected() => LogConnectedAction(mLogger, null);
         private void LogClientDisconnected(string? reason) => LogDisconnectedAction(mLogger, reason, null);
+
+        #endregion
     }
 }

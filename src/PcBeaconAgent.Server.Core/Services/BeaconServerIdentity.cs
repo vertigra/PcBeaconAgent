@@ -52,9 +52,7 @@ namespace PcBeaconAgent.Server.Core.Services
             }
         }
 
-        private void LogKeyLoaded(string source, string path) => LogKeyLoadedAction(mLogger, source, path, null);
-        private void LogKeyGenerated(string path) => LogKeyGeneratedAction(mLogger, path, null);
-        private void LogKeyError(string path, Exception ex) => LogKeyErrorAction(mLogger, path, ex);
+        #region Structured logging definitions (allocation-free)
 
         private static readonly Action<ILogger, string, string, Exception?> LogKeyLoadedAction =
             LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(20, "KeyLoaded"), "API key loaded from {Source}: {Path}");
@@ -64,5 +62,11 @@ namespace PcBeaconAgent.Server.Core.Services
 
         private static readonly Action<ILogger, string, Exception?> LogKeyErrorAction =
             LoggerMessage.Define<string>(LogLevel.Critical, new EventId(22, "KeyError"), "Failed to load or create API key at {Path}. Application cannot continue.");
+
+        private void LogKeyLoaded(string source, string path) => LogKeyLoadedAction(mLogger, source, path, null);
+        private void LogKeyGenerated(string path) => LogKeyGeneratedAction(mLogger, path, null);
+        private void LogKeyError(string path, Exception ex) => LogKeyErrorAction(mLogger, path, ex);
+
+        #endregion
     }
 }

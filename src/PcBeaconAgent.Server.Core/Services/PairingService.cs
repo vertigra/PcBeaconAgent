@@ -77,7 +77,7 @@ namespace PcBeaconAgent.Server.Core.Services
             LogNewPin(mPin, (int)PinLifetime.TotalMinutes);
         }
 
-        // --- Structured logging definitions (allocation-free) ---
+        #region Structured logging definitions (allocation-free)
 
         private static readonly Action<ILogger, string, int, Exception?> LogNewPinAction =
             LoggerMessage.Define<string, int>(
@@ -117,5 +117,7 @@ namespace PcBeaconAgent.Server.Core.Services
         private void LogPairingLocked() => LogPairingLockedAction(mLogger, null);
         private void LogPairingInactive() => LogPairingInactiveAction(mLogger, null);
         private void LogPairingSuccess() => LogPairingSuccessAction(mLogger, null);
+
+        #endregion
     }
 }
