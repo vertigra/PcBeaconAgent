@@ -1,4 +1,4 @@
-﻿namespace PcBeaconAgent.Client.Core.Models.Common
+﻿namespace PcBeaconAgent.Contracts.Models
 {
     public class DiscoveredBeacon
     {

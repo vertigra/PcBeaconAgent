@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using PcBeaconAgent.Client.Core.Models.Common;
 using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Linq;

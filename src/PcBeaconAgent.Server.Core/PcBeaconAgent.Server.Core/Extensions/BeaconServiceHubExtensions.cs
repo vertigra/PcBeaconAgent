@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using PcBeaconAgent.Client.Core.JsonContext;
+using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Server.Core.Services;
 
 namespace PcBeaconAgent.Server.Core.Extensions

@@ -1,9 +1,9 @@
-﻿using PcBeaconAgent.Client.Core.Models.Common;
+﻿using PcBeaconAgent.Contracts.Models;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 
-namespace PcBeaconAgent.Client.Core.JsonContext
+namespace PcBeaconAgent.Contracts
 {
     [JsonSerializable(typeof(PairRequestDto))]
     [JsonSerializable(typeof(PairResponseDto))]

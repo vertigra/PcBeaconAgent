@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Contracts.Models;
 
 namespace PcBeaconAgent.Client.Core.Models.Client
 {

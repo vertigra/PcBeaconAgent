@@ -7,6 +7,7 @@ using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.JsonContext;
 using PcBeaconAgent.Client.Core.Messages;
 using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Contracts;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
