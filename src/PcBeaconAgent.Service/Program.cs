@@ -3,18 +3,18 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
+using PcBeaconAgent.Server.Cli.BackgroundServices;
+using PcBeaconAgent.Server.Cli.Configuration;
+using PcBeaconAgent.Server.Cli.Endpoints;
+using PcBeaconAgent.Server.Cli.Extensions;
 using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
-using PcBeaconAgent.Service.BackgroundServices;
-using PcBeaconAgent.Service.Configuration;
-using PcBeaconAgent.Service.Endpoints;
-using PcBeaconAgent.Service.Extensions;
 using Serilog;
 using System;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Service
+namespace PcBeaconAgent.Server.Cli
 {
     public class Program
     {

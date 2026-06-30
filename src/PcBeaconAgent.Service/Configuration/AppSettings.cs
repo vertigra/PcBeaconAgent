@@ -1,4 +1,4 @@
-﻿namespace PcBeaconAgent.Service.Configuration
+﻿namespace PcBeaconAgent.Server.Cli.Configuration
 {
     public class AppSettings
     {

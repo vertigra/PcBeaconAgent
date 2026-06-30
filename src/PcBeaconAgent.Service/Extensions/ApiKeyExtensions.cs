@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using PcBeaconAgent.Service.Configuration;
+using PcBeaconAgent.Server.Cli.Configuration;
 using System;
 
 
-namespace PcBeaconAgent.Service.Extensions
+namespace PcBeaconAgent.Server.Cli.Extensions
 {
     public static class ApiKeyExtensions
     {

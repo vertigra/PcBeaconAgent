@@ -5,8 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
 
-    <AssemblyName>PcBeaconAgent.Service</AssemblyName>
-    <RootNamespace>PcBeaconAgent.Service</RootNamespace>
+    <AssemblyName>PcBeaconAgent.Server.Cli</AssemblyName>
+    <RootNamespace>PcBeaconAgent.Server.Cli</RootNamespace>
     <UserSecretsId>dotnet-PcBeaconAgent-cfec9708-b427-4f85-9e98-3cf8c1748e58</UserSecretsId>
     <NoWarn>$(NoWarn);NU1701;NETSDK1128;IL2026;IL2104</NoWarn>
 

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Scalar.AspNetCore;
 
-namespace PcBeaconAgent.Service.Extensions
+namespace PcBeaconAgent.Server.Cli.Extensions
 {
     public static class WebApiExtensions
     {
