@@ -141,4 +141,40 @@ public partial class PairingViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
+    /// <summary>
+    /// Called automatically when the PairingPage appears. Requests a fresh
+    /// PIN from the server so the 5-minute TTL window starts counting from
+    /// the moment the user opened the page, not from server startup. This
+    /// avoids the "PIN expired while I was reading it" failure mode and the
+    /// "PIN already used" 403 after a forget-and-re-pair cycle.
+    /// Silent on success — only surfaces an error if the request fails.
+    /// </summary>
+    [RelayCommand]
+    public async Task OnAppearingAsync()
+    {
+        // Don't regenerate if we don't have a valid target yet.
+        if (string.IsNullOrEmpty(ServerIp) || ServerPort == 0) return;
+
+        IsBusy = true;
+        try
+        {
+            var client = mHttpFactory.CreateClient();
+            var url = $"http://{ServerIp}:{ServerPort}/api/pair/regenerate";
+            var response = await client.PostAsync(url, null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage = "Could not request a fresh PIN. Try 'Regenerate PIN' manually.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 }

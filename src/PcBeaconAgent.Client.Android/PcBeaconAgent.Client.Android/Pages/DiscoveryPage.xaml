@@ -28,9 +28,9 @@
                 <DataTemplate x:DataType="contractsModels:BeaconDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
-                            
-                            <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="14" TextColor="#BDBDBD"/>
                             </VerticalStackLayout>
 
                             <Button Grid.Column="1" Text="Remember"
