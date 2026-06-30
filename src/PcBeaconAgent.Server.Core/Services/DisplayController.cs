@@ -110,6 +110,16 @@ namespace PcBeaconAgent.Server.Core.Services
                     $"Display '{devicePath}' was not found among active paths after topology adjustment.");
             }
 
+            // Windows rejects applying an empty path set (ApplyPathInfos throws
+            // PathChangeException: "Invalid paths information"). At least one
+            // display must remain active, so refuse the operation explicitly
+            // with a clear message instead of letting the native call fail.
+            if (remaining.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "Cannot disable the last active display. At least one display must remain active.");
+            }
+
             PathInfo.ApplyPathInfos(remaining, allowChanges: true, saveToDatabase: true);
         }
 

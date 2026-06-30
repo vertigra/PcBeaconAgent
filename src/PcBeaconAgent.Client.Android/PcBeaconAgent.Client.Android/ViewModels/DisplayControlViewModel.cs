@@ -71,6 +71,13 @@ public partial class DisplayControlViewModel : ObservableObject
             Displays.Clear();
             foreach (var d in displays)
                 Displays.Add(new DisplayDeviceItem(d.Id, d.FriendlyName) { IsActive = d.IsActive });
+
+            // Mark the last remaining active display so the UI can block
+            // the Disable button. Windows refuses to disable the final
+            // active display, so we prevent the attempt client-side.
+            var activeItems = Displays.Where(d => d.IsActive).ToList();
+            if (activeItems.Count == 1)
+                activeItems[0].IsLastActive = true;
         }
         catch (Exception ex)
         {
@@ -139,4 +146,14 @@ public partial class DisplayDeviceItem(string id, string friendlyName) : Observa
 
     [ObservableProperty]
     public partial bool IsActive { get; set; }
+
+    /// <summary>
+    /// True when this is the only active display remaining. The UI uses
+    /// this to disable the Disable button — Windows rejects disabling the
+    /// last active display, and the server now returns a clear error for
+    /// it, but blocking the button up front avoids a round-trip and a
+    /// confusing error toast.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsLastActive { get; set; }
 }

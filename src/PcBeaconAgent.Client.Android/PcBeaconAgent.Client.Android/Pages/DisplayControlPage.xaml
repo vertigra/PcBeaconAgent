@@ -64,6 +64,10 @@
                                        IsVisible="{Binding IsActive}"/>
                                 <Label Text="Disabled" FontSize="11" TextColor="#757575"
                                        IsVisible="{Binding IsActive, Converter={StaticResource InvertedBoolConverter}}"/>
+                                <!-- Hint shown when this is the last active display -->
+                                <Label Text="Last active display — cannot disable"
+                                       FontSize="11" TextColor="#FF9800"
+                                       IsVisible="{Binding IsLastActive}"/>
                             </VerticalStackLayout>
 
                             <Button Grid.Column="1"
@@ -71,6 +75,7 @@
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DisplayControlViewModel}}, Path=DisableCommand}"
                                     CommandParameter="{Binding .}"
                                     IsVisible="{Binding IsActive}"
+                                    IsEnabled="{Binding IsLastActive, Converter={StaticResource InvertedBoolConverter}}"
                                     BackgroundColor="#B3261E" TextColor="White"
                                     FontSize="12" CornerRadius="8"
                                     WidthRequest="100" HeightRequest="38"/>
