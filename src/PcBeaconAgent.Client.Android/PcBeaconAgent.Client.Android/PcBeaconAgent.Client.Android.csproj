@@ -52,6 +52,9 @@
     <MauiXaml Update="Pages\AudioControlPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Pages\DiscoveryPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\DisplayControlPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
