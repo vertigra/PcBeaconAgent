@@ -1,6 +1,6 @@
 ﻿using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Contracts.Models;
 using System.Collections.Generic;
 
 namespace PcBeaconAgent.Client.Android.Services

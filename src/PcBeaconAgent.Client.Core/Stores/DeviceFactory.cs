@@ -1,7 +1,7 @@
 ﻿using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models.Client;
-using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Services;
+using PcBeaconAgent.Contracts.Models;
 using System.Net.Http;
 
 namespace PcBeaconAgent.Client.Core.Stores

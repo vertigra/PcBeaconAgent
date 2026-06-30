@@ -2,8 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
-             xmlns:modelsCommon="clr-namespace:PcBeaconAgent.Client.Core.Models.Common;assembly=PcBeaconAgent.Client.Core"
-             xmlns:modelsClient="clr-namespace:PcBeaconAgent.Client.Core.Models.Client;assembly=PcBeaconAgent.Client.Core"
+             xmlns:clientModels="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
+             xmlns:contractsModels="clr-namespace:PcBeaconAgent.Contracts.Models;assembly=PcBeaconAgent.Contracts"
              xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
              x:Class="PcBeaconAgent.Client.Android.Pages.MainPage"
              x:DataType="vm:MainViewModel"
@@ -28,7 +28,7 @@
 
         <CollectionView Grid.Row="2" ItemsSource="{Binding DiscoveredDevices}">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="modelsCommon:BeaconDevice">
+                <DataTemplate x:DataType="contractsModels:BeaconDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
@@ -50,7 +50,7 @@
 
         <CollectionView Grid.Row="4" ItemsSource="{Binding ManagedDevices}">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="modelsClient:ManagedDevice">
+                <DataTemplate x:DataType="clientModels:ManagedDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#322F35" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
                             <VerticalStackLayout Grid.Column="0" Spacing="2">

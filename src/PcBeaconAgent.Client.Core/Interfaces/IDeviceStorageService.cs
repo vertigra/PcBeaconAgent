@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PcBeaconAgent.Contracts.Models;
+using System.Collections.Generic;
 
 namespace PcBeaconAgent.Client.Core.Interfaces
 {
