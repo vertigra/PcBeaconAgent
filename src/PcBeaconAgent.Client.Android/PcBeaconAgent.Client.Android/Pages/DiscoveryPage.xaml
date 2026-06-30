@@ -28,6 +28,7 @@
                 <DataTemplate x:DataType="contractsModels:BeaconDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto">
+                            
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
                                 <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
                             </VerticalStackLayout>
@@ -59,5 +60,30 @@
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>
+
+
+        <!-- Scanning overlay: shown while IsScanning is true, covers the list -->
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding IsScanning}"
+                             BackgroundColor="#CC121212"
+                             VerticalOptions="Fill"
+                             HorizontalOptions="Fill"
+                             Spacing="16"
+                             Padding="20">
+            <ActivityIndicator IsRunning="{Binding IsScanning}"
+                               Color="#6750A4"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"
+                               Margin="0,40,0,0"/>
+            <Label Text="Scanning for devices..."
+                   TextColor="#D0BCFF"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"/>
+            <Label Text="Make sure the PC agent is running on the same network."
+                   TextColor="#757575"
+                   FontSize="12"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>

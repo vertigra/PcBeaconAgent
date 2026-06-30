@@ -74,6 +74,13 @@ public partial class PairingViewModel : ObservableObject
 
                     WeakReferenceMessenger.Default.Send(new PairingSucceededMessage(ServerIp));
 
+                    
+                    // Pop the PairingPage from the navigation stack before switching
+                    // tabs. Without this, GoToAsync("//MainPage") changes the active
+                    // tab but leaves PairingPage on top of DiscoveryPage — when the
+                    // user returns to the Discovery tab they see the stale pairing
+                    // form instead of the device list.
+                    await Shell.Current.GoToAsync("..");
                     await Shell.Current.GoToAsync("//MainPage");
                 }
                 else
