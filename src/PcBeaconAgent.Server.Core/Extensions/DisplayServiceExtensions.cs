@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PcBeaconAgent.Client.Core.Services;
 using PcBeaconAgent.Server.Core.Services;
 
 namespace PcBeaconAgent.Server.Core.Extensions

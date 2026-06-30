@@ -23,8 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
-    <ProjectReference Include="..\..\PcBeaconAgent.Contracts\PcBeaconAgent.Contracts.csproj" />
+    <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
+    <ProjectReference Include="..\PcBeaconAgent.Contracts\PcBeaconAgent.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -17,7 +17,7 @@
     </Project>
     <Project Path="src/PcBeaconAgent.Client.Core/PcBeaconAgent.Client.Core.csproj" />
     <Project Path="src/PcBeaconAgent.Contracts/PcBeaconAgent.Contracts.csproj" />
-    <Project Path="src/PcBeaconAgent.Server.Core/PcBeaconAgent.Server.Core/PcBeaconAgent.Server.Core.csproj" Id="a5d77924-3f3c-42d8-8652-9d1e42cfff9d" />
+    <Project Path="src/PcBeaconAgent.Server.Core/PcBeaconAgent.Server.Core.csproj" />
     <Project Path="src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj" />
   </Folder>
 </Solution>

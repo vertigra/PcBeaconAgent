@@ -88,7 +88,7 @@ check existing ranges and pick the next free one:
 
 | Class                              | Range      |
 | ---------------------------------- | ---------- |
-| `BeaconHub`                        | 1 – 3      |
+| `BeaconServiceHub`                 | 1 – 3      |
 | `PairingService`                   | 10 – 14    |
 | `BeaconServerIdentity`             | 20 – 22    |
 | `MauiPreferencesService`           | 30 – 33    |
@@ -157,7 +157,13 @@ Consequences:
   separate server-only assembly, raise the question in a PR first — the
   default answer is "stay in Core."
 
-* DI-activated constructors must be public. Microsoft.Extensions.DependencyInjectionresolves constructors via reflection with public binding flags. A classmarked internal can still have a public constructor — the type staysinvisible outside its assembly, but the DI container can instantiate it.Marking the constructor itself internal (or any non-public modifier)makes the service unresolvable and crashes the host at startup with"A suitable constructor could not be located". This is the rule, not arecommendation: if a class is registered in DI through AddSingleton,AddScoped, AddTransient, or AddHostedService, its constructorMUST be public.
+* DI-activated constructors must be public. Microsoft.Extensions.DependencyInjectionresolves 
+  constructors via reflection with public binding flags. A classmarked internal can still have 
+  a public constructor — the type staysinvisible outside its assembly, but the DI container can i
+  nstantiate it.Marking the constructor itself internal (or any non-public modifier)makes the service 
+  unresolvable and crashes the host at startup with"A suitable constructor could not be located". 
+  This is the rule, not arecommendation: if a class is registered in DI through AddSingleton, AddScoped, 
+  AddTransient, or AddHostedService, its constructorMUST be public.
 
 ## 4. Async and cancellation
 
@@ -238,7 +244,7 @@ described in [CONTRIBUTING.md](../CONTRIBUTING.md). Recap:
   initialization helpers.
 - **`ImplicitUsings`:** disabled. Add `using` directives explicitly.
 - **Primary constructors:** preferred for classes with simple DI needs
-  (`BeaconHub(IBeaconServerIdentity svc, ILogger<BeaconHub> log)`).
+  (`BeaconServiceHub(IBeaconServerIdentity svc, ILogger<BeaconHub> log)`).
   Use the `m` prefix when promoting a primary-constructor parameter to a
   field by capturing it in a method.
 - **Collection expressions:** use `[...]` for newly-allocated collections
