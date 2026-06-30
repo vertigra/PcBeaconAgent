@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>PcBeaconAgent.Server.Core</AssemblyName>
     <RootNamespace>PcBeaconAgent.Server.Core</RootNamespace>
-    <NoWarn>$(NoWarn);IL2026</NoWarn>
+    <NoWarn>$(NoWarn);IL2026;NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="3.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
     <!-- Wrapper over the Windows CCD API (SetDisplayConfig).
          LGPL license — allows use in MIT/closed-source projects, but
          technically requires shipping a README noting the library's license. -->
@@ -23,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
     <ProjectReference Include="..\PcBeaconAgent.Contracts\PcBeaconAgent.Contracts.csproj" />
   </ItemGroup>
 
