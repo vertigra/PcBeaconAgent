@@ -55,10 +55,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task Forget(ManagedDevice device)
     {
-        bool confirm = await Shell.Current.CurrentPage.DisplayAlert(
-            "Forget Device",
-            $"Forget {device.Device.MachineName}? The pairing key will be removed.",
-            "Forget", "Cancel");
+        bool confirm = await Shell.Current.CurrentPage.DisplayAlertAsync("Forget Device",
+        $"Forget {device.Device.MachineName}? The pairing key will be removed.",
+        "Forget", "Cancel");
 
         if (!confirm) return;
 
