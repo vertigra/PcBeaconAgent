@@ -6,16 +6,16 @@
 ### 📋 Description
 A solution designed to monitor PC status and manage it remotely. It consists of a background agent service for Windows and cross-platform clients.
 
-The **PcBeaconAgent.Service** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
+The **PcBeaconAgent.Server.Cli** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
 
 ### 💻 CLI Arguments (Silent Mode)
 By default, the agent duplicates all logs directly to the console window. For background or scripted execution, you can completely suppress terminal output using the following flags:
 
     Run in silent mode (logs will be written to the file only):
-    ./PcBeaconAgent.Service.exe --no-console
+    ./PcBeaconAgent.Server.Cli.exe --no-console
 
     or:
-    ./PcBeaconAgent.Service.exe --silent
+    ./PcBeaconAgent.Server.Cli.exe --silent
 
 ### 🧠 System Architecture
 
@@ -93,7 +93,7 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 
 ### ⚙️ Internal Version Processing Mechanics
 
-#### 🖥️ Server (PcBeaconAgent.Service)
+#### 🖥️ Server (PcBeaconAgent.Server.Cli)
 * **Pipeline Output:** A standalone, native Windows x64 single-file executable packed inside a `.zip` archive.
 * **Compilation Flags:** Automated trimming (`-p:PublishTrimmed=true`), dead code elimination, and embedded assembly compilation attributes.
 * **Metadata Extraction:** The pipeline strips the `server.v.` prefix and injects the raw `X.Y.Z` value directly into the executable's `Version` and `AssemblyVersion` properties. You can verify this inside the compiled binary properties in Windows Explorer.

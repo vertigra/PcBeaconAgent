@@ -1,7 +1,7 @@
 # PIN Pairing — Algorithm Reference
 
 This document describes, in detail, how a client authenticates with a
-`PcBeaconAgent.Service` instance for the first time, and how the resulting
+`PcBeaconAgent.Server.Cli` instance for the first time, and how the resulting
 key is stored, reused, and revoked afterward.
 
 For a high-level overview, see the **🔐 Security & Pairing** section in
@@ -31,26 +31,26 @@ process lifetime:
                  ┌─────────────────────┐
    service start │                     │ RegeneratePin()
    ──────────────▶      ACTIVE         │◀────────────────────┐
-                 │  (PIN valid, unused)│                      │
-                 └─────────┬───────────┘                      │
-                           │                                  │
-            correct PIN    │           wrong PIN              │
-            submitted      │           (attempts < 5)         │
-                           │                                  │
-                  ┌────────▼────────┐              ┌──────────┴────────┐
-                  │      USED        │              │  attempts < 5?    │
-                  │ (single-use,      │              │  yes → stay ACTIVE│
-                  │  key returned)    │              │  no  → LOCKED     │
-                  └───────────────────┘              └────────────────────┘
+                 │  (PIN valid, unused)│                     │
+                 └─────────┬───────────┘                     │
+                           │                                 │
+            correct PIN    │           wrong PIN             │
+            submitted      │           (attempts < 5)        │
+                           │                                 │
+                  ┌────────▼──────────┐           ┌──────────┴────────┐
+                  │      USED         │           │  attempts < 5?    │
+                  │ (single-use,      │           │  yes → stay ACTIVE│
+                  │  key returned)    │           │  no  → LOCKED     │
+                  └───────────────────┘           └───────────────────┘
                            │                                  │
                   TTL expired                                 │
                   (5 minutes)                                 │
                            ▼                                  ▼
                   ┌───────────────────────────────────────────┐
-                  │                  INACTIVE                  │
-                  │  (PIN expired / used / locked — /api/pair   │
-                  │   returns 403 until RegeneratePin() is      │
-                  │   called)                                   │
+                  │                  INACTIVE                 │
+                  │  (PIN expired / used / locked — /api/pair │
+                  │   returns 403 until RegeneratePin() is    │
+                  │   called)                                 │
                   └───────────────────────────────────────────┘
 ```
 
@@ -78,20 +78,20 @@ action that can throw `NotPairedException` — is the explicit **"Remember"**
 button press.
 
 ```
-┌─────────────┐        UDP only         ┌──────────────────────┐
-│ Start Scan   │ ───────────────────────▶│ DiscoveredDevices     │
-│ (no auth)    │   IP + Port only         │ (IP, Port; no name/MAC│
+┌─────────────┐        UDP only          ┌-──────────────────────┐
+│ Start Scan  │  ───────────────────────▶│ DiscoveredDevices     │
+│ (no auth)   │    IP + Port only        │ (IP, Port; no name/MAC│
 └─────────────┘                          │  until paired)        │
-                                          └──────────┬─────────────┘
-                                                     │
+                                         └──────────┬────────────┘
+                                                    │
                                           user clicks "Remember"
-                                                     │
-                                                     ▼
+                                                    │
+                                                    ▼
                                        ┌─────────────────────────────┐
-                                       │ ConnectAndFetchDetailsAsync   │   ← first point
-                                       │  (device)                     │     a key is
-                                       │  requires X-Api-Key            │     required
-                                       └──────────┬───────────────────┘
+                                       │ ConnectAndFetchDetailsAsync │   ← first point
+                                       │  (device)                   │     a key is
+                                       │  requires X-Api-Key         │     required
+                                       └──────────┬──────────────────┘
                                                   │
                               key missing/invalid │ key valid
                               ────────────────────┤────────────────────
