@@ -54,7 +54,7 @@
             </CollectionView.EmptyView>
 
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="vm:DisplayDeviceItem">
+                <DataTemplate x:DataType="vm:DisplayInfo">
                     <Border StrokeShape="RoundRectangle 12"
                             BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
