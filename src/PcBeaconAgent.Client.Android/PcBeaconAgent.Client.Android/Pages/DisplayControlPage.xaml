@@ -14,7 +14,7 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, Auto, Auto, *" Padding="20" RowSpacing="12">
+    <Grid RowDefinitions="Auto, Auto, Auto, Auto, *, Auto" Padding="20" RowSpacing="12">
 
         <Label Grid.Row="0" FontSize="16" FontAttributes="Bold" TextColor="White">
             <Label.FormattedText>
@@ -25,27 +25,32 @@
             </Label.FormattedText>
         </Label>
 
-        <Button Grid.Row="1"
+        <Label Grid.Row="1"
+               Text="{Binding CurrentTopology, StringFormat='Topology: {0}'}"
+               FontSize="13" TextColor="#9E9E9E"
+               IsVisible="{Binding HasTopology}"/>
+
+        <Button Grid.Row="2"
                 Text="Refresh"
                 Command="{Binding RefreshCommand}"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                 BackgroundColor="#6750A4" TextColor="White"
                 CornerRadius="10" HeightRequest="44"/>
 
-        <Button Grid.Row="2"
+        <Button Grid.Row="3"
                 Text="Restore All"
                 Command="{Binding RestoreAllCommand}"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                 BackgroundColor="#4CAF50" TextColor="White"
                 CornerRadius="10" HeightRequest="44"/>
 
-        <Label Grid.Row="3"
+        <Label Grid.Row="4"
                Text="{Binding ErrorMessage}"
                TextColor="#F44336" FontSize="13"
                HorizontalOptions="Center" VerticalOptions="Start"
                IsVisible="{Binding HasError}"/>
 
-        <CollectionView Grid.Row="3"
+        <CollectionView Grid.Row="4"
                         ItemsSource="{Binding Displays}"
                         IsVisible="{Binding HasError, Converter={StaticResource InvertedBoolConverter}}">
             <CollectionView.EmptyView>
@@ -69,7 +74,6 @@
                                        IsVisible="{Binding IsActive}"/>
                                 <Label Text="Disabled" FontSize="11" TextColor="#757575"
                                        IsVisible="{Binding IsActive, Converter={StaticResource InvertedBoolConverter}}"/>
-                                <!-- Hint shown when this is the last active display -->
                                 <Label Text="Last active display — cannot disable"
                                        FontSize="11" TextColor="#FF9800"
                                        IsVisible="{Binding IsLastActive}"/>
@@ -89,6 +93,11 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <Label Grid.Row="5"
+               Text="Note: An “Active” display is connected to the GPU but may be physically powered off. Windows reports it as active until the cable is disconnected."
+               FontSize="10" TextColor="#666666"
+               HorizontalOptions="Fill" Margin="0,8,0,0"/>
 
     </Grid>
 </ContentPage>

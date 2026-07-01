@@ -54,6 +54,14 @@ tray host. They stay in the backlog:
       device until the 3-second scan window elapses. Fix: drop the
       overlay, keep the scan state in the toolbar (spinner / disabled
       🔍 icon) so the list stays interactive.
+- [ ] **Audio: empty device list on first request after server start.**
+      `CoreAudioController` (COM) may need a moment to enumerate
+      playback devices after the server process starts. If the client
+      calls `/api/audio/devices` immediately, `GetPlaybackDevices` can
+      return an empty list, and the user has to press Refresh. This
+      hurts first-run UX. Fix: either retry the enumeration a few times
+      inside `AudioController.GetDevices`, or delay the server's
+      "ready" signal until the COM device list is populated.
 
 ## Tier 2 — tray host
 

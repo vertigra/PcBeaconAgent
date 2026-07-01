@@ -21,7 +21,7 @@ namespace PcBeaconAgent.Server.Cli.Endpoints
             {
                 try
                 {
-                    return Results.Json(controller.GetDisplays(), ProjectJsonContext.Default.ListDisplayDeviceDto, statusCode: StatusCodes.Status200OK);
+                    return Results.Json(controller.GetDisplays(), ProjectJsonContext.Default.DisplayListResponseDto, statusCode: StatusCodes.Status200OK);
                 }
                 catch(Exception ex)
                 {

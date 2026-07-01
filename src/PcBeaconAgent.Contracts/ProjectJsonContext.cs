@@ -11,6 +11,7 @@ namespace PcBeaconAgent.Contracts
     [JsonSerializable(typeof(List<AudioDeviceDto>))] 
     [JsonSerializable(typeof(DefaultDeviceDto))]
     [JsonSerializable(typeof(List<DisplayDeviceDto>))]
+    [JsonSerializable(typeof(DisplayListResponseDto))]
     [JsonSerializable(typeof(DisableRequestDto))]
     [JsonSerializable(typeof(MessageDto))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]

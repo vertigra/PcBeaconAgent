@@ -23,7 +23,7 @@ namespace PcBeaconAgent.Server.Core.Services
             mLogger = logger;
         }
 
-        public List<DisplayDeviceDto> GetDisplays()
+        public DisplayListResponseDto GetDisplays()
         {
             try
             {
@@ -34,21 +34,32 @@ namespace PcBeaconAgent.Server.Core.Services
                     .Select(t => t.DisplayTarget)];
 
                 // Build a set of device paths that are the GDI primary
-                // (Position == 0,0). A display is primary if any of its
-                // active paths reports IsGDIPrimary. There is normally
-                // exactly one primary, but the set handles edge cases.
+                // (Position == 0,0). In clone mode, one PathInfo with
+                // IsGDIPrimary = true contains multiple TargetsInfo entries
+                // (both displays share the same source). Taking ALL targets
+                // would mark every display in the clone group as primary.
+                // Instead, take only the first target from each primary path.
                 HashSet<string> primaryDevicePaths = [.. activePaths
                     .Where(p => p.IsGDIPrimary)
-                    .SelectMany(p => p.TargetsInfo)
-                    .Select(t => t.DisplayTarget.DevicePath)];
+                    .Select(p => p.TargetsInfo.FirstOrDefault()?.DisplayTarget.DevicePath)
+                    .Where(path => path != null)!];
 
-                return [.. PathDisplayTarget.GetDisplayTargets()
+                var displays = [.. PathDisplayTarget.GetDisplayTargets()
                     .Where(t => t.IsAvailable)
                     .Select(t => new DisplayDeviceDto(
                         Id: t.DevicePath,
                         FriendlyName: t.FriendlyName,
                         IsActive: activeTargets.Contains(t),
                         IsPrimary: primaryDevicePaths.Contains(t.DevicePath)))];
+
+                // Report the current topology explicitly so the client does
+                // not have to infer it. PathInfo.GetCurrentTopology returns
+                // the Windows CCD topology id (Extend, Clone, Internal-only,
+                // External-only). This is the source of truth — the client
+                // just displays the string.
+                string topology = PathInfo.GetCurrentTopology().ToString();
+
+                return new DisplayListResponseDto(displays, topology);
             }
             catch (Exception ex)
             {

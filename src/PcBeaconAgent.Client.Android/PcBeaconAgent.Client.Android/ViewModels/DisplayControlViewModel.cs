@@ -33,6 +33,11 @@ public partial class DisplayControlViewModel : ObservableObject
 
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
+    [ObservableProperty]
+    public partial string CurrentTopology { get; set; } = string.Empty;
+
+    public bool HasTopology => !string.IsNullOrEmpty(CurrentTopology);
+
     public ObservableCollection<DisplayInfo> Displays { get; } = [];
 
     public DisplayControlViewModel(DeviceStore deviceStore, ILogger<DisplayControlViewModel> logger)
@@ -66,10 +71,12 @@ public partial class DisplayControlViewModel : ObservableObject
 
         try
         {
-            var displays = await mDisplay.GetDisplaysAsync();
+            var response = await mDisplay.GetDisplaysAsync();
+
+            CurrentTopology = response.Topology;
 
             Displays.Clear();
-            foreach (var d in displays)
+            foreach (var d in response.Displays)
                 Displays.Add(new DisplayInfo(d.Id, d.FriendlyName)
                 {
                     IsActive = d.IsActive,

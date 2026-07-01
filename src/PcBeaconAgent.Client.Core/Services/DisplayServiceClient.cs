@@ -25,14 +25,14 @@ namespace PcBeaconAgent.Client.Core.Services
             mBaseUrl = UrlHelpers.BuildUrl(ip, port, "display");
         }
 
-        public async Task<IReadOnlyList<DisplayDeviceDto>> GetDisplaysAsync()
+        public async Task<DisplayListResponseDto> GetDisplaysAsync()
         {
             using var request = CreateRequest(HttpMethod.Get, $"{mBaseUrl}/list");
             using var response = await mClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.ListDisplayDeviceDto);
-            return result ?? [];
+            var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.DisplayListResponseDto);
+            return result ?? new DisplayListResponseDto([], "Unknown");
         }
 
         public async Task DisableAsync(string id)
