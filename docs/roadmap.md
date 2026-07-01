@@ -124,6 +124,13 @@ note before implementation; the entries here are reminders.
 - [ ] **Light / Dark theme in the MAUI client.**
       Trivial: `Application.Current!.UserAppTheme = AppInfo.RequestedTheme`.
       Add a manual override in Settings stored in `Preferences`.
+- [ ] Cross-device clipboard & file transfer.A lightweight "AirDrop-like" feature: 
+      send arbitrary text,files, or clipboard contents from the Android client to themanaged PC, 
+      and vice versa. Today the user works around thisby sending links/files to "Saved Messages" 
+      in Telegram — aworkable but clumsy cross-device hop. A nativePOST /api/transfer endpoint 
+      (text payloads first, binaryfiles later) with a SignalR push event to notify the receivingside 
+      would make the PcBeaconAgent a single-purpose tool forthe "I just need to get this string to my PC" 
+      problem. The trayhost is the natural receiver surface for incoming transfers.
 
 ## Tier 4 — security hardening (deferred until TLS lands)
 

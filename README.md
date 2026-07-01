@@ -94,11 +94,11 @@ The project utilizes automated deployment pipelines configured via **GitHub Acti
 
 ### 🏷️ Release Tag Formats
 
-To trigger a release workflow, push a tag matching one of the strict naming conventions below from your local terminal:
+To trigger a release workflow, push a tag matching one of the strict naming conventions below from your local terminal. The version number `X.Y.Z` must follow the [versioning rules](CONTRIBUTING.md#versioning) defined in `CONTRIBUTING.md`.
 
 | Component | Tag Pattern | Target Workflow | Release Name Example |
 | :--- | :--- | :--- | :--- |
-| **Windows Service (Server)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
+| **Server (Console Host)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
 | **Android App (Client)** | `client.v.X.Y.Z` | `publish-client.yml` | `Client Android Release X.Y.Z` |
 
 > 💡 **Branch & Tag Isolation Note:** Git tags point directly to a specific commit, completely independent of branches. You can safely create and push release tags from development branches (e.g., `devel`). GitHub Actions will check out and compile the exact commit historical snapshot bound to that tag, provided that the corresponding workflow `.yml` file exists within that commit.

@@ -39,12 +39,15 @@ namespace PcBeaconAgent.Server.Core.Services
                 // (both displays share the same source). Taking ALL targets
                 // would mark every display in the clone group as primary.
                 // Instead, take only the first target from each primary path.
-                HashSet<string> primaryDevicePaths = [.. activePaths
-                    .Where(p => p.IsGDIPrimary)
-                    .Select(p => p.TargetsInfo.FirstOrDefault()?.DisplayTarget.DevicePath)
-                    .Where(path => path != null)!];
+                HashSet<string> primaryDevicePaths = [];
+                foreach (var path in activePaths.Where(p => p.IsGDIPrimary))
+                {
+                    var targetDevicePath = path.TargetsInfo.FirstOrDefault()?.DisplayTarget.DevicePath;
+                    if (targetDevicePath is not null)
+                        primaryDevicePaths.Add(targetDevicePath);
+                }
 
-                var displays = [.. PathDisplayTarget.GetDisplayTargets()
+                List<DisplayDeviceDto> displays = [.. PathDisplayTarget.GetDisplayTargets()
                     .Where(t => t.IsAvailable)
                     .Select(t => new DisplayDeviceDto(
                         Id: t.DevicePath,
@@ -190,6 +193,8 @@ namespace PcBeaconAgent.Server.Core.Services
         }
 
 
+        #region Structured logging definitions (allocation-free)
+
         private static readonly Action<ILogger, Exception?> LogGetDisplaysErrorAction =
             LoggerMessage.Define(LogLevel.Error, new EventId(100, "GetDisplaysError"), "Failed to retrieve display list.");
 
@@ -215,6 +220,8 @@ namespace PcBeaconAgent.Server.Core.Services
         private void LogDisplayError(string path, Exception ex) => LogDisplayErrorAction(mLogger, path, ex);
         private void LogRestoringTopology(string topology) => LogRestoringTopologyAction(mLogger, topology, null);
         private void LogRestoreError(Exception ex) => LogRestoreErrorAction(mLogger, ex);
+
+        #endregion
 
     }
 }
