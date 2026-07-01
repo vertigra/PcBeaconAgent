@@ -2,6 +2,7 @@
 using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Security.Cryptography;
+using System.Threading;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
@@ -14,6 +15,14 @@ namespace PcBeaconAgent.Server.Core.Services
         private DateTime mPinExpiry;
         private bool mPinUsed;
         private int mFailedAttempts;
+
+        // Guards all mutable pairing state (mPin, mPinExpiry, mPinUsed,
+        // mFailedAttempts). PairingService is a singleton, and /api/pair
+        // can be called concurrently — without this lock two simultaneous
+        // requests could both read mPinUsed == false, both validate the
+        // PIN, and both return the ApiKey (PIN not single-use), or lose
+        // the failed-attempt counter increments.
+        private readonly Lock mStateLock = new();
 
         // Maximum failed PIN attempts before pairing locks out.
         // Prevents brute-forcing 10^6 combinations over the LAN.
@@ -36,35 +45,41 @@ namespace PcBeaconAgent.Server.Core.Services
         /// <inheritdoc />
         public string? ValidateAndExchangePin(string pin)
         {
-            if (!IsPairingActive)
+            lock (mStateLock)
             {
-                LogPairingInactive();
-                return null;
+                if (!IsPairingActive)
+                {
+                    LogPairingInactive();
+                    return null;
+                }
+
+                if (!string.Equals(pin.Trim(), mPin, StringComparison.Ordinal))
+                {
+                    mFailedAttempts++;
+                    int remaining = MaxFailedAttempts - mFailedAttempts;
+
+                    if (remaining > 0)
+                        LogInvalidPin(remaining);
+                    else
+                        LogPairingLocked();
+
+                    return null;
+                }
+
+                // PIN is correct — single-use: invalidate immediately.
+                mPinUsed = true;
+                LogPairingSuccess();
+                return mIdentity.ApiKey;
             }
-
-            if (!string.Equals(pin.Trim(), mPin, StringComparison.Ordinal))
-            {
-                mFailedAttempts++;
-                int remaining = MaxFailedAttempts - mFailedAttempts;
-
-                if (remaining > 0)
-                    LogInvalidPin(remaining);
-                else
-                    LogPairingLocked();
-
-                return null;
-            }
-
-            // PIN is correct — single-use: invalidate immediately.
-            mPinUsed = true;
-            LogPairingSuccess();
-            return mIdentity.ApiKey;
         }
 
         /// <inheritdoc />
         public void RegeneratePin()
         {
-            GeneratePin();
+            lock (mStateLock)
+            {
+                GeneratePin();
+            }
         }
 
         private void GeneratePin()
