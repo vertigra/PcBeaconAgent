@@ -19,19 +19,59 @@ By default, the agent duplicates all logs directly to the console window. For ba
 
 ### 🧠 System Architecture
 
-The project is structured into distinct layers to ensure loose coupling, high testability, and a clear separation of concerns.
+The solution is a monorepo with five projects arranged in a strict
+layering. The dependency arrows never point from server to client —
+both shared libraries depend on `Contracts`, never on each other.
 
-* **Core (`PcBeaconAgent.Client.Core`)**: Contains business logic, service abstractions (e.g., `IPreferencesService`), and domain models (`BeaconDevice`). This layer is platform-agnostic and does not depend on specific UI frameworks.
-* **Platform Implementation**: Contains concrete platform-specific implementations of the Core interfaces (e.g., `MauiPreferencesService` implemented for Android).
-* **Dependency Injection**: Service lifecycles are managed via the MAUI DI container in `MauiProgram.cs`, facilitating easy testing and future-proofing.
+```
+Contracts (DTOs, ProjectJsonContext — no dependencies)
+    ↑              ↑
+    │              │
+Client.Core    Server.Core
+    ↑              ↑
+    │              │
+Android        Server.Cli
+```
+
+* **`PcBeaconAgent.Contracts`** — wire contracts only (DTOs,
+  `BeaconDevice`, `ProjectJsonContext`). No dependencies beyond the BCL.
+  Referenced by both `Client.Core` and `Server.Core`.
+* **`PcBeaconAgent.Client.Core`** — client-side business logic and UI
+  support types (`ManagedDevice`, `SignalService`, `AudioServiceClient`,
+  `DisplayServiceClient`, `PairingServiceClient`, `BeaconClient`).
+  References `Contracts`.
+* **`PcBeaconAgent.Server.Core`** — server-side business logic
+  (`BeaconServiceHub`, `BeaconServer`, `BeaconServerIdentity`,
+  `PairingService`, `DisplayController`, `AudioController`). Holds the
+  `FrameworkReference Microsoft.AspNetCore.App` and the Windows-only
+  NuGet packages (`WindowsDisplayAPI`, `AudioSwitcher`). References
+  `Contracts`.
+* **`PcBeaconAgent.Server.Cli`** — the console host (composition root,
+  HTTP endpoint mapping, `BeaconBackgroundService`). References
+  `Server.Core`.
+* **`PcBeaconAgent.Client.Android`** — the .NET MAUI Android client.
+  References `Client.Core`.
 
 **Data Flow & Security:**
-The architecture follows a clear "Discovery-to-RPC" lifecycle to maintain security while ensuring network flexibility.
+The architecture follows a clear "Discovery-to-RPC" lifecycle to
+maintain security while ensuring network flexibility.
 
-1. **UDP Beacon (Discovery)**: The scanner identifies network devices via UDP broadcast. At this stage, only raw `IP:Port` metadata is available. This phase is unauthenticated.
-2. **SignalR RPC (Request-Response)**: Once the user initiates a connection ("Remember"), the client establishes a persistent SignalR connection. Instead of event-based push patterns, the system uses **authenticated RPC calls** (`InvokeAsync`) to fetch device metadata. This ensures deterministic state management and tight control over data exposure.
-3. **Storage Sync & Indexing**: Device identities are persisted via `IDeviceStorageService`. To maintain integrity, the system uses a **thread-safe index** (`IndexLock`) of stored keys, allowing for granular management and preventing data corruption during concurrent pairing operations.
-4. **Identity Tracking**: The `BeaconDevice` model utilizes robust `Equals`/`GetHashCode` overrides to ensure consistent identity tracking even if the network configuration changes.
+1. **UDP Beacon (Discovery)**: The scanner identifies network devices
+   via UDP broadcast. At this stage, only raw `IP:Port` metadata is
+   available. This phase is unauthenticated.
+2. **SignalR RPC (Request-Response)**: Once the user initiates a
+   connection ("Remember"), the client establishes a persistent SignalR
+   connection. Instead of event-based push patterns, the system uses
+   **authenticated RPC calls** (`InvokeAsync`) to fetch device metadata.
+   This ensures deterministic state management and tight control over
+   data exposure.
+3. **Storage Sync & Indexing**: Device identities are persisted via
+   `IDeviceStorageService`. The client maintains a thread-safe index of
+   stored API keys, allowing for granular management and preventing data
+   corruption during concurrent pairing operations.
+4. **Identity Tracking**: The `BeaconDevice` model utilizes robust
+   `Equals`/`GetHashCode` overrides to ensure consistent identity
+   tracking even if the network configuration changes.
  
 ### 🔐 Security & Pairing
 The system utilizes a secure, PIN-based pairing mechanism to ensure that only authorized clients can access device metadata or control signals. The pairing process is designed with the "Principle of Least Privilege":
@@ -116,3 +156,4 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 
 * Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on commit message formats, types, and scopes.
 * For coding conventions (naming, logging, DI, async, JSON), see the **[Coding Guidelines](docs/coding-guidelines.md)**.
+* For the project roadmap and planned features, see the **[Roadmap](docs/roadmap.md)**.

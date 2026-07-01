@@ -8,43 +8,52 @@ get a commit reference when they ship.
 Items are grouped by priority tier, not by category. Within a tier the
 order is loose.
 
-## Tier 1 — polish the existing surface
+## Tier 1 — polish the existing surface ✅ DONE
 
-These items are blocking "the current functionality is solid" and should
-land before the tray host or any new feature module.
+All Tier 1 items shipped. The existing functionality (audio, display,
+pairing, discovery) is now solid: primary display is handled correctly,
+PIN generation is cryptographically secure, the pairing critical
+section is locked, and the client HTTP layer is factored out into
+service clients.
 
-- [x] **Display: disable the primary display correctly.**
-      Currently `ApplyPathInfos` rejects the remaining path set because
-      no display is promoted to primary. Need to set the primary flag on
-      the surviving display before applying. Tracked in the display-fix
-      thread.
+- [x] **Display: disable the primary display correctly.** (`facff1b`)
+      When the disabled display was the GDI primary, the first surviving
+      display is rebuilt as a new `PathInfo` with `Position = Point.Empty`
+      so `ApplyPathInfos` accepts the path set.
+- [x] **Display: last-active-display guard.** (`0809f7f`)
+      `DisableByDevicePath` throws a clear error before calling
+      `ApplyPathInfos` when the remaining path set is empty. The client
+      blocks the Disable button via `IsLastActive` and shows the server's
+      explanation if the check is bypassed.
+- [x] **Refactor `PairingViewModel` → `PairingServiceClient`.** (`362fdf0`)
+      `PairingViewModel` no longer touches `HttpClient` directly; all
+      pairing HTTP calls go through `IPairingServiceClient` (+
+      `PairingServiceClient`, `PairingHttpException`).
+- [x] **`RandomNumberGenerator` for the PIN.** (`618ede8`)
+      `PairingService.GeneratePin` uses `RandomNumberGenerator.GetInt32`
+      (CSPRNG) instead of `Random.Shared`.
+- [x] **`lock` in `PairingService`.** (`3ea94aa`)
+      `ValidateAndExchangePin` and `RegeneratePin` are wrapped in
+      `lock(mStateLock)` — concurrent `/api/pair` calls can no longer
+      both succeed or lose the failed-attempt counter.
+- [x] **Display: mark the primary display in the mobile client.** (`a9190ae`)
+      `DisplayDeviceDto` carries `IsPrimary`; the server computes it via
+      `PathInfo.IsGDIPrimary`; the client shows a gold "★ Primary" badge.
+- [x] **Refactor: extract `DisplayInfo` into its own file.** (`edaa47e`)
+      `DisplayDeviceItem` moved out of `DisplayControlViewModel.cs` and
+      renamed to `DisplayInfo`.
+
+### Tier 1 carry-over (non-blocking, deferred to a future pass)
+
+These items were identified during Tier 1 work but are not blocking the
+tray host. They stay in the backlog:
+
 - [ ] **Discovery: do not block found devices while scanning.**
       `DiscoveryPage` shows a full-area overlay while `IsScanning` is
       true, so the user cannot tap "Remember" on an already-discovered
       device until the 3-second scan window elapses. Fix: drop the
       overlay, keep the scan state in the toolbar (spinner / disabled
-      🔍 icon) so the list stays interactive. The overlay was originally
-      added because there was no feedback at all; a toolbar indicator
-      is enough and does not block interaction.
-- [ ] **Refactor `PairingViewModel` → `PairingServiceClient`.**
-      `PairingViewModel` creates `HttpClient` via `IHttpClientFactory`
-      inline in three places, which breaks the layering established by
-      `AudioServiceClient` / `DisplayServiceClient`. Extract a
-      stateless `PairingServiceClient` (+ `IPairingServiceClient`) in
-      `Client.Core/Services` that takes `ip`/`port` per call (pairing
-      happens before the device is in `ManagedDevices`, so the client
-      cannot be bound to a single device like the other service clients).
-- [ ] **`RandomNumberGenerator` for the PIN.**
-      `PairingService.GeneratePin` uses `Random.Shared.Next`, which is
-      not a CSPRNG. Switch to `RandomNumberGenerator.GetInt32(100_000,
-      1_000_000)` so a captured broadcast cannot be used to predict the
-      next PIN.
-- [ ] **`lock` in `PairingService.ValidateAndExchangePin`.**
-      The singleton's mutable fields (`mPin`, `mPinUsed`,
-      `mFailedAttempts`) are read and written without synchronization.
-      Two concurrent `/api/pair` calls can both succeed (PIN not marked
-      used) or lose the failed-attempt counter. Wrap the validate+exchange
-      critical section in a `lock`.
+      🔍 icon) so the list stays interactive.
 
 ## Tier 2 — tray host
 
