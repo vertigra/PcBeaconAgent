@@ -106,7 +106,7 @@ public partial class DisplayControlViewModel : ObservableObject
         catch (Exception ex)
         {
             mLogger.LogWarning(ex, "Failed to disable display {Id} for {Ip}", item.Id, DeviceIp);
-            ErrorMessage = "Could not disable the display.";
+            ErrorMessage = string.IsNullOrEmpty(ex.Message) ? "Could not disable the display." : ex.Message;
         }
         finally
         {

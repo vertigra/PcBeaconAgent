@@ -2,6 +2,7 @@
 using PcBeaconAgent.Contracts.Models;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -98,13 +99,12 @@ namespace PcBeaconAgent.Server.Core.Services
 
         private static void DisableByDevicePath(string devicePath)
         {
-            var activePaths = PathInfo.GetActivePaths();
+            PathInfo[] activePaths = PathInfo.GetActivePaths();
 
             var remaining = activePaths
-                .Where(p => !p.TargetsInfo.Any(t => t.DisplayTarget.DevicePath == devicePath))
-                .ToArray();
+                .Where(p => !p.TargetsInfo.Any(t => t.DisplayTarget.DevicePath == devicePath)).ToList();
 
-            if (remaining.Length == activePaths.Length)
+            if (remaining.Count == activePaths.Length)
             {
                 throw new InvalidOperationException(
                     $"Display '{devicePath}' was not found among active paths after topology adjustment.");
@@ -114,10 +114,32 @@ namespace PcBeaconAgent.Server.Core.Services
             // PathChangeException: "Invalid paths information"). At least one
             // display must remain active, so refuse the operation explicitly
             // with a clear message instead of letting the native call fail.
-            if (remaining.Length == 0)
+            if (remaining.Count == 0)
             {
                 throw new InvalidOperationException(
                     "Cannot disable the last active display. At least one display must remain active.");
+            }
+
+            // Windows CCD treats the source surface at desktop position (0, 0)
+            // as the primary display (PathInfo.IsGDIPrimary => Position.IsEmpty).
+            // If the display being disabled was the primary, the remaining paths
+            // no longer designate a primary, and ApplyPathInfos rejects them
+            // with "Invalid paths information". Promote the first surviving
+            // display to primary by rebuilding its PathInfo with Position = (0,0).
+            // PathInfo is immutable, so we reconstruct it from its own properties.
+            var disabledPath = activePaths.FirstOrDefault(
+                p => p.TargetsInfo.Any(t => t.DisplayTarget.DevicePath == devicePath));
+
+            if (disabledPath != null && disabledPath.IsGDIPrimary)
+            {
+                var promoted = remaining[0];
+                var promotedPath = new PathInfo(
+                    promoted.DisplaySource,
+                    Point.Empty,
+                    promoted.Resolution,
+                    promoted.PixelFormat,
+                    promoted.TargetsInfo);
+                remaining[0] = promotedPath;
             }
 
             PathInfo.ApplyPathInfos(remaining, allowChanges: true, saveToDatabase: true);

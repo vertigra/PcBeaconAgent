@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/coding-guidelines.md" />
+    <File Path="docs/pairing-reference.md" />
+    <File Path="docs/roadmap.md" />
+  </Folder>
   <Folder Name="/other/">
     <File Path=".github/workflows/generate-pr-description.yml" />
     <File Path=".github/workflows/publish-client.yml" />
@@ -6,8 +11,6 @@
     <File Path=".gitignore" />
     <File Path="cliff.toml" />
     <File Path="CONTRIBUTING.md" />
-    <File Path="docs/coding-guidelines.md" />
-    <File Path="docs/pairing-reference.md" />
     <File Path="LICENSE.txt" />
     <File Path="README.md" />
   </Folder>
