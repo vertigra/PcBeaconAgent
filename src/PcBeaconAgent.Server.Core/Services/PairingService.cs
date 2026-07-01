@@ -22,13 +22,14 @@ namespace PcBeaconAgent.Server.Core.Services
         // long enough for the user to read it from the console.
         private static readonly TimeSpan PinLifetime = TimeSpan.FromMinutes(5);
 
-        public bool IsPairingActive => !mPinUsed && mFailedAttempts < MaxFailedAttempts && DateTime.UtcNow < mPinExpiry;
-
+        public bool IsPairingActive => !string.IsNullOrEmpty(mPin) &&
+                                       !mPinUsed &&
+                                       mFailedAttempts < MaxFailedAttempts &&
+                                       DateTime.UtcNow < mPinExpiry;
         public PairingService(IBeaconServerIdentity identity, ILogger<PairingService> logger)
         {
             mIdentity = identity;
             mLogger = logger;
-            GeneratePin();
         }
 
         /// <inheritdoc />

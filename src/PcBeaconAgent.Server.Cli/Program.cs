@@ -53,10 +53,11 @@ namespace PcBeaconAgent.Server.Cli
 
                 var app = builder.Build();
 
-                // Force eager instantiation of PairingService so the PIN appears in
-                // the log before the first request, not lazily on the first /api/pair call.
-                // Without this, a Windows Service running in silent mode would generate
-                // the PIN only when the client connects — too late for the user to see it.
+                // Force eager instantiation of PairingService so its singleton
+                // state is ready before the first request. The PIN itself is
+                // not generated here — the Android client auto-requests
+                // /api/pair/regenerate when PairingPage appears, so a startup
+                // PIN would be immediately discarded.
                 _ = app.Services.GetRequiredService<IPairingService>();
 
                 app.MapSignalHubs();

@@ -28,9 +28,19 @@ reference to consult when modifying the pairing code itself.
 process lifetime:
 
 ```
+                 ┌───────────────────────────────────────────┐
+   service start │                  INACTIVE                 │
+   ──────────────▶  (no PIN generated — /api/pair returns    │
+                 │   403 until RegeneratePin() is called)    │
+                 └───────────────────┬───────────────────────┘
+                                     │
+                          RegeneratePin()  (auto-called by the
+                          Android client when PairingPage appears,
+                          or manually via /api/pair/regenerate)
+                                     │
+                                     ▼
                  ┌─────────────────────┐
-   service start │                     │ RegeneratePin()
-   ──────────────▶      ACTIVE         │◀────────────────────┐
+                 │      ACTIVE         │◀────────────────────┐
                  │  (PIN valid, unused)│                     │
                  └─────────┬───────────┘                     │
                            │                                 │
@@ -46,18 +56,24 @@ process lifetime:
                   TTL expired                                 │
                   (5 minutes)                                 │
                            ▼                                  ▼
-                  ┌───────────────────────────────────────────┐
-                  │                  INACTIVE                 │
-                  │  (PIN expired / used / locked — /api/pair │
-                  │   returns 403 until RegeneratePin() is    │
-                  │   called)                                 │
-                  └───────────────────────────────────────────┘
+                     ┌───────────────────────────────────────────┐
+                     │                  INACTIVE                 │
+                     │  (PIN expired / used / locked — /api/pair │
+                     │   returns 403 until RegeneratePin() is    │
+                     │   called)                                 │
+                     └───────────────────────────────────────────┘
 ```
 
-`IsPairingActive` is `true` only while: not used, attempts `< 5`, and
-`DateTime.UtcNow < expiry`. Any other state returns `403 Forbidden` from
-`/api/pair`, distinct from `401 Unauthorized` (wrong PIN, but pairing is
-still active).
+The service starts INACTIVE — no PIN is generated at construction.
+The Android client auto-requests `/api/pair/regenerate` when the
+PairingPage appears, so a startup PIN would be immediately discarded
+and only add noise to the log. Direct `/api/pair` callers (e.g. curl)
+must call `/api/pair/regenerate` first.
+
+`IsPairingActive` is `true` only while: PIN is non-empty, not used,
+attempts `< 5`, and `DateTime.UtcNow < expiry`. Any other state
+returns `403 Forbidden` from `/api/pair`, distinct from `401
+Unauthorized` (wrong PIN, but pairing is still active).
 
 ---
 
