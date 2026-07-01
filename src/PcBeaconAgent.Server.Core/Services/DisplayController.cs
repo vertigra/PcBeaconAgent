@@ -27,16 +27,28 @@ namespace PcBeaconAgent.Server.Core.Services
         {
             try
             {
-                HashSet<PathDisplayTarget> activeTargets = [.. PathInfo.GetActivePaths()
+                var activePaths = PathInfo.GetActivePaths();
+
+                HashSet<PathDisplayTarget> activeTargets = [.. activePaths
                     .SelectMany(p => p.TargetsInfo)
                     .Select(t => t.DisplayTarget)];
+
+                // Build a set of device paths that are the GDI primary
+                // (Position == 0,0). A display is primary if any of its
+                // active paths reports IsGDIPrimary. There is normally
+                // exactly one primary, but the set handles edge cases.
+                HashSet<string> primaryDevicePaths = [.. activePaths
+                    .Where(p => p.IsGDIPrimary)
+                    .SelectMany(p => p.TargetsInfo)
+                    .Select(t => t.DisplayTarget.DevicePath)];
 
                 return [.. PathDisplayTarget.GetDisplayTargets()
                     .Where(t => t.IsAvailable)
                     .Select(t => new DisplayDeviceDto(
                         Id: t.DevicePath,
                         FriendlyName: t.FriendlyName,
-                        IsActive: activeTargets.Contains(t)))];
+                        IsActive: activeTargets.Contains(t),
+                        IsPrimary: primaryDevicePaths.Contains(t.DevicePath)))];
             }
             catch (Exception ex)
             {

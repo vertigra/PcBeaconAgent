@@ -59,7 +59,12 @@
                             BackgroundColor="#212121" Margin="0,5" Padding="15">
                         <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                <Label Text="{Binding FriendlyName}" FontSize="15" TextColor="White"/>
+                                <HorizontalStackLayout Spacing="6">
+                                    <Label Text="{Binding FriendlyName}" FontSize="15" TextColor="White"/>
+                                    <Label Text="★ Primary" FontSize="11" TextColor="#FFD700" FontAttributes="Bold"
+                                           IsVisible="{Binding IsPrimary}"
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
                                 <Label Text="Active" FontSize="11" TextColor="#4CAF50"
                                        IsVisible="{Binding IsActive}"/>
                                 <Label Text="Disabled" FontSize="11" TextColor="#757575"

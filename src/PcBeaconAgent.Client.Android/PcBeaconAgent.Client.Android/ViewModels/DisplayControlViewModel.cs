@@ -70,7 +70,11 @@ public partial class DisplayControlViewModel : ObservableObject
 
             Displays.Clear();
             foreach (var d in displays)
-                Displays.Add(new DisplayDeviceItem(d.Id, d.FriendlyName) { IsActive = d.IsActive });
+                Displays.Add(new DisplayDeviceItem(d.Id, d.FriendlyName)
+                {
+                    IsActive = d.IsActive,
+                    IsPrimary = d.IsPrimary
+                });
 
             // Mark the last remaining active display so the UI can block
             // the Disable button. Windows refuses to disable the final
@@ -146,6 +150,15 @@ public partial class DisplayDeviceItem(string id, string friendlyName) : Observa
 
     [ObservableProperty]
     public partial bool IsActive { get; set; }
+
+    /// <summary>
+    /// True when this display is the GDI primary (desktop position 0,0).
+    /// Shown as a badge in the UI so the user understands which display
+    /// is the main one. Disabling the primary promotes another display
+    /// to primary automatically (server-side fix in DisplayController).
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsPrimary { get; set; }
 
     /// <summary>
     /// True when this is the only active display remaining. The UI uses
