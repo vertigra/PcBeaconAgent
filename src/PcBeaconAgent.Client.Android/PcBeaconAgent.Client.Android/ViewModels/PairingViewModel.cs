@@ -1,15 +1,14 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Core.Constants;
+using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Messages;
-using PcBeaconAgent.Contracts;
-using PcBeaconAgent.Contracts.Models;
 using System;
+using System.Net;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Android.ViewModels;
@@ -19,7 +18,7 @@ namespace PcBeaconAgent.Client.Android.ViewModels;
 public partial class PairingViewModel : ObservableObject
 {
     private readonly IPreferencesService mPrefs;
-    private readonly IHttpClientFactory mHttpFactory;
+    private readonly IPairingServiceClient mPairingClient;
 
     [ObservableProperty]
     public partial string ServerIp { get; set; } = string.Empty;
@@ -39,10 +38,10 @@ public partial class PairingViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
-    public PairingViewModel(IPreferencesService prefs, IHttpClientFactory httpFactory)
+    public PairingViewModel(IPreferencesService prefs, IPairingServiceClient pairingClient)
     {
         mPrefs = prefs;
-        mHttpFactory = httpFactory;
+        mPairingClient = pairingClient;
     }
 
     [RelayCommand]
@@ -60,46 +59,35 @@ public partial class PairingViewModel : ObservableObject
 
         try
         {
-            HttpClient client = mHttpFactory.CreateClient();
-            string url = $"http://{ServerIp}:{ServerPort}/api/pair";
-            HttpResponseMessage response = await client.PostAsJsonAsync(url, new PairRequestDto(Pin), ProjectJsonContext.Default.PairRequestDto);
+            var result = await mPairingClient.PairAsync(ServerIp, ServerPort, Pin);
 
-            if (response.IsSuccessStatusCode)
+            if (result?.ApiKey is { Length: > 0 } key)
             {
-                var result = await response.Content.ReadFromJsonAsync(ProjectJsonContext.Default.PairResponseDto);
+                await mPrefs.SetSecureAsync(StorageKeys.ApiKeyFor(ServerIp), key);
 
-                if (result?.ApiKey is { Length: > 0 } key)
-                {
-                    await mPrefs.SetSecureAsync(StorageKeys.ApiKeyFor(ServerIp), key);
+                WeakReferenceMessenger.Default.Send(new PairingSucceededMessage(ServerIp));
 
-                    WeakReferenceMessenger.Default.Send(new PairingSucceededMessage(ServerIp));
-
-                    
-                    // Pop the PairingPage from the navigation stack before switching
-                    // tabs. Without this, GoToAsync("//MainPage") changes the active
-                    // tab but leaves PairingPage on top of DiscoveryPage — when the
-                    // user returns to the Discovery tab they see the stale pairing
-                    // form instead of the device list.
-                    await Shell.Current.GoToAsync("..");
-                    await Shell.Current.GoToAsync("//MainPage");
-                }
-                else
-                {
-                    ErrorMessage = "Server returned an empty key. Try again.";
-                }
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                ErrorMessage = "Wrong PIN or pairing locked. Check the server log.";
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-            {
-                ErrorMessage = "Pairing mode is inactive. PIN may have expired — regenerate on the server.";
+                // Pop the PairingPage from the navigation stack before switching
+                // tabs. Without this, GoToAsync("//MainPage") changes the active
+                // tab but leaves PairingPage on top of DiscoveryPage — when the
+                // user returns to the Discovery tab they see the stale pairing
+                // form instead of the device list.
+                await Shell.Current.GoToAsync("..");
+                await Shell.Current.GoToAsync("//MainPage");
             }
             else
             {
-                ErrorMessage = $"Unexpected server error ({(int)response.StatusCode}).";
+                ErrorMessage = "Server returned an empty key. Try again.";
             }
+        }
+        catch (PairingHttpException ex)
+        {
+            ErrorMessage = ex.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized => "Wrong PIN or pairing locked. Check the server log.",
+                HttpStatusCode.Forbidden => "This PIN has already been used or expired. Tap 'Regenerate PIN' to request a new one.",
+                _ => ex.Message
+            };
         }
         catch (HttpRequestException ex)
         {
@@ -124,11 +112,8 @@ public partial class PairingViewModel : ObservableObject
 
         try
         {
-            var client = mHttpFactory.CreateClient();
-            var url = $"http://{ServerIp}:{ServerPort}/api/pair/regenerate";
-            var response = await client.PostAsync(url, null);
-
-            ErrorMessage = response.IsSuccessStatusCode
+            bool ok = await mPairingClient.RegeneratePinAsync(ServerIp, ServerPort);
+            ErrorMessage = ok
                 ? "New PIN generated. Check the server console."
                 : "Failed to regenerate PIN.";
         }
@@ -159,11 +144,8 @@ public partial class PairingViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var client = mHttpFactory.CreateClient();
-            var url = $"http://{ServerIp}:{ServerPort}/api/pair/regenerate";
-            var response = await client.PostAsync(url, null);
-
-            if (!response.IsSuccessStatusCode)
+            bool ok = await mPairingClient.RegeneratePinAsync(ServerIp, ServerPort);
+            if (!ok)
             {
                 ErrorMessage = "Could not request a fresh PIN. Try 'Regenerate PIN' manually.";
             }

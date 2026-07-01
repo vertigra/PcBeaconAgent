@@ -31,6 +31,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<IBeaconClient, BeaconClient>();
         builder.Services.AddSingleton<ISignalService, SignalService>();
+        builder.Services.AddSingleton<IPairingServiceClient, PairingServiceClient>();
 
         builder.Services.AddSingleton<App>();
 
