@@ -13,11 +13,19 @@ order is loose.
 These items are blocking "the current functionality is solid" and should
 land before the tray host or any new feature module.
 
-- [ ] **Display: disable the primary display correctly.**
+- [x] **Display: disable the primary display correctly.**
       Currently `ApplyPathInfos` rejects the remaining path set because
       no display is promoted to primary. Need to set the primary flag on
       the surviving display before applying. Tracked in the display-fix
       thread.
+- [ ] **Discovery: do not block found devices while scanning.**
+      `DiscoveryPage` shows a full-area overlay while `IsScanning` is
+      true, so the user cannot tap "Remember" on an already-discovered
+      device until the 3-second scan window elapses. Fix: drop the
+      overlay, keep the scan state in the toolbar (spinner / disabled
+      🔍 icon) so the list stays interactive. The overlay was originally
+      added because there was no feedback at all; a toolbar indicator
+      is enough and does not block interaction.
 - [ ] **Refactor `PairingViewModel` → `PairingServiceClient`.**
       `PairingViewModel` creates `HttpClient` via `IHttpClientFactory`
       inline in three places, which breaks the layering established by
