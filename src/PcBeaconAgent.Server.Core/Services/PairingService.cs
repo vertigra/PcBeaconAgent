@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Server.Core.Interfaces;
 using System;
+using System.Security.Cryptography;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
@@ -69,7 +70,11 @@ namespace PcBeaconAgent.Server.Core.Services
         private void GeneratePin()
         {
             // 6 digits: 100 000–999 999, easy to type on a phone keyboard.
-            mPin = Random.Shared.Next(100_000, 1_000_000).ToString();
+            // RandomNumberGenerator is a CSPRNG — Random.Shared (xoshiro)
+            // is not, and while the 5-attempt lockout makes brute-force
+            // impractical anyway, using a CSPRNG removes any doubt about
+            // predictability of the next PIN from observed previous PINs.
+            mPin = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
             mPinExpiry = DateTime.UtcNow.Add(PinLifetime);
             mPinUsed = false;
             mFailedAttempts = 0;
