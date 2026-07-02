@@ -13,6 +13,7 @@
         <ResourceDictionary>
             <conv:BoolToColorConverter x:Key="BoolToColorConverter" />
             <conv:BoolToTextConverter x:Key="BoolToTextConverter" />
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -46,20 +47,26 @@
                             </VerticalStackLayout>
 
                             <!-- Row 2: Action buttons (icons) -->
-                            <Grid Grid.Row="2" ColumnDefinitions="*, *, *, Auto" ColumnSpacing="10" Margin="0,5,0,0">
+                            <!-- Audio and Display buttons are disabled when the
+                                 device is offline — they require a live HTTP
+                                 connection. Forget stays enabled because it
+                                 only removes the local pairing key. -->
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *, Auto" ColumnSpacing="10" Margin="0,5,0,0">
                                 <Button Grid.Column="0" Text="🔊"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageAudioCommand}"
                                         CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding IsOnline}"
                                         BackgroundColor="#6750A4" TextColor="White"
                                         HeightRequest="44" CornerRadius="8"
                                         FontSize="20" Padding="0"/>
                                 <Button Grid.Column="1" Text="🖥️"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageDisplayCommand}"
                                         CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding IsOnline}"
                                         BackgroundColor="#6750A4" TextColor="White"
                                         HeightRequest="44" CornerRadius="8"
                                         FontSize="20" Padding="0"/>
-                                <Button Grid.Column="3" Text="🗑️"
+                                <Button Grid.Column="2" Text="🗑️"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}"
                                         CommandParameter="{Binding .}"
                                         BackgroundColor="#B3261E" TextColor="White"

@@ -62,6 +62,17 @@ tray host. They stay in the backlog:
       hurts first-run UX. Fix: either retry the enumeration a few times
       inside `AudioController.GetDevices`, or delay the server's
       "ready" signal until the COM device list is populated.
+- [ ] **Managed device: disable control buttons when offline.**
+      The Audio / Display / Forget buttons on a `ManagedDevice` card
+      are always tappable, even when `IsOnline == false`. Tapping them
+      while offline results in a connection error. Disable the control
+      buttons (grey them out) when the device is offline, so the user
+      gets immediate visual feedback that the device is unreachable.
+- [ ] **Display: improve topology UI.**
+      The current topology indicator is a plain text label ("Topology:
+      Extend"). Consider replacing it with monitor icons (e.g. two
+      overlapping rectangles for Clone, side-by-side for Extend) for
+      better visual clarity.
 
 ## Tier 2 — tray host
 
