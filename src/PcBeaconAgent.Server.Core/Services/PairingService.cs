@@ -82,6 +82,15 @@ namespace PcBeaconAgent.Server.Core.Services
             }
         }
 
+        /// <inheritdoc />
+        public string GetCurrentPin()
+        {
+            lock (mStateLock)
+            {
+                return IsPairingActive ? mPin : string.Empty;
+            }
+        }
+
         private void GeneratePin()
         {
             // 6 digits: 100 000–999 999, easy to type on a phone keyboard.

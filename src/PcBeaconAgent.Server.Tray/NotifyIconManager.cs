@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Server.Core.Interfaces;
+using PcBeaconAgent.Server.Tray.ViewModels;
+using PcBeaconAgent.Server.Tray.Views;
 using System;
-using System.Drawing;
 using System.Linq;
 using System.Windows;
 using Forms = System.Windows.Forms;
@@ -24,7 +25,7 @@ public class NotifyIconManager : IDisposable
         mServices = services;
         mNotifyIcon = new Forms.NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = System.Drawing.SystemIcons.Application,
             Visible = true,
             Text = "PcBeaconAgent"
         };
@@ -49,11 +50,14 @@ public class NotifyIconManager : IDisposable
         var mainWindow = Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
         if (mainWindow == null)
         {
-            mainWindow = new MainWindow(mServices);
-            Application.Current.MainWindow = mainWindow;
+            var pairingService = mServices.GetRequiredService<IPairingService>();
+            var viewModel = new MainViewModel(pairingService);
+            mainWindow = new MainWindow { DataContext = viewModel };
         }
 
-        mainWindow.RefreshPin();
+        if (mainWindow.DataContext is MainViewModel vm)
+            vm.RefreshPin();
+
         mainWindow.Show();
         mainWindow.Activate();
     }
@@ -63,7 +67,6 @@ public class NotifyIconManager : IDisposable
         var pairing = mServices.GetService<IPairingService>();
         pairing?.RegeneratePin();
 
-        // Update the tooltip with the new PIN status.
         mNotifyIcon.Text = pairing?.IsPairingActive == true
             ? "PcBeaconAgent — PIN active"
             : "PcBeaconAgent — No active PIN";

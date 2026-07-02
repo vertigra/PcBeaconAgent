@@ -21,5 +21,12 @@
         /// Call this when the user requests re-pairing.
         /// </summary>
         void RegeneratePin();
+
+        /// <summary>
+        /// Returns the current PIN string, or an empty string if no PIN is
+        /// active (expired, used, or not yet generated). Used by the tray
+        /// host to display the PIN in the UI.
+        /// </summary>
+        string GetCurrentPin();
     }
 }

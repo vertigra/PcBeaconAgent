@@ -10,7 +10,6 @@ using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Extensions;
 using Serilog;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -19,31 +18,25 @@ namespace PcBeaconAgent.Server.Tray;
 public partial class App : Application
 {
     private WebApplication? mWebApp;
-    private CancellationTokenSource? mShutdownCts;
     private NotifyIconManager? mTrayIcon;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        mShutdownCts = new CancellationTokenSource();
-
         try
         {
-            // Boot the ASP.NET Core pipeline in the background.
             await StartWebHostAsync();
 
-            // Show the tray icon.
             mTrayIcon = new NotifyIconManager(mWebApp!.Services);
             mTrayIcon.Show();
 
-            // Force eager instantiation of PairingService.
             _ = mWebApp.Services.GetRequiredService<IPairingService>();
         }
         catch (Exception ex)
         {
             Log.Fatal(ex, "PcBeaconAgent Tray fatal error on startup");
-            MessageBox.Show($"Critical error: {ex.Message}", "PcBeaconAgent",
+            System.Windows.MessageBox.Show($"Critical error: {ex.Message}", "PcBeaconAgent",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
@@ -94,11 +87,5 @@ public partial class App : Application
 
         Log.CloseAndFlush();
         base.OnExit(e);
-    }
-
-    public new void Shutdown(int exitCode = 0)
-    {
-        mShutdownCts?.Cancel();
-        base.Shutdown(exitCode);
     }
 }
