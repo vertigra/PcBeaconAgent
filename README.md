@@ -4,9 +4,27 @@
 [![Publish Android Client Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
 
 ### 📋 Description
-A solution designed to monitor PC status and manage it remotely. It consists of a background agent service for Windows and cross-platform clients.
+PcBeaconAgent is a remote control solution for Windows PCs. A lightweight
+agent runs on the PC and exposes a local Web API + SignalR hub over the
+LAN. An Android client discovers the agent via UDP broadcast, pairs via
+a one-time PIN, and then can:
 
-The **PcBeaconAgent.Server.Cli** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
+- **Switch audio output devices** — list playback devices, change the
+  default output, without touching the Windows sound settings.
+- **Control displays** — list connected monitors, disable a specific
+  display, restore the original topology. The server correctly handles
+  primary-display promotion and clone/extend modes.
+- **Monitor online status** — the client sees which PCs are reachable
+  in real time, and control buttons disable automatically when a device
+  goes offline.
+
+The server is a self-contained .NET 10 single-file executable. The
+Android client is a .NET MAUI app. All traffic is plain HTTP (LAN-only);
+TLS is planned for a future release.
+
+The **PcBeaconAgent.Server.Cli** is a console host that runs the Web API
+and SignalR hub. A WPF tray host (`PcBeaconAgent.Server.Tray`) is planned
+to show the pairing PIN in a window and auto-start on user login.
 
 ### 💻 CLI Arguments (Silent Mode)
 By default, the agent duplicates all logs directly to the console window. For background or scripted execution, you can completely suppress terminal output using the following flags:

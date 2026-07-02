@@ -84,7 +84,12 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
 - References `Server.Core` — reuses pairing, beacon, controllers, hub.
 - Auto-start on user login via `HKCU\Software\Microsoft\Windows\
   CurrentVersion\Run` (no admin rights needed).
-- Single-instance mutex.
+- Single-instance mutex. The mutex must be shared between the tray host
+  and the console host — if the tray is running, `Server.Cli` must
+  refuse to start (and vice versa). Both hosts bind the same UDP
+  discovery port and the same HTTP port, so a second instance would
+  crash on socket bind anyway; the mutex gives a clean error message
+  instead of an obscure `AddressAlreadyInUse`.
 - PIN shown in a window and in the tray tooltip, not only in the log
   file. New PIN appears immediately after a successful pairing or after
   the user clicks "Regenerate PIN" in the tray menu.
