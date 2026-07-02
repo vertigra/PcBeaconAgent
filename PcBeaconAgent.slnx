@@ -22,5 +22,6 @@
     <Project Path="src/PcBeaconAgent.Contracts/PcBeaconAgent.Contracts.csproj" />
     <Project Path="src/PcBeaconAgent.Server.Cli/PcBeaconAgent.Server.Cli.csproj" />
     <Project Path="src/PcBeaconAgent.Server.Core/PcBeaconAgent.Server.Core.csproj" />
+    <Project Path="src/PcBeaconAgent.Server.Tray/PcBeaconAgent.Server.Tray.csproj" />
   </Folder>
 </Solution>

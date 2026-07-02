@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PcBeaconAgent.Server.Core.Configuration;
@@ -6,17 +6,13 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.IO;
-using System.Linq;
 
-namespace PcBeaconAgent.Server.Cli.Extensions;
+namespace PcBeaconAgent.Server.Tray.Extensions;
 
-public static class ConfigurationExtensions
+public static class TrayConfigurationExtensions
 {
-    public static AppSettings AddApplicationConfiguration(this IHostApplicationBuilder builder, string[] args)
+    public static AppSettings AddApplicationConfiguration(this IHostApplicationBuilder builder)
     {
-        var argsList = args?.ToList() ?? [];
-        bool silentMode = argsList.Contains("--no-console") || argsList.Contains("--silent");
-
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
@@ -31,20 +27,14 @@ public static class ConfigurationExtensions
 
         var minimumLevel = ParseMinimumLevel(configuration["Logging:LogLevel:Default"]);
 
-        var loggerConfig = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(minimumLevel)
-            .WriteTo.File(fullLogPath, rollingInterval: RollingInterval.Day);
-
-        if (!silentMode)
-        {
-            loggerConfig.WriteTo.Console();
-        }
-
-        Log.Logger = loggerConfig.CreateLogger();
+            .WriteTo.File(fullLogPath, rollingInterval: RollingInterval.Day)
+            .CreateLogger();
 
         builder.Services.AddSerilog();
 
-        Log.Information("PcBeaconAgent initialized. Silent mode: {SilentMode}", silentMode);
+        Log.Information("PcBeaconAgent Tray initialized.");
 
         return settings;
     }

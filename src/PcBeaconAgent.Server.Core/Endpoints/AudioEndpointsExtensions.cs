@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Contracts.Models;
-using PcBeaconAgent.Server.Cli.Configuration;
-using PcBeaconAgent.Server.Cli.Extensions;
+using PcBeaconAgent.Server.Core.Configuration;
+using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Services;
 
-namespace PcBeaconAgent.Server.Cli.Endpoints
+namespace PcBeaconAgent.Server.Core.Endpoints
 {
     public static class AudioEndpointsExtensions
     {

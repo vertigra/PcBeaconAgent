@@ -6,7 +6,7 @@ using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Contracts.Models;
 using PcBeaconAgent.Server.Core.Interfaces;
 
-namespace PcBeaconAgent.Server.Cli.Endpoints
+namespace PcBeaconAgent.Server.Core.Endpoints
 {
     public static class PairingEndpointsExtensions
     {

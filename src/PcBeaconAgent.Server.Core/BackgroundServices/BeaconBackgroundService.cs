@@ -3,9 +3,9 @@ using PcBeaconAgent.Server.Core.Interfaces;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PcBeaconAgent.Server.Cli.BackgroundServices
+namespace PcBeaconAgent.Server.Core.BackgroundServices
 {
-    internal class BeaconBackgroundService(IBeaconServer mServer) : BackgroundService
+    public class BeaconBackgroundService(IBeaconServer mServer) : BackgroundService
     {
         protected override Task ExecuteAsync(CancellationToken stoppingToken) => mServer.StartAsync(stoppingToken);
     }
