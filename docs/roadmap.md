@@ -62,12 +62,11 @@ tray host. They stay in the backlog:
       hurts first-run UX. Fix: either retry the enumeration a few times
       inside `AudioController.GetDevices`, or delay the server's
       "ready" signal until the COM device list is populated.
-- [ ] **Managed device: disable control buttons when offline.**
-      The Audio / Display / Forget buttons on a `ManagedDevice` card
-      are always tappable, even when `IsOnline == false`. Tapping them
-      while offline results in a connection error. Disable the control
-      buttons (grey them out) when the device is offline, so the user
-      gets immediate visual feedback that the device is unreachable.
+- [x] **Managed device: disable control buttons when offline.** (`4a8f407`)
+      The Audio and Display buttons on a `ManagedDevice` card are now
+      disabled (`IsEnabled=false`) when the device is offline. The Forget
+      button stays enabled — forgetting a device only removes the local
+      pairing key and does not require a live connection.
 - [ ] **Display: improve topology UI.**
       The current topology indicator is a plain text label ("Topology:
       Extend"). Consider replacing it with monitor icons (e.g. two
@@ -103,6 +102,15 @@ note before implementation; the entries here are reminders.
       ViGEmBus driver to be installed on the host (bundled in the
       installer). Target use case: navigating gamepad-friendly apps
       (Steam Big Picture, media centers, emulators).
+- [ ] **Device info card with local cache.**
+      Reduce the managed-device card to the essentials (machine name,
+      IP, interface type) and move the rest into a detail page opened
+      via an "Info" button. The detail page shows full hardware info
+      (CPU, RAM, OS version, GPU, disk, etc.) fetched from the server.
+      The info is cached locally so it is available even when the
+      device is offline; when the device is online, the info is
+      refreshed automatically. Requires a new server endpoint
+      (`GET /api/system/info`) and a local cache in `ManagedDevice`.
 - [ ] **Virtual keyboard / mouse (`SendInput`).**
       Two sub-modes: Unicode text entry (layout-independent, for typing
       into fields) and scancode hotkeys (layout-dependent, for macro

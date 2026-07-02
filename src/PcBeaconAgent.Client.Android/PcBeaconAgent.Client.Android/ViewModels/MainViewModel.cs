@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls;
@@ -37,16 +37,25 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         var device = ManagedDevices.FirstOrDefault(d => d.Device.IpAddress == ipAddress);
         if (device != null)
+        {
             device.IsOnline = isOnline;
+            // CanExecute depends on ManagedDevice.IsOnline, which just
+            // changed. Notify the commands so the buttons re-evaluate
+            // their enabled state.
+            ManageAudioCommand.NotifyCanExecuteChanged();
+            ManageDisplayCommand.NotifyCanExecuteChanged();
+        }
     }
 
-    [RelayCommand]
+    private static bool CanManageDevice(ManagedDevice? device) => device is { IsOnline: true };
+
+    [RelayCommand(CanExecute = nameof(CanManageDevice))]
     public async Task ManageAudio(ManagedDevice device)
     {
         await Shell.Current.GoToAsync($"{nameof(AudioControlPage)}?ip={device.Device.IpAddress}");
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManageDevice))]
     public async Task ManageDisplay(ManagedDevice device)
     {
         await Shell.Current.GoToAsync($"{nameof(DisplayControlPage)}?ip={device.Device.IpAddress}");
