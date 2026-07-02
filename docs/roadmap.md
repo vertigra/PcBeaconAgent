@@ -62,11 +62,13 @@ tray host. They stay in the backlog:
       hurts first-run UX. Fix: either retry the enumeration a few times
       inside `AudioController.GetDevices`, or delay the server's
       "ready" signal until the COM device list is populated.
-- [x] **Managed device: disable control buttons when offline.** (`4a8f407`)
+- [x] **Managed device: disable control buttons when offline.** (`9c9c130`)
       The Audio and Display buttons on a `ManagedDevice` card are now
-      disabled (`IsEnabled=false`) when the device is offline. The Forget
-      button stays enabled — forgetting a device only removes the local
-      pairing key and does not require a live connection.
+      disabled (`IsEnabled=false`) when the device is offline, with a
+      `VisualStateManager` `Disabled` state (Opacity 0.3, grey background)
+      for clear visual feedback. The Forget button stays enabled —
+      forgetting a device only removes the local pairing key and does not
+      require a live connection.
 - [ ] **Display: improve topology UI.**
       The current topology indicator is a plain text label ("Topology:
       Extend"). Consider replacing it with monitor icons (e.g. two

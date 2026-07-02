@@ -135,6 +135,33 @@ register it in this table.
 - Services receive options via constructor injection — never read
   `AppSettings` directly outside of the composition root.
 
+### 3.4 Commands: `CanExecute` vs `IsEnabled`
+
+`[RelayCommand(CanExecute = ...)]` does **not** re-evaluate automatically
+when a property of an **object parameter** changes. `CommandManager` only
+tracks top-level `PropertyChanged` on the ViewModel, not on nested objects
+passed as `CommandParameter`.
+
+Rules:
+
+- **Use `CanExecute`** when the gating condition is a simple property on
+  the ViewModel itself (e.g. `IsBusy`). Pair it with
+  `[NotifyCanExecuteChangedFor(nameof(XxxCommand))]` on the property so
+  the source generator wires the notification.
+- **Do NOT use `CanExecute`** when the gating condition is a property on
+  a data object (e.g. `ManagedDevice.IsOnline`) passed as a parameter.
+  The command will not re-evaluate when that property changes, and
+  calling `NotifyCanExecuteChanged()` manually from an event handler is
+  fragile and misses the initial render.
+- **Use `IsEnabled="{Binding Property}"`** in XAML for per-item state
+  gating (e.g. a button inside a `DataTemplate` bound to an item's
+  `IsOnline`). `ObservableProperty` notifies the binding automatically
+  and the button updates instantly.
+- **Pair `IsEnabled` with `VisualStateManager`** when the default
+  disabled appearance is not obvious enough on the current theme. Define
+  a `Disabled` visual state with explicit `Opacity` and `BackgroundColor`
+  so the user can tell at a glance which buttons are active.
+
 ### 3.4 Assembly boundaries and visibility
 
 The solution is a monorepo: `PcBeaconAgent.Client.Core` is shared by both
