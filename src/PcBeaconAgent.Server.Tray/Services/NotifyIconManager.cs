@@ -6,6 +6,7 @@ using PcBeaconAgent.Server.Tray.Views;
 using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace PcBeaconAgent.Server.Tray.Services;
 
@@ -18,10 +19,10 @@ public class NotifyIconManager : IDisposable
     public NotifyIconManager(IServiceProvider services)
     {
         mServices = services;
+
         mTrayIcon = new TaskbarIcon
         {
-            IconSource = System.Windows.Media.Imaging.BitmapFrame.Create(
-                new Uri("pack://application:,,,/beacon.ico", UriKind.Absolute)),
+            IconSource = new BitmapImage(new Uri("pack://application:,,,/beacon.ico", UriKind.Absolute)),
             ToolTipText = "PcBeaconAgent",
             Visibility = Visibility.Visible
         };
@@ -36,7 +37,7 @@ public class NotifyIconManager : IDisposable
 
     public void ShowNotification(string title, string message)
     {
-        mTrayIcon.ShowBalloonTip(title, message, Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+        mTrayIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
     }
 
     private void OnTrayMouseDoubleClick(object? sender, RoutedEventArgs e)

@@ -37,8 +37,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Fatal(ex, "PcBeaconAgent Tray fatal error on startup");
-            System.Windows.MessageBox.Show($"Critical error: {ex.Message}", "PcBeaconAgent",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Critical error: {ex.Message}", "PcBeaconAgent", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
     }
