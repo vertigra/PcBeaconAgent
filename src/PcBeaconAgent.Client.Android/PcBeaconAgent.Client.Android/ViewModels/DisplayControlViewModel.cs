@@ -34,6 +34,7 @@ public partial class DisplayControlViewModel : ObservableObject
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTopology))]
     public partial string CurrentTopology { get; set; } = string.Empty;
 
     public bool HasTopology => !string.IsNullOrEmpty(CurrentTopology);
