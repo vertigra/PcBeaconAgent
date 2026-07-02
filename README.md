@@ -1,9 +1,9 @@
 # PcBeaconAgentService <img src=".github/assets/beacon.png" align="right" height="45" alt="PcBeaconAgent Logo">
 
-[![Server Release](https://img.shields.io/github/v/release/vertigra/PcBeaconAgent?filter=server*%2A&label=Server&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
-[![Client Release](https://img.shields.io/github/v/release/vertigra/PcBeaconAgent?filter=client*%2A&label=Client&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
-[![Publish Server Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml/badge.svg?branch=devel)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
-[![Publish Android Client Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml/badge.svg?branch=devel)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
+[![Server Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=server.v.*&label=Server&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
+[![Client Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=client.v.*&label=Client&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
+[![Publish Server Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
+[![Publish Android Client Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
 
 ### 📋 Description
 PcBeaconAgent is a remote control solution for Windows PCs. A lightweight
