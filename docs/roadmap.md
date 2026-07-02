@@ -48,12 +48,13 @@ service clients.
 These items were identified during Tier 1 work but are not blocking the
 tray host. They stay in the backlog:
 
-- [ ] **Discovery: do not block found devices while scanning.**
-      `DiscoveryPage` shows a full-area overlay while `IsScanning` is
-      true, so the user cannot tap "Remember" on an already-discovered
-      device until the 3-second scan window elapses. Fix: drop the
-      overlay, keep the scan state in the toolbar (spinner / disabled
-      🔍 icon) so the list stays interactive.
+- [x] **Discovery: do not block found devices while scanning.**
+      `DiscoveryPage` previously showed a full-area overlay while
+      `IsScanning` was true, blocking the user from tapping "Remember"
+      on already-discovered devices. Fixed: replaced the overlay with a
+      thin scanning banner at the top of the page (ActivityIndicator +
+      "Scanning for devices..." label) that does not cover the list. The
+      device list stays interactive throughout the scan.
 - [ ] **Audio: empty device list on first request after server start.**
       `CoreAudioController` (COM) may need a moment to enumerate
       playback devices after the server process starts. If the client
