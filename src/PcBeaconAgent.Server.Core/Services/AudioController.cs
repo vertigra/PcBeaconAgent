@@ -5,24 +5,63 @@ using PcBeaconAgent.Contracts.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
     public class AudioController
     {
-        private readonly CoreAudioController mController = new();
         private readonly ILogger<AudioController> mLogger;
+        private CoreAudioController? mController;
+        private readonly object mControllerLock = new();
 
         public AudioController(ILogger<AudioController> logger)
         {
             mLogger = logger;
         }
 
+        /// <summary>
+        /// Lazily creates and caches the CoreAudioController. The COM
+        /// subsystem may need a moment to enumerate playback devices after
+        /// the server process starts. If the controller is created too early,
+        /// GetPlaybackDevices returns an empty list. We create the controller
+        /// on the first call (not in the constructor) and retry the device
+        /// enumeration a few times before giving up.
+        /// </summary>
+        private CoreAudioController GetController()
+        {
+            lock (mControllerLock)
+            {
+                mController ??= new CoreAudioController();
+                return mController;
+            }
+        }
+
         public List<AudioDeviceDto> GetDevices()
         {
             try
             {
-                return mController.GetPlaybackDevices(DeviceState.Active)
+                var controller = GetController();
+
+                // Retry the enumeration up to 5 times with 500ms delay.
+                // CoreAudioController (COM) can return an empty list on the
+                // first call right after process start, before WASAPI
+                // finishes initialising the device collection.
+                for (int attempt = 0; attempt < 5; attempt++)
+                {
+                    var devices = controller.GetPlaybackDevices(DeviceState.Active)
+                        .Select(d => new AudioDeviceDto(d.Id.ToString(), d.FullName))
+                        .ToList();
+
+                    if (devices.Count > 0)
+                        return devices;
+
+                    if (attempt < 4)
+                        Thread.Sleep(500);
+                }
+
+                // Return whatever we got (possibly empty) after all retries.
+                return controller.GetPlaybackDevices(DeviceState.Active)
                     .Select(d => new AudioDeviceDto(d.Id.ToString(), d.FullName))
                     .ToList();
             }
@@ -37,7 +76,7 @@ namespace PcBeaconAgent.Server.Core.Services
         {
             try
             {
-                var device = mController.DefaultPlaybackDevice;
+                var device = GetController().DefaultPlaybackDevice;
                 return device != null
                     ? new DefaultDeviceDto(device.Id.ToString())
                     : null;
@@ -53,7 +92,7 @@ namespace PcBeaconAgent.Server.Core.Services
         {
             try
             {
-                var device = mController.GetPlaybackDevices()
+                var device = GetController().GetPlaybackDevices()
                     .FirstOrDefault(d => d.Id.ToString() == id);
 
                 if (device == null)

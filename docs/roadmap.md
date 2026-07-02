@@ -55,14 +55,13 @@ tray host. They stay in the backlog:
       thin scanning banner at the top of the page (ActivityIndicator +
       "Scanning for devices..." label) that does not cover the list. The
       device list stays interactive throughout the scan.
-- [ ] **Audio: empty device list on first request after server start.**
+- [x] **Audio: empty device list on first request after server start.**
       `CoreAudioController` (COM) may need a moment to enumerate
-      playback devices after the server process starts. If the client
-      calls `/api/audio/devices` immediately, `GetPlaybackDevices` can
-      return an empty list, and the user has to press Refresh. This
-      hurts first-run UX. Fix: either retry the enumeration a few times
-      inside `AudioController.GetDevices`, or delay the server's
-      "ready" signal until the COM device list is populated.
+      playback devices after the server process starts. Fixed: the
+      controller is now created lazily on the first call (not in the
+      constructor), and `GetDevices` retries the enumeration up to 5
+      times with 500ms delay before returning. This gives WASAPI time
+      to finish initialising the device collection.
 - [x] **Managed device: disable control buttons when offline.** (`9c9c130`)
       The Audio and Display buttons on a `ManagedDevice` card are now
       disabled (`IsEnabled=false`) when the device is offline, with a
@@ -93,6 +92,17 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
 - The existing `Server.Cli` keeps working for headless / scripted /
   debug scenarios. Both hosts share the same `Server.Core` business
   logic, so no behaviour drift.
+- [ ] **Add unit and integration tests.**
+      The project currently has no test projects. Add a
+      `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the
+      pure-logic services: `PairingService` (PIN state machine, lockout,
+      expiry, thread safety), `BeaconServerIdentity` (key loading /
+      generation). Add a `PcBeaconAgent.Client.Core.Tests` project
+      covering `DeviceStore`, `DeviceFactory`, `SignalService` (mocked
+      SignalR). Controllers that wrap Windows-only COM / CCD APIs
+      (`AudioController`, `DisplayController`) are tested manually on
+      a real machine — mark them with `[Trait("Category", "RequiresWindows")]`
+      so CI can skip them.
 
 ## Tier 3 — new feature modules
 
