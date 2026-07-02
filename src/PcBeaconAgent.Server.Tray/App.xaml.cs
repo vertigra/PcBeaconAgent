@@ -8,6 +8,7 @@ using PcBeaconAgent.Server.Core.Endpoints;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Extensions;
+using PcBeaconAgent.Server.Tray.Services;
 using Serilog;
 using System;
 using System.Threading.Tasks;

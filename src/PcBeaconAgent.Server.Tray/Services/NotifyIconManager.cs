@@ -1,3 +1,4 @@
+using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.ViewModels;
@@ -5,47 +6,45 @@ using PcBeaconAgent.Server.Tray.Views;
 using System;
 using System.Linq;
 using System.Windows;
-using Forms = System.Windows.Forms;
 
-namespace PcBeaconAgent.Server.Tray;
+namespace PcBeaconAgent.Server.Tray.Services;
 
-/// <summary>
-/// Manages the NotifyIcon (tray icon) and its context menu.
-/// Uses WinForms NotifyIcon inside a WPF application — this is the
-/// standard approach because WPF does not have a built-in tray icon.
-/// </summary>
 public class NotifyIconManager : IDisposable
 {
-    private readonly Forms.NotifyIcon mNotifyIcon;
+    private readonly TaskbarIcon mTrayIcon;
     private readonly IServiceProvider mServices;
     private bool mDisposed;
 
     public NotifyIconManager(IServiceProvider services)
     {
         mServices = services;
-        mNotifyIcon = new Forms.NotifyIcon
+        mTrayIcon = new TaskbarIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
-            Visible = true,
-            Text = "PcBeaconAgent"
+            IconSource = System.Windows.Media.Imaging.BitmapFrame.Create(
+                new Uri("pack://application:,,,/beacon.ico", UriKind.Absolute)),
+            ToolTipText = "PcBeaconAgent",
+            Visibility = Visibility.Visible
         };
 
-        var contextMenu = new Forms.ContextMenuStrip();
-        contextMenu.Items.Add("Show PIN", null, OnShowPin);
-        contextMenu.Items.Add("Regenerate PIN", null, OnRegeneratePin);
-        contextMenu.Items.Add(new Forms.ToolStripSeparator());
-        contextMenu.Items.Add("Exit", null, OnExit);
-
-        mNotifyIcon.ContextMenuStrip = contextMenu;
-        mNotifyIcon.DoubleClick += OnShowPin;
+        mTrayIcon.TrayMouseDoubleClick += OnTrayMouseDoubleClick;
     }
 
     public void Show()
     {
-        mNotifyIcon.Visible = true;
+        mTrayIcon.Visibility = Visibility.Visible;
     }
 
-    private void OnShowPin(object? sender, EventArgs e)
+    public void ShowNotification(string title, string message)
+    {
+        mTrayIcon.ShowBalloonTip(title, message, Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+    }
+
+    private void OnTrayMouseDoubleClick(object? sender, RoutedEventArgs e)
+    {
+        ShowPinWindow();
+    }
+
+    public void ShowPinWindow()
     {
         var mainWindow = Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
         if (mainWindow == null)
@@ -62,19 +61,19 @@ public class NotifyIconManager : IDisposable
         mainWindow.Activate();
     }
 
-    private void OnRegeneratePin(object? sender, EventArgs e)
+    public void RegeneratePin()
     {
         var pairing = mServices.GetService<IPairingService>();
         pairing?.RegeneratePin();
 
-        mNotifyIcon.Text = pairing?.IsPairingActive == true
+        mTrayIcon.ToolTipText = pairing?.IsPairingActive == true
             ? "PcBeaconAgent — PIN active"
             : "PcBeaconAgent — No active PIN";
 
-        OnShowPin(sender, e);
+        ShowPinWindow();
     }
 
-    private void OnExit(object? sender, EventArgs e)
+    public void Exit()
     {
         Application.Current.Shutdown(0);
     }
@@ -83,8 +82,7 @@ public class NotifyIconManager : IDisposable
     {
         if (!mDisposed)
         {
-            mNotifyIcon.Visible = false;
-            mNotifyIcon.Dispose();
+            mTrayIcon.Dispose();
             mDisposed = true;
         }
     }
