@@ -39,23 +39,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
         if (device != null)
         {
             device.IsOnline = isOnline;
-            // CanExecute depends on ManagedDevice.IsOnline, which just
-            // changed. Notify the commands so the buttons re-evaluate
-            // their enabled state.
-            ManageAudioCommand.NotifyCanExecuteChanged();
-            ManageDisplayCommand.NotifyCanExecuteChanged();
         }
     }
 
-    private static bool CanManageDevice(ManagedDevice? device) => device is { IsOnline: true };
-
-    [RelayCommand(CanExecute = nameof(CanManageDevice))]
+    [RelayCommand]
     public async Task ManageAudio(ManagedDevice device)
     {
         await Shell.Current.GoToAsync($"{nameof(AudioControlPage)}?ip={device.Device.IpAddress}");
     }
 
-    [RelayCommand(CanExecute = nameof(CanManageDevice))]
+    [RelayCommand]
     public async Task ManageDisplay(ManagedDevice device)
     {
         await Shell.Current.GoToAsync($"{nameof(DisplayControlPage)}?ip={device.Device.IpAddress}");
