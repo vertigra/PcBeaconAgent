@@ -97,6 +97,17 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
 - The existing `Server.Cli` keeps working for headless / scripted /
   debug scenarios. Both hosts share the same `Server.Core` business
   logic, so no behaviour drift.
+- [ ] **CI/CD for Server.Tray.**
+      The `publish-server.yml` workflow should build and publish
+      `Server.Tray` alongside `Server.Cli` — both are server-side
+      executables and should be released together under the same
+      `server.v.X.Y.Z` tag. The release artifact should include both
+      ZIPs (or a combined ZIP).
+- [ ] **Documentation for Server.Tray.**
+      Update `README.md` with a section describing the tray host: what
+      it is, how to run it, how it differs from `Server.Cli`, and how
+      to configure auto-start. Update the CI/CD section to mention
+      that the server release now includes both hosts.
 - [ ] **Add unit and integration tests.**
       The project currently has no test projects. Add a
       `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the

@@ -6,6 +6,7 @@ using PcBeaconAgent.Server.Tray.Views;
 using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace PcBeaconAgent.Server.Tray.Services;
@@ -28,6 +29,27 @@ public class NotifyIconManager : IDisposable
         };
 
         mTrayIcon.TrayMouseDoubleClick += OnTrayMouseDoubleClick;
+
+        // Build context menu via code-behind. Hardcodet's TaskbarIcon
+        // supports ContextMenu in XAML, but since the icon is created in
+        // code (not XAML), we build the menu here.
+        var contextMenu = new ContextMenu();
+
+        var showPinItem = new MenuItem { Header = "Show PIN" };
+        showPinItem.Click += (_, _) => ShowPinWindow();
+        contextMenu.Items.Add(showPinItem);
+
+        var regenerateItem = new MenuItem { Header = "Regenerate PIN" };
+        regenerateItem.Click += (_, _) => RegeneratePin();
+        contextMenu.Items.Add(regenerateItem);
+
+        contextMenu.Items.Add(new Separator());
+
+        var exitItem = new MenuItem { Header = "Exit" };
+        exitItem.Click += (_, _) => Exit();
+        contextMenu.Items.Add(exitItem);
+
+        mTrayIcon.ContextMenu = contextMenu;
     }
 
     public void Show()
