@@ -1,4 +1,3 @@
-using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +9,7 @@ using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Extensions;
 using PcBeaconAgent.Server.Tray.ViewModels;
+using PcBeaconAgent.Server.Tray.Views;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -20,7 +20,7 @@ namespace PcBeaconAgent.Server.Tray;
 public partial class App : Application
 {
     private WebApplication? mWebApp;
-    private TaskbarIcon? mTrayIcon;
+    private TrayWindow? mTrayWindow;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -33,9 +33,10 @@ public partial class App : Application
             var pairingService = mWebApp!.Services.GetRequiredService<IPairingService>();
             var trayViewModel = new TrayViewModel(pairingService, this);
 
-            mTrayIcon = (TaskbarIcon)FindResource("TrayIcon");
-            mTrayIcon.DataContext = trayViewModel;
-            mTrayIcon.Visibility = Visibility.Visible;
+            mTrayWindow = new TrayWindow { DataContext = trayViewModel };
+            // The window stays hidden — it only hosts the TaskbarIcon.
+            mTrayWindow.Show();
+            mTrayWindow.Hide();
 
             _ = mWebApp.Services.GetRequiredService<IPairingService>();
         }
@@ -83,7 +84,7 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        mTrayIcon?.Dispose();
+        mTrayWindow?.Close();
 
         if (mWebApp != null)
         {
