@@ -3,6 +3,7 @@ using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
@@ -36,11 +37,16 @@ namespace PcBeaconAgent.Server.Core.Services
                                        !mPinUsed &&
                                        mFailedAttempts < MaxFailedAttempts &&
                                        DateTime.UtcNow < mPinExpiry;
+
+        public event Action<PairingStateEventArgs>? PairingStateChanged;
+
         public PairingService(IBeaconServerIdentity identity, ILogger<PairingService> logger)
         {
             mIdentity = identity;
             mLogger = logger;
         }
+
+        
 
         /// <inheritdoc />
         public string? ValidateAndExchangePin(string pin)
@@ -69,6 +75,12 @@ namespace PcBeaconAgent.Server.Core.Services
                 // PIN is correct — single-use: invalidate immediately.
                 mPinUsed = true;
                 LogPairingSuccess();
+
+                PairingStateChanged?.Invoke(new PairingStateEventArgs
+                {
+                    State = PairingState.Used
+                });
+
                 return mIdentity.ApiKey;
             }
         }
@@ -105,6 +117,31 @@ namespace PcBeaconAgent.Server.Core.Services
 
             // Prominent separator makes the PIN easy to spot in a scrolling log.
             LogNewPin(mPin, (int)PinLifetime.TotalMinutes);
+
+            // Notify subscribers (tray host) that a new PIN is available.
+            PairingStateChanged?.Invoke(new PairingStateEventArgs
+            {
+                State = PairingState.Generated,
+                Pin = mPin,
+                ExpiryUtc = mPinExpiry
+            });
+
+            // Schedule an expiry notification. If the PIN is not used within
+            // the lifetime window, fire the Expired event so the tray can
+            // hide the balloon.
+            _ = Task.Delay(PinLifetime).ContinueWith(_ =>
+            {
+                lock (mStateLock)
+                {
+                    if (!mPinUsed && DateTime.UtcNow >= mPinExpiry)
+                    {
+                        PairingStateChanged?.Invoke(new PairingStateEventArgs
+                        {
+                            State = PairingState.Expired
+                        });
+                    }
+                }
+            });
         }
 
         #region Structured logging definitions (allocation-free)

@@ -1,4 +1,6 @@
-﻿namespace PcBeaconAgent.Server.Core.Interfaces
+﻿using System;
+
+namespace PcBeaconAgent.Server.Core.Interfaces
 {
     /// <summary>
     /// Manages a single-use, time-limited PIN for initial client pairing.
@@ -28,5 +30,27 @@
         /// host to display the PIN in the UI.
         /// </summary>
         string GetCurrentPin();
+
+        /// <summary>
+        /// Raised when the PIN state changes: a new PIN is generated,
+        /// the PIN is used (successful pairing), or the PIN expires.
+        /// The tray host subscribes to show/hide balloon notifications.
+        /// </summary>
+        event Action<PairingStateEventArgs>? PairingStateChanged;
+    }
+
+    public class PairingStateEventArgs : EventArgs
+    {
+        public PairingState State { get; init; }
+        public string Pin { get; init; } = string.Empty;
+        public DateTime ExpiryUtc { get; init; }
+    }
+
+    public enum PairingState
+    {
+        Generated,
+        Used,
+        Expired,
+        Locked
     }
 }

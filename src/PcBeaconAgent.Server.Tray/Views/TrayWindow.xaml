@@ -11,7 +11,7 @@
         <tb:TaskbarIcon x:Name="TrayIcon"
                         IconSource="pack://application:,,,/beacon.ico"
                         ToolTipText="PcBeaconAgent"
-                        TrayMouseDoubleClick="TrayIcon_TrayMouseDoubleClick">
+                        TrayLeftMouseUp="TrayIcon_TrayLeftMouseUp">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Show PIN"

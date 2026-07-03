@@ -1,3 +1,4 @@
+using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ public partial class App : Application
 {
     private WebApplication? mWebApp;
     private TrayWindow? mTrayWindow;
+    private TrayViewModel? mTrayViewModel;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -31,9 +33,10 @@ public partial class App : Application
             await StartWebHostAsync();
 
             var pairingService = mWebApp!.Services.GetRequiredService<IPairingService>();
-            var trayViewModel = new TrayViewModel(pairingService, this);
 
-            mTrayWindow = new TrayWindow { DataContext = trayViewModel };
+            mTrayWindow = new TrayWindow();
+            mTrayViewModel = new TrayViewModel(pairingService, this, mTrayWindow.TrayIcon);
+            mTrayWindow.DataContext = mTrayViewModel;
             // The window stays hidden — it only hosts the TaskbarIcon.
             mTrayWindow.Show();
             mTrayWindow.Hide();
@@ -84,6 +87,7 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        mTrayViewModel?.Dispose();
         mTrayWindow?.Close();
 
         if (mWebApp != null)
