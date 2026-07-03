@@ -1,3 +1,4 @@
+using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +9,7 @@ using PcBeaconAgent.Server.Core.Endpoints;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Extensions;
-using PcBeaconAgent.Server.Tray.Services;
+using PcBeaconAgent.Server.Tray.ViewModels;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace PcBeaconAgent.Server.Tray;
 public partial class App : Application
 {
     private WebApplication? mWebApp;
-    private NotifyIconManager? mTrayIcon;
+    private TaskbarIcon? mTrayIcon;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -29,15 +30,20 @@ public partial class App : Application
         {
             await StartWebHostAsync();
 
-            mTrayIcon = new NotifyIconManager(mWebApp!.Services);
-            mTrayIcon.Show();
+            var pairingService = mWebApp!.Services.GetRequiredService<IPairingService>();
+            var trayViewModel = new TrayViewModel(pairingService, this);
+
+            mTrayIcon = (TaskbarIcon)FindResource("TrayIcon");
+            mTrayIcon.DataContext = trayViewModel;
+            mTrayIcon.Visibility = Visibility.Visible;
 
             _ = mWebApp.Services.GetRequiredService<IPairingService>();
         }
         catch (Exception ex)
         {
             Log.Fatal(ex, "PcBeaconAgent Tray fatal error on startup");
-            MessageBox.Show($"Critical error: {ex.Message}", "PcBeaconAgent", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Critical error: {ex.Message}", "PcBeaconAgent",
+                MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
     }

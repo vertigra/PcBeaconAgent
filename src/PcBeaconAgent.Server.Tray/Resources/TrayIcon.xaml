@@ -1,0 +1,22 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tb="http://www.hardcodet.net/taskbar">
+
+    <tb:TaskbarIcon x:Key="TrayIcon"
+                    IconSource="pack://application:,,,/beacon.ico"
+                    ToolTipText="PcBeaconAgent"
+                    Visibility="Hidden">
+        <tb:TaskbarIcon.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Show PIN"
+                          Command="{Binding ShowPinCommand}"/>
+                <MenuItem Header="Regenerate PIN"
+                          Command="{Binding RegeneratePinCommand}"/>
+                <Separator/>
+                <MenuItem Header="Exit"
+                          Command="{Binding ExitCommand}"/>
+            </ContextMenu>
+        </tb:TaskbarIcon.ContextMenu>
+    </tb:TaskbarIcon>
+
+</ResourceDictionary>
