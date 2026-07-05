@@ -9,6 +9,14 @@
     <AssemblyName>PcBeaconAgent.Server.Tray</AssemblyName>
     <RootNamespace>PcBeaconAgent.Server.Tray</RootNamespace>
     <NoWarn>$(NoWarn);IL2026;NU1701</NoWarn>
+    <!-- NU1903: Microsoft.AspNetCore.OpenApi 10.0.9 transitively pulls
+         Microsoft.OpenApi 2.0.0 which has GHSA-v5pm-xwqc-g5wc (high).
+         10.0.10+ does not exist yet on NuGet as of 2026-07. The advisory
+         affects OpenApiReader parsing of untrusted OpenAPI documents —
+         our usage is generate-only (AddOpenApi / MapOpenApi), we never
+         feed the library untrusted input, so the practical risk is nil.
+         Re-evaluate when a fixed Microsoft.AspNetCore.OpenApi ships. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
     <ApplicationIcon>beacon.ico</ApplicationIcon>
   </PropertyGroup>
 

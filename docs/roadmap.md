@@ -172,6 +172,21 @@ note before implementation; the entries here are reminders.
 - [ ] **Light / Dark theme in the MAUI client.**
       Trivial: `Application.Current!.UserAppTheme = AppInfo.RequestedTheme`.
       Add a manual override in Settings stored in `Preferences`.
+- [ ] **Custom balloon / toast positioning.**
+      The Windows `Shell_NotifyIcon` balloon API positions the balloon
+      next to the tray icon — the app cannot control it. The PIN popup
+      (patch #39) snaps to the taskbar via `SHAppBarMessage`, but the
+      transient terminal-state balloons (Used / Expired / Locked) still
+      appear wherever Windows decides. Two options: (a) switch to the
+      UWP Toast API (`Microsoft.Toolkit.Uwp.Notifications`) which gives
+      a richer UI and lands in the Action Center but still doesn't let
+      us pick the on-screen position; (b) replace balloons entirely
+      with a small transient WPF popup (similar to `PinPopupWindow`
+      but auto-closing after a few seconds) positioned next to the
+      tray icon via `Shell_NotifyIconGetRect`. Option (b) is the only
+      way to get pixel-perfect control. Defer until the rest of Tier 2
+      ships; the current balloons are functional, just not pixel-aligned
+      with the popup.
 - [ ] Cross-device clipboard & file transfer.A lightweight "AirDrop-like" feature: 
       send arbitrary text,files, or clipboard contents from the Android client to themanaged PC, 
       and vice versa. Today the user works around thisby sending links/files to "Saved Messages" 

@@ -80,17 +80,7 @@
                        FontSize="11"
                        Foreground="#9E9E9E"
                        HorizontalAlignment="Center"
-                       Margin="0,6,0,12"/>
-
-            <!-- Actions -->
-            <Button Grid.Row="4"
-                    Content="{Binding CopyButtonText}"
-                    Command="{Binding CopyPinCommand}"
-                    Padding="16,6"
-                    HorizontalAlignment="Center"
-                    Background="#6750A4" Foreground="White"
-                    FontWeight="Medium"
-                    Cursor="Hand"/>
+                       Margin="0,6,0,0"/>
         </Grid>
     </Border>
 </Window>

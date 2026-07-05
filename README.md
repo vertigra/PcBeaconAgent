@@ -25,17 +25,28 @@ Android client is a .NET MAUI app. All traffic is plain HTTP (LAN-only);
 TLS is planned for a future release.
 
 The **PcBeaconAgent.Server.Cli** is a console host that runs the Web API
-and SignalR hub. A WPF tray host (`PcBeaconAgent.Server.Tray`) is planned
-to show the pairing PIN in a window and auto-start on user login.
+and SignalR hub. The **PcBeaconAgent.Server.Tray** is a WPF tray host
+that runs the same business logic and adds a system tray icon, a PIN
+popup with countdown, and balloon notifications. Both share the same
+`Server.Core` — pick the one that fits your deployment:
+
+- **Server.Cli** — headless, scripted, or Windows Service deployments.
+  Detailed documentation: [docs/server-cli.md](docs/server-cli.md).
+- **Server.Tray** — interactive desktop sessions; auto-starts on user
+  login (planned), shows the PIN in a popup next to the taskbar.
+  Detailed documentation: [docs/server-tray.md](docs/server-tray.md).
 
 ### 💻 CLI Arguments (Silent Mode)
-By default, the agent duplicates all logs directly to the console window. For background or scripted execution, you can completely suppress terminal output using the following flags:
 
-    Run in silent mode (logs will be written to the file only):
+For background or scripted execution, the CLI host can suppress
+terminal output:
+
     ./PcBeaconAgent.Server.Cli.exe --no-console
-
-    or:
+    # or:
     ./PcBeaconAgent.Server.Cli.exe --silent
+
+See [docs/server-cli.md](docs/server-cli.md) for the full CLI reference
+(Windows Service install, appsettings.json schema, log file location).
 
 ### 🧠 System Architecture
 
@@ -120,6 +131,11 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 | :--- | :--- | :--- | :--- |
 | **Server (Console Host)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
 | **Android App (Client)** | `client.v.X.Y.Z` | `publish-client.yml` | `Client Android Release X.Y.Z` |
+
+> ℹ️ **Server release includes both hosts.** The `publish-server.yml`
+> workflow currently builds `Server.Cli` only. Adding `Server.Tray`
+> to the same workflow (and shipping both ZIPs under one tag) is
+> tracked in the [roadmap](docs/roadmap.md).
 
 > 💡 **Branch & Tag Isolation Note:** Git tags point directly to a specific commit, completely independent of branches. You can safely create and push release tags from development branches (e.g., `devel`). GitHub Actions will check out and compile the exact commit historical snapshot bound to that tag, provided that the corresponding workflow `.yml` file exists within that commit.
 

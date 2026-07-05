@@ -54,9 +54,18 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         switch (e.State)
         {
             case PairingState.Generated:
-                // The PIN is fresh — open the persistent popup so the user
-                // can read it for the entire validity window. The popup
-                // has its own countdown and self-closes at expiry.
+                // Skip the popup when the user is already looking at the
+                // PIN in MainWindow — they explicitly clicked Regenerate
+                // there, so re-opening the popup would be redundant noise.
+                // External triggers (HTTP /api/pair/regenerate from the
+                // Android client, or the tray's own "Regenerate PIN"
+                // menu item) still get the popup because MainWindow is
+                // not visible in those cases.
+                if (IsMainWindowVisible)
+                {
+                    mTrayIcon.ToolTipText = "PcBeaconAgent — PIN active";
+                    break;
+                }
                 ShowPopup(e.Pin, e.ExpiryUtc);
                 mTrayIcon.ToolTipText = "PcBeaconAgent — PIN active";
                 break;
@@ -115,6 +124,15 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     {
         mActivePopup = null;
     }
+
+    /// <summary>
+    /// True if <see cref="Views.MainWindow"/> is currently on screen.
+    /// Used to suppress the Generated popup when the user is already
+    /// viewing the PIN in MainWindow (e.g. they just clicked Regenerate
+    /// there).
+    /// </summary>
+    private bool IsMainWindowVisible =>
+        mApp.Windows.OfType<Views.MainWindow>().Any(w => w.IsVisible);
 
     private void ShowBalloon(string title, string message, BalloonIcon icon)
     {
