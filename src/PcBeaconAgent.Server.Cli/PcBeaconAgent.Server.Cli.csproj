@@ -36,7 +36,7 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-	<TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
+        <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
   </ItemGroup>
 
   <ItemGroup>

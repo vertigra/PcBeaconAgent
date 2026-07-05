@@ -13,7 +13,7 @@ namespace PcBeaconAgent.Server.Core.Services
     {
         private readonly ILogger<AudioController> mLogger;
         private CoreAudioController? mController;
-        private readonly object mControllerLock = new();
+        private readonly Lock mControllerLock = new();
 
         public AudioController(ILogger<AudioController> logger)
         {

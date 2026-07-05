@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Hardcodet.Wpf.TaskbarNotification;
+using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Views;
 using System;
@@ -89,7 +90,8 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     {
         ClosePopup();
 
-        mActivePopup = new Views.PinPopupWindow(pin, expiryUtc);
+        var popupVm = new PinPopupViewModel(pin, expiryUtc);
+        mActivePopup = new Views.PinPopupWindow(popupVm);
         // Auto-clear our reference when the user closes the popup manually
         // (or when its own countdown timer elapses). Without this, the next
         // Generated event would try to Close() an already-closed window.
@@ -172,6 +174,7 @@ public partial class TrayViewModel : ObservableObject, IDisposable
             mPairingService.PairingStateChanged -= OnPairingStateChanged;
             ClosePopup();
             mDisposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 }

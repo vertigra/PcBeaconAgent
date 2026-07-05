@@ -1,4 +1,5 @@
 ﻿using System;
+using PcBeaconAgent.Server.Core.Events;
 
 namespace PcBeaconAgent.Server.Core.Interfaces
 {
@@ -41,25 +42,12 @@ namespace PcBeaconAgent.Server.Core.Interfaces
         DateTime? GetCurrentPinExpiryUtc();
 
         /// <summary>
-        /// Raised when the PIN state changes: a new PIN is generated,
-        /// the PIN is used (successful pairing), or the PIN expires.
-        /// The tray host subscribes to show/hide balloon notifications.
+        /// Raised on every PIN lifecycle transition: Generated (new PIN),
+        /// Used (successful exchange), Expired (lifetime elapsed), Locked
+        /// (too many failed attempts). Subscribers must marshal to the UI
+        /// thread themselves — the event is raised on a thread-pool thread
+        /// for Expired, and on the caller's thread for the other states.
         /// </summary>
         event Action<PairingStateEventArgs>? PairingStateChanged;
-    }
-
-    public class PairingStateEventArgs : EventArgs
-    {
-        public PairingState State { get; init; }
-        public string Pin { get; init; } = string.Empty;
-        public DateTime ExpiryUtc { get; init; }
-    }
-
-    public enum PairingState
-    {
-        Generated,
-        Used,
-        Expired,
-        Locked
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Security.Cryptography;
