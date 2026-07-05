@@ -32,6 +32,15 @@ namespace PcBeaconAgent.Server.Core.Interfaces
         string GetCurrentPin();
 
         /// <summary>
+        /// Returns the UTC instant at which the current PIN expires, or
+        /// <c>null</c> if no PIN is active. Used by the tray popup to render
+        /// an accurate countdown when the user reopens it manually (the
+        /// Generated event carries the original expiry, but a click on the
+        /// tray icon happens later and needs the current remaining time).
+        /// </summary>
+        DateTime? GetCurrentPinExpiryUtc();
+
+        /// <summary>
         /// Raised when the PIN state changes: a new PIN is generated,
         /// the PIN is used (successful pairing), or the PIN expires.
         /// The tray host subscribes to show/hide balloon notifications.

@@ -17,12 +17,23 @@ namespace PcBeaconAgent.Server.Core.Services
         private bool mPinUsed;
         private int mFailedAttempts;
 
+        // Monotonic counter incremented on every successful GeneratePin call.
+        // Used by the delayed Expired continuation to detect that a newer PIN
+        // has superseded the one it was scheduled for — without this, regenerating
+        // a PIN would still fire Expired for the old one when its timer elapses.
+        private long mPinGeneration;
+
+        // Cancellable handle for the pending Expired event. Cancelled when the
+        // PIN is used or regenerated — so the delayed continuation becomes a
+        // no-op instead of firing a spurious Expired.
+        private CancellationTokenSource? mExpiryCts;
+
         // Guards all mutable pairing state (mPin, mPinExpiry, mPinUsed,
-        // mFailedAttempts). PairingService is a singleton, and /api/pair
-        // can be called concurrently — without this lock two simultaneous
-        // requests could both read mPinUsed == false, both validate the
-        // PIN, and both return the ApiKey (PIN not single-use), or lose
-        // the failed-attempt counter increments.
+        // mFailedAttempts, mPinGeneration, mExpiryCts). PairingService is a
+        // singleton, and /api/pair can be called concurrently — without this
+        // lock two simultaneous requests could both read mPinUsed == false,
+        // both validate the PIN, and both return the ApiKey (PIN not
+        // single-use), or lose the failed-attempt counter increments.
         private readonly Lock mStateLock = new();
 
         // Maximum failed PIN attempts before pairing locks out.
@@ -46,8 +57,6 @@ namespace PcBeaconAgent.Server.Core.Services
             mLogger = logger;
         }
 
-        
-
         /// <inheritdoc />
         public string? ValidateAndExchangePin(string pin)
         {
@@ -65,15 +74,25 @@ namespace PcBeaconAgent.Server.Core.Services
                     int remaining = MaxFailedAttempts - mFailedAttempts;
 
                     if (remaining > 0)
+                    {
                         LogInvalidPin(remaining);
+                    }
                     else
+                    {
                         LogPairingLocked();
+                        mExpiryCts?.Cancel();
+                        PairingStateChanged?.Invoke(new PairingStateEventArgs
+                        {
+                            State = PairingState.Locked
+                        });
+                    }
 
                     return null;
                 }
 
                 // PIN is correct — single-use: invalidate immediately.
                 mPinUsed = true;
+                mExpiryCts?.Cancel();
                 LogPairingSuccess();
 
                 PairingStateChanged?.Invoke(new PairingStateEventArgs
@@ -103,45 +122,83 @@ namespace PcBeaconAgent.Server.Core.Services
             }
         }
 
+        /// <inheritdoc />
+        public DateTime? GetCurrentPinExpiryUtc()
+        {
+            lock (mStateLock)
+            {
+                return IsPairingActive ? mPinExpiry : null;
+            }
+        }
+
         private void GeneratePin()
         {
-            // 6 digits: 100 000–999 999, easy to type on a phone keyboard.
-            // RandomNumberGenerator is a CSPRNG — Random.Shared (xoshiro)
-            // is not, and while the 5-attempt lockout makes brute-force
-            // impractical anyway, using a CSPRNG removes any doubt about
-            // predictability of the next PIN from observed previous PINs.
-            mPin = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
-            mPinExpiry = DateTime.UtcNow.Add(PinLifetime);
-            mPinUsed = false;
-            mFailedAttempts = 0;
+            string pin;
+            DateTime expiry;
+            long generation;
+            CancellationTokenSource cts;
 
-            // Prominent separator makes the PIN easy to spot in a scrolling log.
-            LogNewPin(mPin, (int)PinLifetime.TotalMinutes);
+            lock (mStateLock)
+            {
+                // Cancel any pending Expired event from a previous PIN.
+                // The continuation's generation check would also catch this,
+                // but cancelling avoids the extra Task.Delay wakeup.
+                mExpiryCts?.Cancel();
+                mExpiryCts?.Dispose();
+                mExpiryCts = new CancellationTokenSource();
+                cts = mExpiryCts;
+
+                // 6 digits: 100 000–999 999, easy to type on a phone keyboard.
+                // RandomNumberGenerator is a CSPRNG — Random.Shared (xoshiro)
+                // is not, and while the 5-attempt lockout makes brute-force
+                // impractical anyway, using a CSPRNG removes any doubt about
+                // predictability of the next PIN from observed previous PINs.
+                mPin = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
+                mPinExpiry = DateTime.UtcNow.Add(PinLifetime);
+                mPinUsed = false;
+                mFailedAttempts = 0;
+                generation = ++mPinGeneration;
+
+                pin = mPin;
+                expiry = mPinExpiry;
+
+                // Prominent separator makes the PIN easy to spot in a scrolling log.
+                LogNewPin(mPin, (int)PinLifetime.TotalMinutes);
+            }
 
             // Notify subscribers (tray host) that a new PIN is available.
             PairingStateChanged?.Invoke(new PairingStateEventArgs
             {
                 State = PairingState.Generated,
-                Pin = mPin,
-                ExpiryUtc = mPinExpiry
+                Pin = pin,
+                ExpiryUtc = expiry
             });
 
-            // Schedule an expiry notification. If the PIN is not used within
-            // the lifetime window, fire the Expired event so the tray can
-            // hide the balloon.
-            _ = Task.Delay(PinLifetime).ContinueWith(_ =>
+            // Schedule Expired. The continuation re-checks both the generation
+            // counter (a newer PIN may have superseded this one) and mPinUsed
+            // (the PIN may have been exchanged). Only if neither has happened
+            // does it fire Expired. Cancellation is the fast path — it avoids
+            // the extra Task.Delay wakeup when the PIN is regenerated or used.
+            CancellationToken token = cts.Token;
+            _ = Task.Delay(PinLifetime, token).ContinueWith(t =>
             {
+                if (t.IsCanceled) return;
+
+                bool shouldFire;
                 lock (mStateLock)
                 {
-                    if (!mPinUsed && DateTime.UtcNow >= mPinExpiry)
-                    {
-                        PairingStateChanged?.Invoke(new PairingStateEventArgs
-                        {
-                            State = PairingState.Expired
-                        });
-                    }
+                    shouldFire = mPinGeneration == generation && !mPinUsed;
                 }
-            });
+
+                if (shouldFire)
+                {
+                    LogPinExpired();
+                    PairingStateChanged?.Invoke(new PairingStateEventArgs
+                    {
+                        State = PairingState.Expired
+                    });
+                }
+            }, TaskScheduler.Default);
         }
 
         #region Structured logging definitions (allocation-free)
@@ -179,11 +236,18 @@ namespace PcBeaconAgent.Server.Core.Services
                 new EventId(14, "PairingSuccess"),
                 "Pairing successful. ApiKey exchanged and PIN invalidated.");
 
+        private static readonly Action<ILogger, Exception?> LogPinExpiredAction =
+            LoggerMessage.Define(
+                LogLevel.Information,
+                new EventId(15, "PairingPinExpired"),
+                "Pairing PIN expired without being used. Run RegeneratePin (or reopen the pairing page on the client) to issue a new one.");
+
         private void LogNewPin(string pin, int minutes) => LogNewPinAction(mLogger, pin, minutes, null);
         private void LogInvalidPin(int remaining) => LogInvalidPinAction(mLogger, remaining, null);
         private void LogPairingLocked() => LogPairingLockedAction(mLogger, null);
         private void LogPairingInactive() => LogPairingInactiveAction(mLogger, null);
         private void LogPairingSuccess() => LogPairingSuccessAction(mLogger, null);
+        private void LogPinExpired() => LogPinExpiredAction(mLogger, null);
 
         #endregion
     }
