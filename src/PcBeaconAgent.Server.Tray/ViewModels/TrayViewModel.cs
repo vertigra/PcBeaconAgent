@@ -68,9 +68,8 @@ public partial class TrayViewModel : ObservableObject, IDisposable
                 // Suppress both popup and balloon when the user is already
                 // looking at the PIN in MainWindow (e.g. they just clicked
                 // Regenerate there). External triggers (HTTP
-                // /api/pair/regenerate from the Android client, the tray
-                // context menu's Regenerate item) still get the popup
-                // because MainWindow is not visible in those flows.
+                // /api/pair/regenerate from the Android client) still get
+                // the popup because MainWindow is not visible in that flow.
                 if (IsMainWindowVisible)
                 {
                     mTrayIcon.ToolTipText = "PcBeaconAgent — PIN active";
@@ -121,15 +120,16 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         mApp.Windows.OfType<Views.MainWindow>().Any(w => w.IsVisible);
 
     [RelayCommand]
-    public void ShowPin()
+    public void ShowWindow()
     {
-        // Left-click on the tray icon always opens MainWindow — it is
-        // the interactive hub (PIN display + Regenerate today, Settings
-        // + server status in the future per the roadmap). The popup is
-        // a passive notification surface driven by the Generated event,
-        // not by user clicks. If the user wants to see the PIN without
-        // opening MainWindow, the popup is already on screen (Generated
-        // opened it) — they don't need to click anything.
+        // Left-click on the tray icon (and the "Show window" context menu
+        // item) always opens MainWindow — it is the interactive hub (PIN
+        // display + Regenerate today, Settings + server status in the
+        // future per the roadmap). The popup is a passive notification
+        // surface driven by the Generated event, not by user clicks. If
+        // the user wants to see the PIN without opening MainWindow, the
+        // popup is already on screen (Generated opened it) — they don't
+        // need to click anything.
         var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
         if (mainWindow == null)
         {
@@ -142,17 +142,6 @@ public partial class TrayViewModel : ObservableObject, IDisposable
 
         mainWindow.Show();
         mainWindow.Activate();
-    }
-
-    [RelayCommand]
-    public void RegeneratePin()
-    {
-        // GeneratePin raises the Generated event, which OnPairingStateChanged
-        // routes to INotificationService (popup if MainWindow is hidden,
-        // nothing if MainWindow is visible — MainWindow's own view model
-        // already refreshes its PIN display via RefreshPin on the next
-        // user interaction).
-        mPairingService.RegeneratePin();
     }
 
     [RelayCommand]

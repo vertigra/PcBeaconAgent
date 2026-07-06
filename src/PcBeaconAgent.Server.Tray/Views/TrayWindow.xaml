@@ -14,10 +14,8 @@
                         TrayLeftMouseUp="TrayIcon_TrayLeftMouseUp">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Show PIN"
-                              Command="{Binding ShowPinCommand}"/>
-                    <MenuItem Header="Regenerate PIN"
-                              Command="{Binding RegeneratePinCommand}"/>
+                    <MenuItem Header="Show window"
+                              Command="{Binding ShowWindowCommand}"/>
                     <Separator/>
                     <MenuItem Header="Exit"
                               Command="{Binding ExitCommand}"/>

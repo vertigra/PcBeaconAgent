@@ -18,8 +18,10 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto, *" Padding="20" RowSpacing="10">
-        
-        <CollectionView Grid.Row="1" ItemsSource="{Binding ManagedDevices}">
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding ManagedDevices}"
+                        IsVisible="{Binding HasDevices}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="clientModels:ManagedDevice">
                     <Border StrokeShape="RoundRectangle 12" BackgroundColor="#322F35" Margin="0,5" Padding="15">
@@ -118,5 +120,32 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- Empty state: shown when there are no managed devices. -->
+        <!-- HasDevices is the inverse of ManagedDevices.Count == 0;
+             computed in MainViewModel. The button navigates to the
+             Discovery tab so the user can find and pair a device. -->
+        <VerticalStackLayout Grid.Row="1"
+                             IsVisible="{Binding HasNoDevices}"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="16">
+            <Label Text="No devices yet"
+                   FontSize="20" FontAttributes="Bold"
+                   TextColor="#9E9E9E"
+                   HorizontalOptions="Center"/>
+            <Label Text="Go to the Discovery tab to find and pair a PC on your network."
+                   FontSize="14"
+                   TextColor="#757575"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center"
+                   MaxLines="3"/>
+            <Button Text="Go to Discovery"
+                    Command="{Binding GoToDiscoveryCommand}"
+                    BackgroundColor="#6750A4" TextColor="White"
+                    Padding="20,10" CornerRadius="8"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"/>
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>

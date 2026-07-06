@@ -183,6 +183,16 @@ note before implementation; the entries here are reminders.
 - [ ] **Light / Dark theme in the MAUI client.**
       Trivial: `Application.Current!.UserAppTheme = AppInfo.RequestedTheme`.
       Add a manual override in Settings stored in `Preferences`.
+- [ ] **i18n / multi-language support.**
+      All UI strings in `Client.Android` and `Server.Tray` are currently
+      hard-coded English (e.g. "Pairing PIN", "Show window", "Go to
+      Discovery"). Switch to .NET resource files (`.resx`) per project
+      with `IStringLocalizer`-style lookup, ship English + Russian as
+      the first two locales, add a language picker in Settings. The
+      server's PIN popup and balloon strings go through the same
+      mechanism so the tray host inherits the locale from the OS or
+      from a setting in `appsettings.json`. ClI host stays English-only
+      (its output is log-shaped, not user-facing prose).
 - [ ] **Custom balloon / toast positioning.**
       The Windows `Shell_NotifyIcon` balloon API positions the balloon
       next to the tray icon — the app cannot control it. The PIN popup

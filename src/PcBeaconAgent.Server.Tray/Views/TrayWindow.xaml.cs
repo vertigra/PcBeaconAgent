@@ -17,6 +17,6 @@ public partial class TrayWindow : Window
     private void TrayIcon_TrayLeftMouseUp(object? sender, RoutedEventArgs e)
     {
         if (DataContext is ViewModels.TrayViewModel vm)
-            vm.ShowPin();
+            vm.ShowWindow();
     }
 }
