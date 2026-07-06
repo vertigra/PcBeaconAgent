@@ -44,12 +44,12 @@ jobs:
 
     - name: Restore Workloads and Dependencies
       run: |
-        dotnet workload restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
-        dotnet restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
+        dotnet workload restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
+        dotnet restore src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj
 
     - name: Publish Android App
       run: |
-        dotnet publish src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj `
+        dotnet publish src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj `
           -c Release `
           -f net10.0-android `
           -p:AndroidKeyStore=false `

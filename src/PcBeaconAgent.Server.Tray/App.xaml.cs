@@ -9,7 +9,7 @@ using PcBeaconAgent.Server.Core.Endpoints;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Extensions;
-using PcBeaconAgent.Server.Tray.Services;
+using PcBeaconAgent.Server.Tray.Notifications;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using PcBeaconAgent.Server.Tray.Views;
 using Serilog;

@@ -5,7 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace PcBeaconAgent.Server.Tray.Services
+namespace PcBeaconAgent.Server.Tray.Notifications
 {
     /// <summary>
     /// Tray host implementation of <see cref="INotificationService"/>.

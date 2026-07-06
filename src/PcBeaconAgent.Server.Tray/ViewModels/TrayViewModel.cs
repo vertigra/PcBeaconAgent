@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Hardcodet.Wpf.TaskbarNotification;
 using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
-using PcBeaconAgent.Server.Tray.Services;
+using PcBeaconAgent.Server.Tray.Notifications;
 using System;
 using System.Linq;
 
@@ -43,9 +43,25 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     {
         // The Expired event is raised from a thread-pool continuation;
         // the others come from the caller's thread (HTTP request for
-        // Used/Locked, UI thread for Generated via RegeneratePin).
-        // INotificationService marshals to the UI thread internally, so
-        // we don't need to do it here — just route the event.
+        // Used/Locked/Generated-via-regenerate, UI thread for
+        // Generated via the tray menu's Regenerate). We must marshal
+        // to the UI thread before touching any WPF state — in
+        // particular IsMainWindowVisible reads Application.Windows,
+        // which throws on cross-thread access.
+        //
+        // INotificationService also marshals internally, but the
+        // IsMainWindowVisible check below runs BEFORE we call into
+        // the service, so the dispatcher hop has to happen here.
+        if (!mApp.Dispatcher.CheckAccess())
+        {
+            mApp.Dispatcher.Invoke(() => HandleStateChange(e));
+            return;
+        }
+        HandleStateChange(e);
+    }
+
+    private void HandleStateChange(PairingStateEventArgs e)
+    {
         switch (e.State)
         {
             case PairingState.Generated:
@@ -96,7 +112,10 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     /// <summary>
     /// True if <see cref="Views.MainWindow"/> is currently on screen.
     /// Used to suppress Generated notifications when the user is already
-    /// viewing the PIN in MainWindow.
+    /// viewing the PIN in MainWindow. <b>UI-thread only</b> — reads
+    /// <see cref="Application.Windows"/>, which throws on cross-thread
+    /// access. Callers must marshal via <see cref="OnPairingStateChanged"/>
+    /// before reaching here.
     /// </summary>
     private bool IsMainWindowVisible =>
         mApp.Windows.OfType<Views.MainWindow>().Any(w => w.IsVisible);
