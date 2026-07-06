@@ -3,34 +3,38 @@ using CommunityToolkit.Mvvm.Input;
 using Hardcodet.Wpf.TaskbarNotification;
 using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
-using PcBeaconAgent.Server.Tray.Views;
+using PcBeaconAgent.Server.Tray.Services;
 using System;
 using System.Linq;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels;
 
 /// <summary>
-/// ViewModel for the tray icon context menu, single-click action and
-/// PIN lifecycle notifications. Subscribes to
-/// <see cref="IPairingService.PairingStateChanged"/> to drive a persistent
-/// popup on <see cref="PairingState.Generated"/> (PIN + countdown) and
-/// short transient balloons on the terminal states
-/// (<see cref="PairingState.Used"/>, <see cref="PairingState.Expired"/>,
-/// <see cref="PairingState.Locked"/>).
+/// ViewModel for the tray icon context menu, single-click action, and
+/// PIN lifecycle routing. Subscribes to
+/// <see cref="IPairingService.PairingStateChanged"/> and forwards each
+/// transition to <see cref="INotificationService"/>. Owns no UI
+/// surfaces directly — neither the popup nor the balloons are created
+/// here; the service owns them.
 /// </summary>
 public partial class TrayViewModel : ObservableObject, IDisposable
 {
     private readonly IPairingService mPairingService;
     private readonly App mApp;
     private readonly TaskbarIcon mTrayIcon;
-    private PinPopupWindow? mActivePopup;
+    private readonly INotificationService mNotifications;
     private bool mDisposed;
 
-    public TrayViewModel(IPairingService pairingService, App app, TaskbarIcon trayIcon)
+    public TrayViewModel(
+        IPairingService pairingService,
+        App app,
+        TaskbarIcon trayIcon,
+        INotificationService notifications)
     {
         mPairingService = pairingService;
         mApp = app;
         mTrayIcon = trayIcon;
+        mNotifications = notifications;
 
         mPairingService.PairingStateChanged += OnPairingStateChanged;
     }
@@ -40,123 +44,73 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         // The Expired event is raised from a thread-pool continuation;
         // the others come from the caller's thread (HTTP request for
         // Used/Locked, UI thread for Generated via RegeneratePin).
-        // Always marshal to the UI thread — balloon/popup APIs require it.
-        if (!mApp.Dispatcher.CheckAccess())
-        {
-            mApp.Dispatcher.Invoke(() => HandleStateChange(e));
-            return;
-        }
-        HandleStateChange(e);
-    }
-
-    private void HandleStateChange(PairingStateEventArgs e)
-    {
+        // INotificationService marshals to the UI thread internally, so
+        // we don't need to do it here — just route the event.
         switch (e.State)
         {
             case PairingState.Generated:
-                // Skip the popup when the user is already looking at the
-                // PIN in MainWindow — they explicitly clicked Regenerate
-                // there, so re-opening the popup would be redundant noise.
-                // External triggers (HTTP /api/pair/regenerate from the
-                // Android client, or the tray's own "Regenerate PIN"
-                // menu item) still get the popup because MainWindow is
-                // not visible in those cases.
+                // Suppress both popup and balloon when the user is already
+                // looking at the PIN in MainWindow (e.g. they just clicked
+                // Regenerate there). External triggers (HTTP
+                // /api/pair/regenerate from the Android client, the tray
+                // context menu's Regenerate item) still get the popup
+                // because MainWindow is not visible in those flows.
                 if (IsMainWindowVisible)
                 {
                     mTrayIcon.ToolTipText = "PcBeaconAgent — PIN active";
                     break;
                 }
-                ShowPopup(e.Pin, e.ExpiryUtc);
+                mNotifications.ShowPinPopup(e.Pin, e.ExpiryUtc);
                 mTrayIcon.ToolTipText = "PcBeaconAgent — PIN active";
                 break;
 
             case PairingState.Used:
-                ClosePopup();
-                ShowBalloon("Pairing complete",
-                    "A client has paired with this PC.", BalloonIcon.Info);
+                mNotifications.ClosePinPopup();
+                mNotifications.ShowTransient(
+                    "Pairing complete",
+                    "A client has paired with this PC.",
+                    NotificationSeverity.Info);
                 mTrayIcon.ToolTipText = "PcBeaconAgent — Paired";
                 break;
 
             case PairingState.Expired:
-                ClosePopup();
-                ShowBalloon("PIN expired",
+                mNotifications.ClosePinPopup();
+                mNotifications.ShowTransient(
+                    "PIN expired",
                     "The pairing PIN was not used and has expired.",
-                    BalloonIcon.Warning);
+                    NotificationSeverity.Warning);
                 mTrayIcon.ToolTipText = "PcBeaconAgent — No active PIN";
                 break;
 
             case PairingState.Locked:
-                ClosePopup();
-                ShowBalloon("Pairing locked",
+                mNotifications.ClosePinPopup();
+                mNotifications.ShowTransient(
+                    "Pairing locked",
                     "Too many failed attempts. Restart the service to reset.",
-                    BalloonIcon.Error);
+                    NotificationSeverity.Error);
                 mTrayIcon.ToolTipText = "PcBeaconAgent — Locked";
                 break;
         }
     }
 
-    private void ShowPopup(string pin, DateTime expiryUtc)
-    {
-        ClosePopup();
-
-        var popupVm = new PinPopupViewModel(pin, expiryUtc);
-        mActivePopup = new Views.PinPopupWindow(popupVm);
-        // Auto-clear our reference when the user closes the popup manually
-        // (or when its own countdown timer elapses). Without this, the next
-        // Generated event would try to Close() an already-closed window.
-        mActivePopup.Closed += OnPopupClosed;
-        mActivePopup.Show();
-    }
-
-    private void ClosePopup()
-    {
-        if (mActivePopup != null)
-        {
-            // Detach first so our manual Close() doesn't re-enter OnPopupClosed
-            // — keeps the lifecycle explicit and avoids a double-null.
-            mActivePopup.Closed -= OnPopupClosed;
-            mActivePopup.Close();
-            mActivePopup = null;
-        }
-    }
-
-    private void OnPopupClosed(object? sender, EventArgs e)
-    {
-        mActivePopup = null;
-    }
-
     /// <summary>
     /// True if <see cref="Views.MainWindow"/> is currently on screen.
-    /// Used to suppress the Generated popup when the user is already
-    /// viewing the PIN in MainWindow (e.g. they just clicked Regenerate
-    /// there).
+    /// Used to suppress Generated notifications when the user is already
+    /// viewing the PIN in MainWindow.
     /// </summary>
     private bool IsMainWindowVisible =>
         mApp.Windows.OfType<Views.MainWindow>().Any(w => w.IsVisible);
 
-    private void ShowBalloon(string title, string message, BalloonIcon icon)
-    {
-        // Hardcodet 2.x dropped the customTimeout parameter — Windows
-        // ignores it anyway and clamps to its own system timeout (~10–30s).
-        // The balloon is intentionally a short transient signal, not a
-        // persistent state holder — that's what the popup is for.
-        mTrayIcon.ShowBalloonTip(title, message, icon);
-    }
-
     [RelayCommand]
     public void ShowPin()
     {
-        // If a PIN is currently active, surface it via the popup with the
-        // real remaining lifetime so the countdown is accurate. Otherwise
-        // open the full MainWindow where the user can request a new PIN.
-        string currentPin = mPairingService.GetCurrentPin();
-        DateTime? expiry = mPairingService.GetCurrentPinExpiryUtc();
-        if (!string.IsNullOrEmpty(currentPin) && expiry.HasValue)
-        {
-            ShowPopup(currentPin, expiry.Value);
-            return;
-        }
-
+        // Left-click on the tray icon always opens MainWindow — it is
+        // the interactive hub (PIN display + Regenerate today, Settings
+        // + server status in the future per the roadmap). The popup is
+        // a passive notification surface driven by the Generated event,
+        // not by user clicks. If the user wants to see the PIN without
+        // opening MainWindow, the popup is already on screen (Generated
+        // opened it) — they don't need to click anything.
         var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
         if (mainWindow == null)
         {
@@ -174,8 +128,11 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public void RegeneratePin()
     {
-        // GeneratePin raises the Generated event, which opens the popup.
-        // No need to call ShowPin() explicitly — the event handler does it.
+        // GeneratePin raises the Generated event, which OnPairingStateChanged
+        // routes to INotificationService (popup if MainWindow is hidden,
+        // nothing if MainWindow is visible — MainWindow's own view model
+        // already refreshes its PIN display via RefreshPin on the next
+        // user interaction).
         mPairingService.RegeneratePin();
     }
 
@@ -190,7 +147,6 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         if (!mDisposed)
         {
             mPairingService.PairingStateChanged -= OnPairingStateChanged;
-            ClosePopup();
             mDisposed = true;
             GC.SuppressFinalize(this);
         }

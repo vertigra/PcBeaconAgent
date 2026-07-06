@@ -9,6 +9,7 @@ using PcBeaconAgent.Server.Core.Endpoints;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Extensions;
+using PcBeaconAgent.Server.Tray.Services;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using PcBeaconAgent.Server.Tray.Views;
 using Serilog;
@@ -23,6 +24,7 @@ public partial class App : Application
     private WebApplication? mWebApp;
     private TrayWindow? mTrayWindow;
     private TrayViewModel? mTrayViewModel;
+    private INotificationService? mNotifications;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -33,9 +35,17 @@ public partial class App : Application
             await StartWebHostAsync();
 
             var pairingService = mWebApp!.Services.GetRequiredService<IPairingService>();
+            // INotificationService is constructed before the TaskbarIcon
+            // exists — the icon lives in TrayWindow.xaml and is only
+            // available after InitializeComponent. We pass it in via
+            // AttachTaskbarIcon below.
+            mNotifications = new TrayNotificationService(this);
 
             mTrayWindow = new TrayWindow();
-            mTrayViewModel = new TrayViewModel(pairingService, this, mTrayWindow.TrayIcon);
+            mNotifications.AttachTaskbarIcon(mTrayWindow.TrayIcon);
+
+            mTrayViewModel = new TrayViewModel(
+                pairingService, this, mTrayWindow.TrayIcon, mNotifications);
             mTrayWindow.DataContext = mTrayViewModel;
             // The window stays hidden — it only hosts the TaskbarIcon.
             mTrayWindow.Show();
@@ -88,6 +98,9 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         mTrayViewModel?.Dispose();
+        // Close any open popup before the app unwinds — otherwise the
+        // popup's DispatcherTimer could tick against a disposed window.
+        mNotifications?.ClosePinPopup();
         mTrayWindow?.Close();
 
         if (mWebApp != null)

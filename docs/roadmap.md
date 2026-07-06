@@ -80,8 +80,17 @@ tray host. They stay in the backlog:
 The `PcBeaconAgent.Server.Cli` console host stays. A new
 `PcBeaconAgent.Server.Tray` project is added alongside it:
 
-- WPF + `NotifyIcon` (WinForms interop for the tray icon).
+- WPF + `Hardcodet.NotifyIcon.Wpf` (pure WPF tray icon — no WinForms
+  interop). Shipped.
 - References `Server.Core` — reuses pairing, beacon, controllers, hub.
+  Shipped.
+- **PIN popup with countdown** (`PinPopupWindow` + `PinPopupViewModel`)
+  snapped to the taskbar edge via `SHAppBarMessage`. Shipped.
+- **Balloon notifications** for terminal pairing states (Used / Expired /
+  Locked) via `INotificationService`. Shipped. Custom positioning of the
+  balloons themselves is tracked in Tier 3 — Windows positions
+  `Shell_NotifyIcon` balloons next to the tray icon and we cannot
+  control it.
 - Auto-start on user login via `HKCU\Software\Microsoft\Windows\
   CurrentVersion\Run` (no admin rights needed).
 - Single-instance mutex. The mutex must be shared between the tray host
@@ -90,35 +99,37 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
   discovery port and the same HTTP port, so a second instance would
   crash on socket bind anyway; the mutex gives a clean error message
   instead of an obscure `AddressAlreadyInUse`.
-- PIN shown in a window and in the tray tooltip, not only in the log
-  file. New PIN appears immediately after a successful pairing or after
-  the user clicks "Regenerate PIN" in the tray menu.
 - Settings window: API key, ports, log path, auto-start toggle.
 - The existing `Server.Cli` keeps working for headless / scripted /
   debug scenarios. Both hosts share the same `Server.Core` business
   logic, so no behaviour drift.
 - [ ] **CI/CD for Server.Tray.**
       The `publish-server.yml` workflow should build and publish
-      `Server.Tray` alongside `Server.Cli` — both are server-side
-      executables and should be released together under the same
+      `Server.Tray` alongside `Server.Cli` under the same
       `server.v.X.Y.Z` tag. The release artifact should include both
-      ZIPs (or a combined ZIP).
-- [ ] **Documentation for Server.Tray.**
-      Update `README.md` with a section describing the tray host: what
-      it is, how to run it, how it differs from `Server.Cli`, and how
-      to configure auto-start. Update the CI/CD section to mention
-      that the server release now includes both hosts.
+      ZIPs (or a combined ZIP). No new tag pattern — both hosts ship
+      under one tag. `Server.Tray` must be published without trimming
+      (`PublishTrimmed=false`) — WPF XAML bindings trim unreliably.
+- [x] **Documentation for Server.Tray.** (`e782f92`)
+      Split into [docs/server-cli.md](server-cli.md) and
+      [docs/server-tray.md](server-tray.md); `README.md` updated with a
+      comparison table and links to both.
 - [ ] **Add unit and integration tests.**
       The project currently has no test projects. Add a
       `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the
       pure-logic services: `PairingService` (PIN state machine, lockout,
-      expiry, thread safety), `BeaconServerIdentity` (key loading /
-      generation). Add a `PcBeaconAgent.Client.Core.Tests` project
-      covering `DeviceStore`, `DeviceFactory`, `SignalService` (mocked
-      SignalR). Controllers that wrap Windows-only COM / CCD APIs
-      (`AudioController`, `DisplayController`) are tested manually on
-      a real machine — mark them with `[Trait("Category", "RequiresWindows")]`
-      so CI can skip them.
+      expiry, thread safety, the `PairingStateChanged` event sequence
+      under regenerate/use/expire races), `BeaconServerIdentity` (key
+      loading / generation). Add a `PcBeaconAgent.Client.Core.Tests`
+      project covering `DeviceStore`, `DeviceFactory`, `SignalService`
+      (mocked SignalR). Controllers that wrap Windows-only COM / CCD
+      APIs (`AudioController`, `DisplayController`) are tested manually
+      on a real machine — mark them with `[Trait("Category",
+      "RequiresWindows")]` so CI can skip them. `INotificationService`
+      in `Server.Tray` is testable by mocking the interface — verify
+      that `TrayViewModel` routes each `PairingState` to the expected
+      `ShowPinPopup` / `ClosePinPopup` / `ShowTransient` calls and
+      suppresses them when `IsMainWindowVisible`.
 
 ## Tier 3 — new feature modules
 
@@ -187,6 +198,24 @@ note before implementation; the entries here are reminders.
       way to get pixel-perfect control. Defer until the rest of Tier 2
       ships; the current balloons are functional, just not pixel-aligned
       with the popup.
+- [ ] **Auto-update from GitHub Releases.**
+      On startup (and periodically while running), the tray host queries
+      the GitHub Releases API for the latest `server.v.*` tag. If a
+      newer version exists, it downloads the new `Server.Tray.zip`
+      release asset to a temp directory, verifies a SHA-256 hash
+      published alongside the release, and prompts the user via a tray
+      balloon ("Update available — click to install"). On confirmation,
+      the tray host launches a small updater helper (or a self-script)
+      that waits for the current process to exit, swaps the executable,
+      and restarts. The Cli host does **not** auto-update — service-mode
+      deployments should be updated through whatever deployment pipeline
+      installed them (sc.exe, Ansible, etc.). Security: the GitHub API
+      call must be HTTPS (it is by default), and the downloaded archive
+      must be hash-verified before any swap. The update check is
+      opt-out via `appsettings.json` (`Updates: { Enabled: true,
+      CheckInterval: "24:00:00" }`). Requires a release-asset naming
+      convention to be added to `publish-server.yml` (e.g.
+      `PcBeaconAgent.Server.Tray-win-x64-{version}.zip`).
 - [ ] Cross-device clipboard & file transfer.A lightweight "AirDrop-like" feature: 
       send arbitrary text,files, or clipboard contents from the Android client to themanaged PC, 
       and vice versa. Today the user works around thisby sending links/files to "Saved Messages" 

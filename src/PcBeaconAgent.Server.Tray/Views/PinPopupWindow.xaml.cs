@@ -1,4 +1,3 @@
-using PcBeaconAgent.Server.Tray.Services;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using System;
 using System.Windows;
@@ -9,12 +8,16 @@ namespace PcBeaconAgent.Server.Tray.Views
     /// <summary>
     /// Transient popup that shows the current pairing PIN with a live
     /// countdown. All display state is driven by
-    /// <see cref="PinPopupViewModel"/> via bindings; this code-behind
-    /// handles only view-side concerns: setting the DataContext,
-    /// positioning near the tray (via <see cref="TaskbarPositioner"/>),
-    /// drag-move, the close button, and forwarding the ViewModel's
-    /// <see cref="PinPopupViewModel.Expired"/> event to <see cref="Window.Close"/>.
-    /// No P/Invoke lives here.
+    /// <see cref="PinPopupViewModel"/> via bindings. This code-behind
+    /// handles only view-side concerns: setting the DataContext, the
+    /// close button, drag-move, and forwarding the ViewModel's
+    /// <see cref="PinPopupViewModel.Expired"/> event to
+    /// <see cref="Window.Close"/>.
+    /// <para>
+    /// Positioning is the responsibility of
+    /// <see cref="Services.INotificationService"/> — the window itself
+    /// does not know or care where on screen it appears.
+    /// </para>
     /// </summary>
     public partial class PinPopupWindow : Window
     {
@@ -27,22 +30,6 @@ namespace PcBeaconAgent.Server.Tray.Views
             DataContext = mViewModel;
 
             mViewModel.Expired += Close;
-            Position();
-            // Position must be re-applied after the visual tree has
-            // measured — at constructor time ActualWidth/Height are 0.
-            ContentRendered += (_, _) => Position();
-        }
-
-        private void Position()
-        {
-            double width = ActualWidth > 0 ? ActualWidth : Width;
-            double height = ActualHeight > 0 ? ActualHeight : Height;
-            if (double.IsNaN(width)) width = 300;
-            if (double.IsNaN(height)) height = 160;
-
-            Point p = TaskbarPositioner.GetPositionAboveTaskbar(width, height);
-            Left = p.X;
-            Top = p.Y;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();

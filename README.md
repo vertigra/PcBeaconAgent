@@ -61,7 +61,7 @@ Contracts (DTOs, ProjectJsonContext — no dependencies)
 Client.Core    Server.Core
     ↑              ↑
     │              │
-Android        Server.Cli
+Android        Server.Cli  •  Server.Tray
 ```
 
 * **`PcBeaconAgent.Contracts`** — wire contracts only (DTOs,
@@ -78,8 +78,14 @@ Android        Server.Cli
   NuGet packages (`WindowsDisplayAPI`, `AudioSwitcher`). References
   `Contracts`.
 * **`PcBeaconAgent.Server.Cli`** — the console host (composition root,
-  HTTP endpoint mapping, `BeaconBackgroundService`). References
-  `Server.Core`.
+  HTTP endpoint mapping, `BeaconBackgroundService`). Suitable for
+  headless, scripted, or Windows Service deployments. References
+  `Server.Core`. See [docs/server-cli.md](docs/server-cli.md).
+* **`PcBeaconAgent.Server.Tray`** — the WPF tray host. Runs the same
+  `Server.Core` business logic and adds a system tray icon, a PIN popup
+  with countdown, and balloon notifications via `INotificationService`.
+  Suitable for interactive desktop sessions. References `Server.Core`.
+  See [docs/server-tray.md](docs/server-tray.md).
 * **`PcBeaconAgent.Client.Android`** — the .NET MAUI Android client.
   References `Client.Core`.
 
@@ -129,13 +135,16 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 
 | Component | Tag Pattern | Target Workflow | Release Name Example |
 | :--- | :--- | :--- | :--- |
-| **Server (Console Host)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
+| **Server (Cli + Tray)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
 | **Android App (Client)** | `client.v.X.Y.Z` | `publish-client.yml` | `Client Android Release X.Y.Z` |
 
-> ℹ️ **Server release includes both hosts.** The `publish-server.yml`
-> workflow currently builds `Server.Cli` only. Adding `Server.Tray`
-> to the same workflow (and shipping both ZIPs under one tag) is
-> tracked in the [roadmap](docs/roadmap.md).
+> ℹ️ **Single `server.v.*` tag publishes both hosts.** The
+> `publish-server.yml` workflow currently builds `Server.Cli` only.
+> Adding `Server.Tray` to the same workflow (and shipping both ZIPs
+> under one tag) is tracked in the [roadmap](docs/roadmap.md). When
+> that lands, the same `server.v.X.Y.Z` tag will produce a release
+> containing both `PcBeaconAgent.Server.Cli.zip` and
+> `PcBeaconAgent.Server.Tray.zip` — no new tag pattern is introduced.
 
 > 💡 **Branch & Tag Isolation Note:** Git tags point directly to a specific commit, completely independent of branches. You can safely create and push release tags from development branches (e.g., `devel`). GitHub Actions will check out and compile the exact commit historical snapshot bound to that tag, provided that the corresponding workflow `.yml` file exists within that commit.
 
@@ -169,10 +178,20 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 
 ### ⚙️ Internal Version Processing Mechanics
 
-#### 🖥️ Server (PcBeaconAgent.Server.Cli)
-* **Pipeline Output:** A standalone, native Windows x64 single-file executable packed inside a `.zip` archive.
-* **Compilation Flags:** Automated trimming (`-p:PublishTrimmed=true`), dead code elimination, and embedded assembly compilation attributes.
-* **Metadata Extraction:** The pipeline strips the `server.v.` prefix and injects the raw `X.Y.Z` value directly into the executable's `Version` and `AssemblyVersion` properties. You can verify this inside the compiled binary properties in Windows Explorer.
+#### 🖥️ Server (PcBeaconAgent.Server.Cli + PcBeaconAgent.Server.Tray)
+* **Pipeline Output:** Both hosts compile to standalone, native Windows
+  x64 single-file executables, each packed inside its own `.zip`
+  archive. A single `server.v.X.Y.Z` tag produces both artifacts once
+  the `publish-server.yml` workflow is updated to build them together
+  (see [roadmap](docs/roadmap.md)).
+* **Compilation Flags:** Automated trimming (`-p:PublishTrimmed=true`),
+  dead code elimination, and embedded assembly compilation attributes.
+  `Server.Tray` is published without trimming — WPF reflection-heavy
+  XAML bindings trim unreliably.
+* **Metadata Extraction:** The pipeline strips the `server.v.` prefix
+  and injects the raw `X.Y.Z` value directly into both executables'
+  `Version` and `AssemblyVersion` properties. You can verify this
+  inside the compiled binary properties in Windows Explorer.
 
 #### 📱 Android Client (PcBeaconAgent.Client.Android)
 * **Pipeline Output:** A standalone, signed optimization architecture `.apk` package.

@@ -19,11 +19,21 @@ Each commit message must follow this structure:
 
 ### Scopes
 - `client`: Changes related to the Android MAUI application.
-- `server`: Changes related to the ASP.NET Core service.
-- `core`: Changes to the shared library.
+- `server`: Changes to the shared `Server.Core` library (business logic
+  consumed by both hosts).
+- `server-cli`: Changes specific to `PcBeaconAgent.Server.Cli` (console host,
+  Windows Service composition).
+- `server-tray`: Changes specific to `PcBeaconAgent.Server.Tray` (WPF tray
+  host, popup, balloons, notification service).
+- `core`: Changes to the shared `Contracts` library (DTOs,
+  `ProjectJsonContext`).
+- `docs`: Documentation-only changes (changelog generation routes this to its
+  own group, but it's still a valid scope).
 
 ### Examples
-- `feat(server): implement UDP discovery protocol`
+- `feat(server-cli): add --no-console flag`
+- `feat(server-tray): implement PIN popup with countdown`
+- `fix(server): correct primary-display disable in DisplayController`
 - `fix(client): resolve socket exception on disconnect`
 - `ci: update release workflow path filters`
 
