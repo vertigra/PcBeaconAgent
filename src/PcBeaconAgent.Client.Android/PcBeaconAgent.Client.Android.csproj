@@ -33,13 +33,13 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.80" />
     <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.80" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Resources\AppIcon\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

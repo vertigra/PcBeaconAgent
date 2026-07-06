@@ -18,7 +18,7 @@ Each commit message must follow this structure:
 - `test`: Adding or correcting tests
 
 ### Scopes
-- `client`: Changes related to the Android MAUI application.
+- `to c`: Changes related to the Android MAUI application.
 - `server`: Changes to the shared `Server.Core` library (business logic
   consumed by both hosts).
 - `server-cli`: Changes specific to `PcBeaconAgent.Server.Cli` (console host,
