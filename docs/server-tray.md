@@ -100,7 +100,5 @@ both hosts and ship them together under the same `server.v.X.Y.Z` tag.
 ## What's not in Server.Tray
 
 - **No console window.** Output goes to the log file only.
-- **No Windows Service support.** Use [Server.Cli](server-cli.md) for
-  service-mode deployments.
 - **No `--silent` flag.** The host is silent by design — the UI *is*
   the notification surface.

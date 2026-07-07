@@ -100,12 +100,13 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       of the same host — the new process logs a clear error and exits
       instead of crashing on `AddressAlreadyInUse` from the UDP
       discovery or HTTP port bind. The mutex is global (not
-      session-local) so the constraint holds across user sessions and
-      Windows Service contexts.
+      session-local) so the constraint holds even if a future build
+      runs one host in the interactive session and another under a
+      different account.
 - Settings window: API key, ports, log path, auto-start toggle.
-- The existing `Server.Cli` keeps working for headless / scripted /
-  debug scenarios. Both hosts share the same `Server.Core` business
-  logic, so no behaviour drift.
+- The existing `Server.Cli` keeps working for debug / scripted /
+  interactive scenarios. Both hosts share the same `Server.Core`
+  business logic, so no behaviour drift.
 - [ ] **CI/CD for Server.Tray.**
       The `publish-server.yml` workflow should build and publish
       `Server.Tray` alongside `Server.Cli` under the same

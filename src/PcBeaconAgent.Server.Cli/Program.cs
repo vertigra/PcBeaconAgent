@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Hosting.WindowsServices;
 using PcBeaconAgent.Server.Cli.Extensions;
 using PcBeaconAgent.Server.Core.BackgroundServices;
 using PcBeaconAgent.Server.Core.Configuration;
@@ -22,7 +20,7 @@ namespace PcBeaconAgent.Server.Cli
         {
             // Acquire the single-instance mutex BEFORE any port bind.
             // If another PcBeaconAgent process (Cli or Tray) is already
-            // running, exit immediately with a clear log line — without
+            // running, exit immediately with a clear message — without
             // this guard, Kestrel would crash on socket bind with an
             // obscure AddressAlreadyInUse.
             using var singleInstance = new SingleInstanceGuard();
@@ -30,6 +28,33 @@ namespace PcBeaconAgent.Server.Cli
             {
                 Log.Fatal("Another PcBeaconAgent instance is already running. " +
                           "Exiting. (mutex: {MutexName})", SingleInstanceGuard.MutexName);
+
+                // The Cli is an interactive console host — there is no
+                // service-mode today. The user double-clicked the exe
+                // and saw nothing happen because the process exited
+                // before they could read the message. Print it to the
+                // console and wait for Enter so the window stays open.
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Error.WriteLine();
+                Console.Error.WriteLine("=================================================");
+                Console.Error.WriteLine("  PcBeaconAgent is already running");
+                Console.Error.WriteLine("=================================================");
+                Console.Error.WriteLine();
+                Console.Error.WriteLine("Another PcBeaconAgent instance (Server.Cli or");
+                Console.Error.WriteLine("Server.Tray) is already running on this PC.");
+                Console.Error.WriteLine("Only one instance can run at a time because they");
+                Console.Error.WriteLine("share the same network ports.");
+                Console.Error.WriteLine();
+                Console.Error.WriteLine("Close the other instance and try again.");
+                Console.Error.WriteLine();
+                Console.ResetColor();
+
+                if (Environment.UserInteractive && !Console.IsInputRedirected)
+                {
+                    Console.Error.WriteLine("Press Enter to exit...");
+                    Console.ReadLine();
+                }
+
                 Environment.ExitCode = 2;
                 return;
             }
@@ -49,16 +74,11 @@ namespace PcBeaconAgent.Server.Cli
 
                 builder.WebHost.UseUrls($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
 
-                builder.Services.AddWindowsService(options =>
-                {
-                    options.ServiceName = "PcBeaconAgent";
-                });
-
                 builder.Services.AddBeaconServer();
                 builder.Services.AddHostedService<BeaconBackgroundService>();
 
                 builder.Services.AddBeaconServerIdentity();
-               
+
                 builder.Services.AddSignal();
                 builder.Services.AddAudioService();
                 builder.Services.AddDisplayService();
@@ -88,10 +108,10 @@ namespace PcBeaconAgent.Server.Cli
                 Console.Error.WriteLine($"Critical error on started: {ex.Message}");
                 Console.Error.WriteLine(ex.StackTrace);
                 Console.ResetColor();
-         
+
                 Log.Fatal(ex, "PcBeaconAgent service fatal ended");
 
-                if (!WindowsServiceHelpers.IsWindowsService() && Environment.UserInteractive && !Console.IsInputRedirected)
+                if (Environment.UserInteractive && !Console.IsInputRedirected)
                 {
                     Console.WriteLine("Press Enter to exit...");
                     Console.ReadLine();

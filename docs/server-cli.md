@@ -1,26 +1,31 @@
 # Server.Cli — Console Host
 
-`PcBeaconAgent.Server.Cli` is the headless console host. It runs the
+`PcBeaconAgent.Server.Cli` is the interactive console host. It runs the
 Web API + SignalR hub + UDP beacon in a single process, prints the
-pairing PIN to stdout and the log file, and is suitable for running
-as a Windows Service, from Task Scheduler, or interactively in a
-terminal window.
+pairing PIN to stdout and the log file, and is meant to be run in a
+terminal window you keep open while using the agent.
 
 The tray host ([Server.Tray](server-tray.md)) is a separate executable
 that shares the same `Server.Core` business logic but adds a WPF UI
 with a tray icon and PIN popup. The two hosts are mutually exclusive —
-they bind the same UDP discovery port and the same HTTP port, so a
-second instance of either will fail on socket bind. A single-instance
-mutex to make the error message friendlier is tracked in the
-[roadmap](roadmap.md).
+they share a single-instance mutex (`Global\PcBeaconAgent-SingleInstance`)
+so a second instance of either exits cleanly with a clear message
+instead of crashing on `AddressAlreadyInUse`.
 
 ## When to use which
 
 | Use Server.Cli when… | Use Server.Tray when… |
 |---|---|
-| Running as a Windows Service (no UI session) | Running interactively on the user's desktop |
-| Headless / scripted / `--silent` deployments | You want the PIN popup and tray icon |
-| Debugging — full stdout logging | Auto-start on user login is desired |
+| Debugging — full stdout logging in a terminal | Running interactively on the user's desktop |
+| Scripted / short-lived use from a terminal | You want the PIN popup and tray icon |
+| You want to read PIN transitions in real time | Auto-start on user login is desired |
+
+> ⚠️ **Server.Cli is interactive-only.** It does not register as a
+> Windows Service and does not support headless / Session 0 deployments
+> — `DisplayController` and `AudioController` require an interactive
+> desktop session, so a Session 0 service would have no monitors and
+> no audio devices to control. For always-on use, run `Server.Tray`
+> and configure auto-start (planned, see [roadmap](roadmap.md)).
 
 ## CLI arguments
 
@@ -36,20 +41,6 @@ PcBeaconAgent.Server.Cli.exe --no-console
 # Alias:
 PcBeaconAgent.Server.Cli.exe --silent
 ```
-
-### Windows Service mode
-
-The executable is registered with `AddWindowsService` so it can run as
-a Windows Service out of the box. Install with `sc.exe`:
-
-```powershell
-sc.exe create PcBeaconAgent binPath= "C:\path\to\PcBeaconAgent.Server.Cli.exe" start= auto
-sc.exe start PcBeaconAgent
-```
-
-The service runs under the LocalSystem account by default. If you
-need access to per-user audio devices, run the service under a
-specific user account instead.
 
 ## Configuration
 
@@ -114,7 +105,9 @@ In interactive mode the same banner is printed to stdout. In
 
 - **No tray icon, no popup, no balloons.** The PIN is in the log only.
   If you need a UI, use [Server.Tray](server-tray.md).
-- **No auto-start.** Use Windows Service or Task Scheduler.
+- **No auto-start.** Launch the executable manually when you need it.
+- **No Windows Service support.** The controllers require an
+  interactive desktop session.
 - **No PIN state-change notifications.** The `PairingStateChanged`
   event is raised by `PairingService` but no subscriber in `Server.Cli`
   consumes it — the host has no UI surface to update. The log entries

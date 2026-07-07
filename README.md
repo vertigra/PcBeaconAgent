@@ -30,8 +30,8 @@ that runs the same business logic and adds a system tray icon, a PIN
 popup with countdown, and balloon notifications. Both share the same
 `Server.Core` — pick the one that fits your deployment:
 
-- **Server.Cli** — headless, scripted, or Windows Service deployments.
-  Detailed documentation: [docs/server-cli.md](docs/server-cli.md).
+- **Server.Cli** — interactive console host for debugging and scripted
+  use. Detailed documentation: [docs/server-cli.md](docs/server-cli.md).
 - **Server.Tray** — interactive desktop sessions; auto-starts on user
   login (planned), shows the PIN in a popup next to the taskbar.
   Detailed documentation: [docs/server-tray.md](docs/server-tray.md).
@@ -46,7 +46,7 @@ terminal output:
     ./PcBeaconAgent.Server.Cli.exe --silent
 
 See [docs/server-cli.md](docs/server-cli.md) for the full CLI reference
-(Windows Service install, appsettings.json schema, log file location).
+(appsettings.json schema, log file location, interactive-only notes).
 
 ### 🧠 System Architecture
 
@@ -78,9 +78,10 @@ Android        Server.Cli  •  Server.Tray
   NuGet packages (`WindowsDisplayAPI`, `AudioSwitcher`). References
   `Contracts`.
 * **`PcBeaconAgent.Server.Cli`** — the console host (composition root,
-  HTTP endpoint mapping, `BeaconBackgroundService`). Suitable for
-  headless, scripted, or Windows Service deployments. References
-  `Server.Core`. See [docs/server-cli.md](docs/server-cli.md).
+  HTTP endpoint mapping, `BeaconBackgroundService`). Interactive-only —
+  the controllers require a desktop session, so it cannot run as a
+  Windows Service. References `Server.Core`. See
+  [docs/server-cli.md](docs/server-cli.md).
 * **`PcBeaconAgent.Server.Tray`** — the WPF tray host. Runs the same
   `Server.Core` business logic and adds a system tray icon, a PIN popup
   with countdown, and balloon notifications via `INotificationService`.
