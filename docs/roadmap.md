@@ -93,7 +93,7 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
   control it.
 - Auto-start on user login via `HKCU\Software\Microsoft\Windows\
   CurrentVersion\Run` (no admin rights needed).
-- [x] **Single-instance mutex.** (`<TBD>`)
+- [x] **Single-instance mutex.** (`5f4ecbb`)
       A named system mutex (`Global\PcBeaconAgent-SingleInstance`) is
       acquired by both `Server.Cli` and `Server.Tray` at startup. If
       the mutex is already held — by the other host or by a duplicate
@@ -102,11 +102,24 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       discovery or HTTP port bind. The mutex is global (not
       session-local) so the constraint holds even if a future build
       runs one host in the interactive session and another under a
-      different account.
+      different account. In `Server.Cli` the failure path prints a
+      yellow banner to stderr and waits for Enter so the user can
+      actually read why nothing opened (`e15feb1`); `Server.Tray`
+      shows a `MessageBox` with the same explanation.
 - Settings window: API key, ports, log path, auto-start toggle.
 - The existing `Server.Cli` keeps working for debug / scripted /
   interactive scenarios. Both hosts share the same `Server.Core`
   business logic, so no behaviour drift.
+- [x] **Drop Windows Service support from `Server.Cli`.** (`e15feb1`)
+      The `AddWindowsService` registration, `EnableComHosting`,
+      `BuiltInComInteropSupport`, and the
+      `Microsoft.Extensions.Hosting.WindowsServices` package were
+      removed. `DisplayController` (CCM/CCD) and `AudioController`
+      (WASAPI) require an interactive desktop session — they have
+      nothing to control in Session 0. The service-mode registration
+      was misleading documentation; it never actually worked. The
+      always-on use case is handled by `Server.Tray` with auto-start
+      on user login (still pending).
 - [ ] **CI/CD for Server.Tray.**
       The `publish-server.yml` workflow should build and publish
       `Server.Tray` alongside `Server.Cli` under the same
