@@ -89,7 +89,7 @@ check existing ranges and pick the next free one:
 | Class                              | Range      |
 | ---------------------------------- | ---------- |
 | `BeaconServiceHub`                 | 1 – 3      |
-| `PairingService`                   | 10 – 14    |
+| `PairingService`                   | 10 – 15    |
 | `BeaconServerIdentity`             | 20 – 22    |
 | `MauiPreferencesService`           | 30 – 33    |
 | `BeaconServer`                     | 40 – 42    |
@@ -162,7 +162,7 @@ Rules:
   a `Disabled` visual state with explicit `Opacity` and `BackgroundColor`
   so the user can tell at a glance which buttons are active.
 
-### 3.4 Assembly boundaries and visibility
+### 3.5 Assembly boundaries and visibility
 
 The solution is a monorepo: `PcBeaconAgent.Client.Core` is shared by both
 the Service host and the Android client. We do not split Core into separate
@@ -184,13 +184,17 @@ Consequences:
   separate server-only assembly, raise the question in a PR first — the
   default answer is "stay in Core."
 
-* DI-activated constructors must be public. Microsoft.Extensions.DependencyInjectionresolves 
-  constructors via reflection with public binding flags. A classmarked internal can still have 
-  a public constructor — the type staysinvisible outside its assembly, but the DI container can i
-  nstantiate it.Marking the constructor itself internal (or any non-public modifier)makes the service 
-  unresolvable and crashes the host at startup with"A suitable constructor could not be located". 
-  This is the rule, not arecommendation: if a class is registered in DI through AddSingleton, AddScoped, 
-  AddTransient, or AddHostedService, its constructorMUST be public.
+- **DI-activated constructors MUST be public.**
+  `Microsoft.Extensions.DependencyInjection` resolves constructors via
+  reflection with public binding flags. A class marked `internal` can
+  still have a `public` constructor — the type stays invisible outside
+  its assembly, but the DI container can instantiate it. Marking the
+  constructor itself `internal` (or any non-public modifier) makes the
+  service unresolvable and crashes the host at startup with
+  `"A suitable constructor could not be located"`. This is the rule,
+  not a recommendation: if a class is registered in DI through
+  `AddSingleton`, `AddScoped`, `AddTransient`, or `AddHostedService`,
+  its constructor MUST be public.
 
 ## 4. Async and cancellation
 
@@ -207,7 +211,7 @@ Consequences:
 ## 5. JSON serialization
 
 - All types that travel over SignalR or HTTP MUST be registered in
-  `ProjectJsonContext` (`Client.Core/JsonContext/ProjectJsonContext.cs`).
+  `ProjectJsonContext` (`Contracts/ProjectJsonContext.cs`).
 - The context is added to both `System.Text.Json` (via
   `ConfigureHttpJsonOptions`) and SignalR (via `AddJsonProtocol`) in
   `SignalExtension.AddSignal`.
@@ -241,7 +245,9 @@ described in [CONTRIBUTING.md](../CONTRIBUTING.md). Recap:
 ```
 
 - Types: `feat`, `fix`, `docs`, `refactor`, `ci`, `test`.
-- Scopes: `client`, `server`, `core`.
+- Scopes: `client`, `server`, `server-cli`, `server-tray`, `core`,
+  `docs` — see [CONTRIBUTING.md](../CONTRIBUTING.md#scopes) for the
+  full list and which project each scope maps to.
 - Summary in imperative mood, lowercase, no trailing period.
 - Body: optional, bullets with `-`. Explain *why*, not just *what* — the
   diff already shows *what*.
@@ -253,7 +259,7 @@ described in [CONTRIBUTING.md](../CONTRIBUTING.md). Recap:
 - The project must compile and all tests must pass at every commit.
 - Avoid mixing formatting churn (renames, whitespace) with semantic changes.
 
-## 8. XAML (MAUI)
+## 8. XAML (MAUI + WPF)
 
 - Pages live in a `Pages/` folder. ViewModels live in a `ViewModels/` folder.
   The folder pair mirrors each other — `AudioControlPage.xaml` ↔

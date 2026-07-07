@@ -9,6 +9,7 @@ using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Endpoints;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Services;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -19,6 +20,20 @@ namespace PcBeaconAgent.Server.Cli
     {
         public static async Task Main(string[] args)
         {
+            // Acquire the single-instance mutex BEFORE any port bind.
+            // If another PcBeaconAgent process (Cli or Tray) is already
+            // running, exit immediately with a clear log line — without
+            // this guard, Kestrel would crash on socket bind with an
+            // obscure AddressAlreadyInUse.
+            using var singleInstance = new SingleInstanceGuard();
+            if (!singleInstance.TryAcquire())
+            {
+                Log.Fatal("Another PcBeaconAgent instance is already running. " +
+                          "Exiting. (mutex: {MutexName})", SingleInstanceGuard.MutexName);
+                Environment.ExitCode = 2;
+                return;
+            }
+
             try
             {
                 var builder = WebApplication.CreateSlimBuilder(args);

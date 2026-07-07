@@ -93,12 +93,15 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
   control it.
 - Auto-start on user login via `HKCU\Software\Microsoft\Windows\
   CurrentVersion\Run` (no admin rights needed).
-- Single-instance mutex. The mutex must be shared between the tray host
-  and the console host — if the tray is running, `Server.Cli` must
-  refuse to start (and vice versa). Both hosts bind the same UDP
-  discovery port and the same HTTP port, so a second instance would
-  crash on socket bind anyway; the mutex gives a clean error message
-  instead of an obscure `AddressAlreadyInUse`.
+- [x] **Single-instance mutex.** (`<TBD>`)
+      A named system mutex (`Global\PcBeaconAgent-SingleInstance`) is
+      acquired by both `Server.Cli` and `Server.Tray` at startup. If
+      the mutex is already held — by the other host or by a duplicate
+      of the same host — the new process logs a clear error and exits
+      instead of crashing on `AddressAlreadyInUse` from the UDP
+      discovery or HTTP port bind. The mutex is global (not
+      session-local) so the constraint holds across user sessions and
+      Windows Service contexts.
 - Settings window: API key, ports, log path, auto-start toggle.
 - The existing `Server.Cli` keeps working for headless / scripted /
   debug scenarios. Both hosts share the same `Server.Core` business
@@ -242,7 +245,10 @@ they protect against the wrong threat model.
 - [ ] **TLS / HTTPS for the Web API and SignalR.**
       Self-signed certificate generated on first run, pinned on the
       client during pairing. Until this lands, the PIN and the API key
-      travel in cleartext over the LAN.
+      travel in cleartext over the LAN. Applies to both `Server.Cli`
+      and `Server.Tray` — they share the same Kestrel pipeline and
+      the same `Server.Core` configuration, so a single cert + bind
+      update covers both hosts.
 - [ ] **Authenticate `/api/pair/regenerate`.**
       Currently unauthenticated so the client can request a fresh PIN
       before it has a key. Once TLS is in place, require a short-lived

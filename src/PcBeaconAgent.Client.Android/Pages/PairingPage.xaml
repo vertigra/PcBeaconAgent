@@ -34,9 +34,9 @@
         <Label TextColor="#BDBDBD" FontSize="14" LineBreakMode="WordWrap">
             <Label.FormattedText>
                 <FormattedString>
-                    <Span Text="Look at the server console or log file for a line starting with" TextColor="#BDBDBD"/>
+                    <Span Text="A popup with the" TextColor="#BDBDBD"/>
                     <Span Text=" PAIRING PIN" TextColor="#D0BCFF" FontAttributes="Bold"/>
-                    <Span Text=", then enter the 6-digit code below." TextColor="#BDBDBD"/>
+                    <Span Text=" has appeared next to the system tray on the server. Enter the 6-digit code below." TextColor="#BDBDBD"/>
                 </FormattedString>
             </Label.FormattedText>
         </Label>

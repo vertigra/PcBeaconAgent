@@ -3,6 +3,8 @@
     <File Path="docs/coding-guidelines.md" />
     <File Path="docs/pairing-reference.md" />
     <File Path="docs/roadmap.md" />
+    <File Path="docs/server-cli.md" />
+    <File Path="docs/server-tray.md" />
   </Folder>
   <Folder Name="/other/">
     <File Path=".github/workflows/generate-pr-description.yml" />

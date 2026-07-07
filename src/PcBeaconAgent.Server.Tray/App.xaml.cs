@@ -8,6 +8,7 @@ using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Endpoints;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Services;
 using PcBeaconAgent.Server.Tray.Extensions;
 using PcBeaconAgent.Server.Tray.Notifications;
 using PcBeaconAgent.Server.Tray.ViewModels;
@@ -25,10 +26,31 @@ public partial class App : Application
     private TrayWindow? mTrayWindow;
     private TrayViewModel? mTrayViewModel;
     private INotificationService? mNotifications;
+    private SingleInstanceGuard? mSingleInstance;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Acquire the single-instance mutex BEFORE any port bind. If
+        // another PcBeaconAgent process (Cli or Tray) is already
+        // running, show a friendly message box and exit — without
+        // this guard, Kestrel would crash on socket bind with an
+        // obscure AddressAlreadyInUse.
+        mSingleInstance = new SingleInstanceGuard();
+        if (!mSingleInstance.TryAcquire())
+        {
+            Log.Fatal("Another PcBeaconAgent instance is already running. " +
+                      "Exiting. (mutex: {MutexName})", SingleInstanceGuard.MutexName);
+            MessageBox.Show(
+                "Another PcBeaconAgent instance is already running. " +
+                "Please close it first.",
+                "PcBeaconAgent",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            Shutdown(2);
+            return;
+        }
 
         try
         {
@@ -108,6 +130,12 @@ public partial class App : Application
             await mWebApp.StopAsync();
             await mWebApp.DisposeAsync();
         }
+
+        // Release the single-instance mutex so the next PcBeaconAgent
+        // process can start. Must come after the web host stops —
+        // otherwise a new instance could acquire the mutex and try to
+        // bind ports before this one has released them.
+        mSingleInstance?.Dispose();
 
         Log.CloseAndFlush();
         base.OnExit(e);

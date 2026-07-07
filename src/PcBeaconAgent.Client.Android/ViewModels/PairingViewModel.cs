@@ -114,7 +114,7 @@ public partial class PairingViewModel : ObservableObject
         {
             bool ok = await mPairingClient.RegeneratePinAsync(ServerIp, ServerPort);
             ErrorMessage = ok
-                ? "New PIN generated. Check the server console."
+                ? "New PIN generated. Check the popup next to the server's system tray."
                 : "Failed to regenerate PIN.";
         }
         catch (Exception ex)
