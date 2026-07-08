@@ -5,8 +5,10 @@ using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Notifications;
 using PcBeaconAgent.Server.Tray.Services;
+using Serilog;
 using System;
 using System.Linq;
+using System.Windows;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels;
 
@@ -134,18 +136,36 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         // the user wants to see the PIN without opening MainWindow, the
         // popup is already on screen (Generated opened it) — they don't
         // need to click anything.
-        var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
-        if (mainWindow == null)
+        try
         {
-            var viewModel = new MainViewModel(mPairingService, mAutoStart);
-            mainWindow = new Views.MainWindow { DataContext = viewModel };
+            var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
+            if (mainWindow == null)
+            {
+                var viewModel = new MainViewModel(mPairingService, mAutoStart);
+                mainWindow = new Views.MainWindow { DataContext = viewModel };
+            }
+
+            if (mainWindow.DataContext is MainViewModel vm)
+                vm.OnWindowShown();
+
+            mainWindow.Show();
+            mainWindow.Activate();
         }
-
-        if (mainWindow.DataContext is MainViewModel vm)
-            vm.OnWindowShown();
-
-        mainWindow.Show();
-        mainWindow.Activate();
+        catch (Exception ex)
+        {
+            // If the window construction fails (XAML parse error,
+            // resource not found, binding exception, etc.) the user
+            // would otherwise see nothing — the tray icon stays but
+            // no window appears, and the unhandled exception may
+            // destabilise the dispatcher. Surface the error so we
+            // can diagnose it.
+            Log.Fatal(ex, "Failed to open MainWindow");
+            MessageBox.Show(
+                $"Failed to open main window:\n\n{ex}",
+                "PcBeaconAgent",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     [RelayCommand]
