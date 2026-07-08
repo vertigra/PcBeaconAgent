@@ -11,6 +11,7 @@ using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
 using PcBeaconAgent.Server.Tray.Extensions;
 using PcBeaconAgent.Server.Tray.Notifications;
+using PcBeaconAgent.Server.Tray.Services;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using PcBeaconAgent.Server.Tray.Views;
 using Serilog;
@@ -27,6 +28,10 @@ public partial class App : Application
     private TrayViewModel? mTrayViewModel;
     private INotificationService? mNotifications;
     private SingleInstanceGuard? mSingleInstance;
+    // AutoStartService is constructed once and shared between the
+    // TrayViewModel (for the menu item, if we add one later) and the
+    // SettingsViewModel (for the checkbox).
+    private IAutoStartService? mAutoStart;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -62,12 +67,13 @@ public partial class App : Application
             // available after InitializeComponent. We pass it in via
             // AttachTaskbarIcon below.
             mNotifications = new TrayNotificationService(this);
+            mAutoStart = new AutoStartService();
 
             mTrayWindow = new TrayWindow();
             mNotifications.AttachTaskbarIcon(mTrayWindow.TrayIcon);
 
             mTrayViewModel = new TrayViewModel(
-                pairingService, this, mTrayWindow.TrayIcon, mNotifications);
+                pairingService, this, mTrayWindow.TrayIcon, mNotifications, mAutoStart);
             mTrayWindow.DataContext = mTrayViewModel;
             // The window stays hidden — it only hosts the TaskbarIcon.
             mTrayWindow.Show();

@@ -23,14 +23,32 @@ See the comparison table in [Server.Cli](server-cli.md#when-to-use-which).
 Short version: use Tray for interactive desktop sessions, Cli for
 headless / service / scripted deployments.
 
+## Main window
+
+The main window is the interactive hub. Open it with a single left-click
+on the tray icon (or the "Show window" context menu item). It has three
+tabs:
+
+- **Pairing** — current PIN display + Regenerate button. Same content
+  the popup shows, but in a permanent window you can keep open.
+- **Settings** — auto-start toggle (Startup section) + app name and
+  version (About section). Future settings (network, security, updates,
+  log path) will be added as additional expanders.
+- **Files** — placeholder for the Tier 3 cross-device file transfer
+  feature.
+
+The window header shows the app icon, name, and version. The window is
+not modal — it stays open until the user closes it, and the tray host
+keeps running. Closing the window does not exit the application; use
+the tray context menu → Exit for that.
+
 ## Tray icon behaviour
 
 | Action | Effect |
 |---|---|
-| **Single left-click** | If a PIN is active, opens the popup. If no PIN is active, opens `MainWindow`. |
+| **Single left-click** | Opens `MainWindow`. The popup is a passive notification surface driven by the Generated event, not by user clicks. |
 | **Right-click** | Opens the context menu. |
-| **Context menu → Show PIN** | Same as single left-click. |
-| **Context menu → Regenerate PIN** | Generates a fresh PIN and opens the popup. |
+| **Context menu → Show window** | Same as single left-click. |
 | **Context menu → Exit** | Shuts the host down. |
 
 ## PIN lifecycle notifications
@@ -81,9 +99,20 @@ See [Server.Cli configuration](server-cli.md#configuration).
 
 ## Auto-start
 
-Auto-start on user login is **not yet implemented**. It will be added
-via `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` (no admin
-rights needed) — see the [roadmap](roadmap.md).
+Auto-start on user login is implemented via the per-user
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` registry key — no
+admin rights needed. The feature is **off by default**; the user opts
+in via the Settings tab in the main window.
+
+- **Enable:** open the main window (tray single-click → "Show window"),
+  go to the Settings tab, expand the Startup section, tick "Start
+  PcBeaconAgent when I log in".
+- **Disable:** uncheck the same box.
+- **Registry value name:** `PcBeaconAgent.Server.Tray` under the `Run`
+  key above. The value is the full path to the executable, quoted so
+  paths with spaces survive.
+- **If the registry write fails** (group policy, locked-down hive), the
+  checkbox reverts silently — the rest of the app still works.
 
 ## Build & publish
 

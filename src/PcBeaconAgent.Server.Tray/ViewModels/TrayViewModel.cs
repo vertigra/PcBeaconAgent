@@ -4,6 +4,7 @@ using Hardcodet.Wpf.TaskbarNotification;
 using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Notifications;
+using PcBeaconAgent.Server.Tray.Services;
 using System;
 using System.Linq;
 
@@ -23,18 +24,21 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     private readonly App mApp;
     private readonly TaskbarIcon mTrayIcon;
     private readonly INotificationService mNotifications;
+    private readonly IAutoStartService mAutoStart;
     private bool mDisposed;
 
     public TrayViewModel(
         IPairingService pairingService,
         App app,
         TaskbarIcon trayIcon,
-        INotificationService notifications)
+        INotificationService notifications,
+        IAutoStartService autoStart)
     {
         mPairingService = pairingService;
         mApp = app;
         mTrayIcon = trayIcon;
         mNotifications = notifications;
+        mAutoStart = autoStart;
 
         mPairingService.PairingStateChanged += OnPairingStateChanged;
     }
@@ -133,12 +137,12 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
         if (mainWindow == null)
         {
-            var viewModel = new MainViewModel(mPairingService);
+            var viewModel = new MainViewModel(mPairingService, mAutoStart);
             mainWindow = new Views.MainWindow { DataContext = viewModel };
         }
 
         if (mainWindow.DataContext is MainViewModel vm)
-            vm.RefreshPin();
+            vm.OnWindowShown();
 
         mainWindow.Show();
         mainWindow.Activate();

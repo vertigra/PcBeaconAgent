@@ -91,8 +91,13 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
   balloons themselves is tracked in Tier 3 — Windows positions
   `Shell_NotifyIcon` balloons next to the tray icon and we cannot
   control it.
-- Auto-start on user login via `HKCU\Software\Microsoft\Windows\
-  CurrentVersion\Run` (no admin rights needed).
+- [x] **Auto-start on user login.** (`<TBD>`)
+      Implemented via `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+      (no admin rights needed). Off by default — the user opts in via
+      the Settings tab in the main window. Registry value name is
+      `PcBeaconAgent.Server.Tray`, value is the quoted full path to
+      the executable. If the registry write fails (group policy,
+      locked-down hive), the checkbox reverts silently.
 - [x] **Single-instance mutex.** (`5f4ecbb`)
       A named system mutex (`Global\PcBeaconAgent-SingleInstance`) is
       acquired by both `Server.Cli` and `Server.Tray` at startup. If
@@ -107,6 +112,9 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       actually read why nothing opened (`e15feb1`); `Server.Tray`
       shows a `MessageBox` with the same explanation.
 - Settings window: API key, ports, log path, auto-start toggle.
+      **Partially shipped** — the main window now has a Settings tab
+      with the auto-start toggle and the About section. The remaining
+      sections (Network, Security, Updates, Logs) are still pending.
 - The existing `Server.Cli` keeps working for debug / scripted /
   interactive scenarios. Both hosts share the same `Server.Core`
   business logic, so no behaviour drift.
