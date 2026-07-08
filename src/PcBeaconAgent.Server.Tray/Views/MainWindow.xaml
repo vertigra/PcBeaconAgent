@@ -76,10 +76,10 @@
                        VerticalAlignment="Center"
                        Margin="0,0,12,0"/>
                 <TextBlock Style="{StaticResource HeaderTitle}"
-                           Text="{Binding AppName}"
+                           Text="{Binding AppName, Mode=OneWay}"
                            DockPanel.Dock="Left"/>
                 <TextBlock Style="{StaticResource HeaderVersion}"
-                           Text="{Binding AppVersion, StringFormat='  v{0}'}"
+                           Text="{Binding AppVersion, Mode=OneWay, StringFormat='  v{0}'}"
                            DockPanel.Dock="Left"/>
             </DockPanel>
         </Border>

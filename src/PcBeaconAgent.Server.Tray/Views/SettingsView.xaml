@@ -33,9 +33,9 @@
                       Padding="12,8">
                 <StackPanel Margin="12,8,0,8">
                     <TextBlock FontSize="14" Foreground="White">
-                        <Run Text="{Binding AppName}" FontWeight="Bold"/>
+                        <Run Text="{Binding AppName, Mode=OneWay}" FontWeight="Bold"/>
                         <Run Text="  "/>
-                        <Run Text="{Binding AppVersion}" Foreground="#9E9E9E"/>
+                        <Run Text="{Binding AppVersion, Mode=OneWay}" Foreground="#9E9E9E"/>
                     </TextBlock>
                     <Button Content="Open project page"
                             Command="{Binding OpenProjectUrlCommand}"
