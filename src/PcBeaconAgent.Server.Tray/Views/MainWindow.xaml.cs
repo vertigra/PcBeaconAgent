@@ -1,4 +1,3 @@
-using PcBeaconAgent.Server.Tray.Services;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using System.Windows;
 
@@ -6,20 +5,15 @@ namespace PcBeaconAgent.Server.Tray.Views
 {
     /// <summary>
     /// Main application window — TabControl with three tabs (Pairing,
-    /// Settings, Files). The window title carries the app name and
-    /// version (set once in the constructor — no binding needed
-    /// because the version does not change at runtime).
+    /// Settings, Files). The window title is bound to
+    /// <see cref="Services.AppInfo.Version"/> via <c>Binding</c> with a
+    /// static source in XAML — no code-behind needed.
     /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
-
-            // Window title bar carries the version — no in-window
-            // header needed. AppInfo is the single source of truth
-            // shared with SettingsViewModel.About section.
-            Title = $"PcBeaconAgent v{AppInfo.Version}";
 
             // Refresh the Pairing tab whenever the window is shown so
             // the PIN display is not stale. Loaded fires on first show
