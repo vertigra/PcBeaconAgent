@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Services;
-using System;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
@@ -40,17 +39,9 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             Settings = new SettingsViewModel(autoStart);
             Files = new FilesViewModel();
 
-            // Header text. Mirrors SettingsViewModel.AppName/Version —
-            // we duplicate the lookup rather than sharing a service
-            // because the values are static for the process lifetime
-            // and the indirection would be overkill.
-            System.Reflection.Assembly asm =
-                System.Reflection.Assembly.GetEntryAssembly()
-                ?? System.Reflection.Assembly.GetExecutingAssembly();
-            System.Reflection.AssemblyName name = asm.GetName();
-            AppName = name.Name ?? "PcBeaconAgent.Server.Tray";
-            System.Version? v = name.Version;
-            AppVersion = v != null ? $"{v.Major}.{v.Minor}.{v.Build}" : "0.0.0";
+            // Header text from the single source of truth.
+            AppName = AppInfo.Name;
+            AppVersion = AppInfo.Version;
         }
 
         /// <summary>
@@ -64,3 +55,4 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         }
     }
 }
+

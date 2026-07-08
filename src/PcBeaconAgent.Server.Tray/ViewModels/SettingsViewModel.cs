@@ -1,9 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcBeaconAgent.Server.Tray.Services;
-using System;
 using System.Diagnostics;
-using System.Reflection;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
@@ -23,11 +21,11 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         [ObservableProperty]
         public partial bool CanChangeAutoStart { get; set; } = true;
 
-        [ObservableProperty]
-        public partial string AppName { get; set; }
-
-        [ObservableProperty]
-        public partial string AppVersion { get; set; }
+        // AppName / AppVersion come from AppInfo — single source of
+        // truth shared with MainViewModel. Bound from the About
+        // section of SettingsView.
+        public string AppName => AppInfo.Name;
+        public string AppVersion => AppInfo.Version;
 
         public SettingsViewModel(IAutoStartService autoStart)
         {
@@ -36,15 +34,6 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             // Read the current state from the registry. If the user
             // previously enabled auto-start, the checkbox reflects it.
             AutoStartEnabled = autoStart.IsEnabled;
-
-            // AppName + AppVersion come from the executing assembly.
-            // For publish builds, Version comes from the csproj
-            // <Version> property, injected by the CI pipeline.
-            Assembly asm = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
-            AssemblyName name = asm.GetName();
-            AppName = name.Name ?? "PcBeaconAgent.Server.Tray";
-            Version? v = name.Version;
-            AppVersion = v != null ? $"{v.Major}.{v.Minor}.{v.Build}" : "0.0.0";
         }
 
         /// <summary>

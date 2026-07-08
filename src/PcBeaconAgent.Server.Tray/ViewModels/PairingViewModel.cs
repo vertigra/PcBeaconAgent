@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcBeaconAgent.Server.Core.Interfaces;
-using System;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
@@ -11,6 +10,17 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
     /// by <see cref="TrayViewModel"/> / <c>INotificationService</c> —
     /// this VM is just the in-window display surface.
     /// </summary>
+    /// <remarks>
+    /// <b>PIN lifecycle.</b> The Android client requests a fresh PIN
+    /// automatically when it opens the PairingPage (via
+    /// <c>/api/pair/regenerate</c>). The server-side
+    /// <c>PairingService</c> does not generate a PIN on startup and
+    /// must not generate one when the user merely opens the main
+    /// window — that would race with the client-driven flow and
+    /// produce a PIN the client never asked for. <see cref="RefreshPin"/>
+    /// only reads; <see cref="RegeneratePin"/> is the only path that
+    /// writes (and it is bound to an explicit button click).
+    /// </remarks>
     public partial class PairingViewModel : ObservableObject
     {
         private readonly IPairingService mPairingService;
@@ -46,26 +56,19 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         }
 
         /// <summary>
-        /// Re-reads the current PIN from the service. Called by
-        /// <see cref="MainViewModel"/> when the user opens the window
-        /// (so the display is fresh) and after a Regenerate click.
+        /// Re-reads the current PIN from the service. Read-only —
+        /// does NOT generate a new PIN if none is active. The PIN
+        /// display may be empty when the user opens the window before
+        /// the Android client has requested one; that is expected and
+        /// correct. The user can click "Regenerate PIN" if they want
+        /// one immediately, or just open the Android app's PairingPage
+        /// and let it drive.
         /// </summary>
         public void RefreshPin()
         {
             CurrentPin = mPairingService.GetCurrentPin();
             HasActivePin = mPairingService.IsPairingActive;
-
-            // If there's no active PIN when the user opens the window
-            // (e.g. they opened it after the previous PIN expired but
-            // before the Android client requested a new one), generate
-            // one so the UI is not empty. This matches the Tray's
-            // overall "PIN-on-demand" model.
-            if (!HasActivePin)
-            {
-                mPairingService.RegeneratePin();
-                CurrentPin = mPairingService.GetCurrentPin();
-                HasActivePin = mPairingService.IsPairingActive;
-            }
         }
     }
 }
+
