@@ -8,7 +8,7 @@ using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
 using PcBeaconAgent.Server.Tray.Extensions;
-using PcBeaconAgent.Server.Tray.Notifications;
+using PcBeaconAgent.Server.Tray.Services;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using PcBeaconAgent.Server.Tray.Views;
 using Serilog;
@@ -106,12 +106,8 @@ public partial class App : Application
         // (PIN display, settings) survives open/close cycles within one
         // process run.
         builder.Services.AddSingleton<AppSettings>(settings);
-        builder.Services.AddSingleton<Services.IAutoStartService, Services.AutoStartService>();
-        // INotificationService factory: Application.Current is set by
-        // the time the factory is invoked (resolution happens in
-        // OnStartup, after the App constructor has run).
-        builder.Services.AddSingleton<INotificationService>(sp => new TrayNotificationService((App)Current));
-
+        builder.Services.AddSingleton<IAutoStartService, AutoStartService>();
+        builder.Services.AddSingleton<INotificationService>(sp => new NotificationService((App)Current));
         builder.Services.AddSingleton<PairingViewModel>();
         builder.Services.AddSingleton<SettingsViewModel>();
         builder.Services.AddSingleton<FilesViewModel>();

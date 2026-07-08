@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcBeaconAgent.Server.Core.Configuration;
+using PcBeaconAgent.Server.Tray.Helpers;
 using PcBeaconAgent.Server.Tray.Services;
 using Serilog;
 using System.Diagnostics;

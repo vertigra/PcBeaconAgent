@@ -5,11 +5,11 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace PcBeaconAgent.Server.Tray.Notifications
+namespace PcBeaconAgent.Server.Tray.Services
 {
     /// <summary>
-    /// Tray host implementation of <see cref="INotificationService"/>.
-    /// Owns:
+    /// Implementation of <see cref="INotificationService"/> for the tray
+    /// host. Owns:
     /// <list type="bullet">
     ///   <item>The <see cref="PinPopupWindow"/> instance and its lifecycle.</item>
     ///   <item>The Win32 <c>SHAppBarMessage</c> interop used to snap the
@@ -23,7 +23,7 @@ namespace PcBeaconAgent.Server.Tray.Notifications
     ///       <see cref="INotificationService"/> contract stays.</item>
     /// </list>
     /// </summary>
-    internal sealed class TrayNotificationService : INotificationService
+    internal sealed class NotificationService : INotificationService
     {
         private readonly App mApp;
         private TaskbarIcon? mTaskbarIcon;
@@ -63,7 +63,7 @@ namespace PcBeaconAgent.Server.Tray.Notifications
         // the popup doesn't visually touch either. Pixels, device units.
         private const double Margin = 4;
 
-        public TrayNotificationService(App app)
+        public NotificationService(App app)
         {
             mApp = app;
         }

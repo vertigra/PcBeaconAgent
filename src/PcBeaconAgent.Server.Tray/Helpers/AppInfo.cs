@@ -1,11 +1,11 @@
 using System;
 using System.Reflection;
 
-namespace PcBeaconAgent.Server.Tray.Services
+namespace PcBeaconAgent.Server.Tray.Helpers
 {
     /// <summary>
     /// Single source of truth for the app name and version shown in
-    /// the MainWindow header and the Settings → About section. Both
+    /// the MainWindow title and the Settings → About section. Both
     /// <see cref="ViewModels.MainViewModel"/> and
     /// <see cref="ViewModels.SettingsViewModel"/> read from this
     /// helper so the reflection lookup lives in one place.

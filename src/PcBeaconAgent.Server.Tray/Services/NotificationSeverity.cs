@@ -1,4 +1,4 @@
-namespace PcBeaconAgent.Server.Tray.Notifications
+namespace PcBeaconAgent.Server.Tray.Services
 {
     /// <summary>
     /// Severity for transient notifications shown via

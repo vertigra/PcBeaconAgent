@@ -6,7 +6,7 @@ namespace PcBeaconAgent.Server.Tray.Views
     /// <summary>
     /// Main application window — TabControl with three tabs (Pairing,
     /// Settings, Files). The window title is bound to
-    /// <see cref="Services.AppInfo.Version"/> via <c>Binding</c> with a
+    /// <see cref="Helpers.AppInfo.Version"/> via <c>Binding</c> with a
     /// static source in XAML — no code-behind needed.
     /// </summary>
     public partial class MainWindow : Window

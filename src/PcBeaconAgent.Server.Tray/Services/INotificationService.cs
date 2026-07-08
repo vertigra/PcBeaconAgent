@@ -1,7 +1,7 @@
 using System;
 using Hardcodet.Wpf.TaskbarNotification;
 
-namespace PcBeaconAgent.Server.Tray.Notifications
+namespace PcBeaconAgent.Server.Tray.Services
 {
     /// <summary>
     /// Owns the user-facing notification surface for the tray host:

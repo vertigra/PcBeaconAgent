@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using Hardcodet.Wpf.TaskbarNotification;
 using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
-using PcBeaconAgent.Server.Tray.Notifications;
 using PcBeaconAgent.Server.Tray.Services;
 using Serilog;
 using System;
