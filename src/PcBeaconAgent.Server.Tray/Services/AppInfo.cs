@@ -26,7 +26,7 @@ namespace PcBeaconAgent.Server.Tray.Services
             Assembly asm = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
             AssemblyName name = asm.GetName();
             Name = name.Name ?? "PcBeaconAgent.Server.Tray";
-            System.Version? v = name.Version;
+            Version? v = name.Version;
             Version = v != null ? $"{v.Major}.{v.Minor}.{v.Build}" : "0.0.0";
         }
     }

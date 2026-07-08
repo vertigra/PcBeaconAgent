@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using PcBeaconAgent.Server.Tray.Services;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
@@ -14,10 +13,7 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         public SettingsViewModel Settings { get; }
         public FilesViewModel Files { get; }
 
-        public MainViewModel(
-            PairingViewModel pairing,
-            SettingsViewModel settings,
-            FilesViewModel files)
+        public MainViewModel(PairingViewModel pairing, SettingsViewModel settings, FilesViewModel files)
         {
             Pairing = pairing;
             Settings = settings;

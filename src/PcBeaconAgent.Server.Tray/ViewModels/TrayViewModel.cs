@@ -29,12 +29,7 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     private readonly MainViewModel mMainViewModel;
     private bool mDisposed;
 
-    public TrayViewModel(
-        IPairingService pairingService,
-        App app,
-        TaskbarIcon trayIcon,
-        INotificationService notifications,
-        MainViewModel mainViewModel)
+    public TrayViewModel(IPairingService pairingService, App app, TaskbarIcon trayIcon, INotificationService notifications, MainViewModel mainViewModel)
     {
         mPairingService = pairingService;
         mApp = app;

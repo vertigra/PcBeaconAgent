@@ -1,8 +1,6 @@
-using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using PcBeaconAgent.Server.Core.BackgroundServices;
 using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Endpoints;
@@ -11,7 +9,6 @@ using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
 using PcBeaconAgent.Server.Tray.Extensions;
 using PcBeaconAgent.Server.Tray.Notifications;
-using PcBeaconAgent.Server.Tray.Services;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using PcBeaconAgent.Server.Tray.Views;
 using Serilog;
@@ -28,10 +25,6 @@ public partial class App : Application
     private TrayViewModel? mTrayViewModel;
     private INotificationService? mNotifications;
     private SingleInstanceGuard? mSingleInstance;
-    // AppSettings is read from appsettings.json in StartWebHostAsync
-    // and registered as a DI singleton so the Settings tab can read
-    // the network configuration without re-reading the file.
-    private AppSettings? mAppSettings;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -62,19 +55,11 @@ public partial class App : Application
             await StartWebHostAsync();
 
             var pairingService = mWebApp!.Services.GetRequiredService<IPairingService>();
-            // INotificationService is constructed before the TaskbarIcon
-            // exists — the icon lives in TrayWindow.xaml and is only
-            // available after InitializeComponent. We pass it in via
-            // AttachTaskbarIcon below. (Patch C will move this into DI.)
-            mNotifications = new TrayNotificationService(this);
+            mNotifications = mWebApp.Services.GetRequiredService<INotificationService>();
 
             mTrayWindow = new TrayWindow();
             mNotifications.AttachTaskbarIcon(mTrayWindow.TrayIcon);
 
-            // MainViewModel is resolved from DI — its child VMs
-            // (Pairing, Settings, Files) are resolved transitively
-            // with their own dependencies (IPairingService,
-            // IAutoStartService, AppSettings).
             var mainViewModel = mWebApp.Services.GetRequiredService<MainViewModel>();
 
             mTrayViewModel = new TrayViewModel(
@@ -98,8 +83,7 @@ public partial class App : Application
     private async Task StartWebHostAsync()
     {
         var builder = WebApplication.CreateSlimBuilder();
-        mAppSettings = builder.AddApplicationConfiguration();
-        AppSettings settings = mAppSettings;
+        AppSettings settings = builder.AddApplicationConfiguration();
 
         var beaconOptions = new BeaconServerOptions(settings.Server.Host, settings.Server.DiscoveryPort);
         var apiOptions = new WebApiOptions(settings.Server.ApiPort, settings.Server.ApiKey);
@@ -118,19 +102,20 @@ public partial class App : Application
         builder.Services.AddPairingService();
         builder.Services.AddWebApi();
 
-        // Tray view models — singleton so the window state (PIN display,
-        // settings) survives open/close cycles within one process run.
-        // AppSettings and IAutoStartService are registered here so the
-        // child VMs can resolve them transitively. INotificationService
-        // stays manual until patch C (it needs the App instance, which
-        // is not available at DI registration time).
+        // Tray view models and services — singleton so the window state
+        // (PIN display, settings) survives open/close cycles within one
+        // process run.
         builder.Services.AddSingleton<AppSettings>(settings);
-        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.Services.IAutoStartService,
-            PcBeaconAgent.Server.Tray.Services.AutoStartService>();
-        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.PairingViewModel>();
-        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.SettingsViewModel>();
-        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.FilesViewModel>();
-        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.MainViewModel>();
+        builder.Services.AddSingleton<Services.IAutoStartService, Services.AutoStartService>();
+        // INotificationService factory: Application.Current is set by
+        // the time the factory is invoked (resolution happens in
+        // OnStartup, after the App constructor has run).
+        builder.Services.AddSingleton<INotificationService>(sp => new TrayNotificationService((App)Current));
+
+        builder.Services.AddSingleton<PairingViewModel>();
+        builder.Services.AddSingleton<SettingsViewModel>();
+        builder.Services.AddSingleton<FilesViewModel>();
+        builder.Services.AddSingleton<MainViewModel>();
 
         mWebApp = builder.Build();
 
