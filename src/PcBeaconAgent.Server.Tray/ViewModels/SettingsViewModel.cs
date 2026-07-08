@@ -3,18 +3,18 @@ using CommunityToolkit.Mvvm.Input;
 using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Tray.Services;
 using Serilog;
-using System;
 using System.Diagnostics;
 using System.IO;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
     /// <summary>
-    /// View model for the Settings tab. Currently exposes the
-    /// auto-start toggle, the About section (app name + version +
-    /// update check), and the Logs section (log file path + open
-    /// folder button). Future settings (network, security) will be
-    /// added here — see roadmap Tier 2/3 "Settings window".
+    /// View model for the Settings tab. Exposes the auto-start toggle,
+    /// read-only network configuration (Host / API port / Discovery
+    /// port), the About section (app name + version + update check),
+    /// and the Logs section (log file path + open folder button).
+    /// Future settings (network editing, security) will be added here
+    /// — see roadmap Tier 2/3 "Settings window".
     /// </summary>
     public partial class SettingsViewModel : ObservableObject
     {
@@ -32,20 +32,20 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         public string AppName => AppInfo.Name;
         public string AppVersion => AppInfo.Version;
 
-        // LogFilePath is read-only display — the path comes from
-        // appsettings.json (LogSettings.FilePath) and is resolved
-        // to an absolute path relative to the executable. Read-only
-        // binding → Mode=OneWay in XAML.
-        public string LogFilePath { get; }
-
-        // Network settings — read-only display. Editing requires a
-        // soft restart (Tier 3). Values come from appsettings.json
-        // (ServerSettings). Read-only binding → Mode=OneWay in XAML.
+        // Network settings — read-only display. The values come from
+        // AppSettings (loaded from appsettings.json by the host). Editing
+        // requires a soft restart (Tier 3). Read-only binding →
+        // Mode=OneWay in XAML.
         public string Host { get; }
         public int ApiPort { get; }
         public int DiscoveryPort { get; }
 
-        public SettingsViewModel(IAutoStartService autoStart)
+        // LogFilePath is read-only display — resolved from AppSettings.Log.FilePath
+        // relative to the executable directory. Read-only binding →
+        // Mode=OneWay in XAML.
+        public string LogFilePath { get; }
+
+        public SettingsViewModel(IAutoStartService autoStart, AppSettings appSettings)
         {
             mAutoStart = autoStart;
 
@@ -53,133 +53,15 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             // previously enabled auto-start, the checkbox reflects it.
             AutoStartEnabled = autoStart.IsEnabled;
 
-            // Resolve the log file path. We read appsettings.json
-            // directly here rather than injecting AppSettings because
-            // the DI container in App.xaml.cs builds the web host
-            // separately and does not expose AppSettings to the tray
-            // view models. This is a small read at window-open time;
-            // if the file is missing or malformed, we fall back to a
-            // sane default.
-            LogFilePath = ResolveLogFilePath();
+            Host = appSettings.Server.Host;
+            ApiPort = appSettings.Server.ApiPort;
+            DiscoveryPort = appSettings.Server.DiscoveryPort;
 
-            // Read network settings from appsettings.json. Same
-            // lightweight JSON extraction approach as LogFilePath.
-            (Host, ApiPort, DiscoveryPort) = ResolveNetworkSettings();
-        }
-
-        /// <summary>
-        /// Reads <c>LogSettings.FilePath</c> from <c>appsettings.json</c>
-        /// and resolves it to an absolute path relative to the
-        /// executable directory. Returns a fallback path if the
-        /// configuration cannot be read.
-        /// </summary>
-        private static string ResolveLogFilePath()
-        {
-            try
-            {
-                string baseDir = System.AppContext.BaseDirectory;
-                string configPath = Path.Combine(baseDir, "appsettings.json");
-                if (!File.Exists(configPath))
-                    return Path.Combine(baseDir, "logs", "pcbeacon.log");
-
-                string json = File.ReadAllText(configPath);
-                // Lightweight extraction — avoids pulling in
-                // Microsoft.Extensions.Configuration just for one
-                // string. The JSON structure is:
-                //   "LogSettings": { "FilePath": "logs\\…" }
-                int idx = json.IndexOf("\"FilePath\"", System.StringComparison.Ordinal);
-                if (idx < 0) return Path.Combine(baseDir, "logs", "pcbeacon.log");
-                int colon = json.IndexOf(':', idx);
-                int openQuote = json.IndexOf('"', colon + 1);
-                int closeQuote = json.IndexOf('"', openQuote + 1);
-                if (openQuote < 0 || closeQuote < 0)
-                    return Path.Combine(baseDir, "logs", "pcbeacon.log");
-
-                string relative = json.Substring(openQuote + 1, closeQuote - openQuote - 1);
-                return Path.GetFullPath(Path.Combine(baseDir, relative));
-            }
-            catch
-            {
-                return "logs/pcbeacon.log";
-            }
-        }
-
-        /// <summary>
-        /// Reads <c>ServerSettings.Host</c>, <c>ServerSettings.ApiPort</c>,
-        /// and <c>ServerSettings.DiscoveryPort</c> from
-        /// <c>appsettings.json</c>. Returns fallbacks if the file is
-        /// missing or malformed. Used for the read-only Network section.
-        /// </summary>
-        private static (string Host, int ApiPort, int DiscoveryPort) ResolveNetworkSettings()
-        {
-            string host = "0.0.0.0";
-            int apiPort = 5000;
-            int discoveryPort = 8888;
-
-            try
-            {
-                string baseDir = System.AppContext.BaseDirectory;
-                string configPath = Path.Combine(baseDir, "appsettings.json");
-                if (!File.Exists(configPath))
-                    return (host, apiPort, discoveryPort);
-
-                string json = File.ReadAllText(configPath);
-                host = ExtractJsonString(json, "Host") ?? host;
-                int? parsedApi = ExtractJsonInt(json, "ApiPort");
-                if (parsedApi.HasValue) apiPort = parsedApi.Value;
-                int? parsedDiscovery = ExtractJsonInt(json, "DiscoveryPort");
-                if (parsedDiscovery.HasValue) discoveryPort = parsedDiscovery.Value;
-            }
-            catch
-            {
-                // Fall through with defaults.
-            }
-
-            return (host, apiPort, discoveryPort);
-        }
-
-        /// <summary>
-        /// Lightweight JSON string-value extractor. Finds
-        /// <c>"key": "value"</c> and returns the value. Returns null
-        /// if the key is not found. Not a full JSON parser — assumes
-        /// the appsettings.json structure is flat enough for the
-        /// keys we care about.
-        /// </summary>
-        private static string? ExtractJsonString(string json, string key)
-        {
-            int idx = json.IndexOf($"\"{key}\"", System.StringComparison.Ordinal);
-            if (idx < 0) return null;
-            int colon = json.IndexOf(':', idx);
-            if (colon < 0) return null;
-            int openQuote = json.IndexOf('"', colon + 1);
-            if (openQuote < 0) return null;
-            int closeQuote = json.IndexOf('"', openQuote + 1);
-            if (closeQuote < 0) return null;
-            return json.Substring(openQuote + 1, closeQuote - openQuote - 1);
-        }
-
-        /// <summary>
-        /// Lightweight JSON int-value extractor. Finds
-        /// <c>"key": 12345</c> and returns the value. Returns null if
-        /// the key is not found or the value is not a valid integer.
-        /// </summary>
-        private static int? ExtractJsonInt(string json, string key)
-        {
-            int idx = json.IndexOf($"\"{key}\"", System.StringComparison.Ordinal);
-            if (idx < 0) return null;
-            int colon = json.IndexOf(':', idx);
-            if (colon < 0) return null;
-            // Scan forward past whitespace to the first digit.
-            int i = colon + 1;
-            while (i < json.Length && (json[i] == ' ' || json[i] == '\t'))
-                i++;
-            int start = i;
-            while (i < json.Length && (char.IsDigit(json[i]) || json[i] == '-'))
-                i++;
-            if (i == start) return null;
-            if (int.TryParse(json.AsSpan(start, i - start), out int value))
-                return value;
-            return null;
+            // LogSettings.FilePath is relative (e.g. "logs\pc-beacon.log").
+            // Resolve it to an absolute path so the UI shows where the
+            // log actually lives on disk.
+            string baseDir = System.AppContext.BaseDirectory;
+            LogFilePath = Path.GetFullPath(Path.Combine(baseDir, appSettings.Log.FilePath));
         }
 
         /// <summary>

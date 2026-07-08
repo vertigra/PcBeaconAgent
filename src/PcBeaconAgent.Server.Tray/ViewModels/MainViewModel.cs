@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Services;
 
@@ -26,10 +27,11 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
 
         public MainViewModel(
             IPairingService pairingService,
-            IAutoStartService autoStart)
+            IAutoStartService autoStart,
+            AppSettings appSettings)
         {
             mPairing = new PairingViewModel(pairingService);
-            Settings = new SettingsViewModel(autoStart);
+            Settings = new SettingsViewModel(autoStart, appSettings);
             Files = new FilesViewModel();
         }
 

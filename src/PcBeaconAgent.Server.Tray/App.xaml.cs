@@ -32,6 +32,10 @@ public partial class App : Application
     // TrayViewModel (for the menu item, if we add one later) and the
     // SettingsViewModel (for the checkbox).
     private IAutoStartService? mAutoStart;
+    // AppSettings is read from appsettings.json in StartWebHostAsync
+    // and shared with the Settings tab so it can display the network
+    // configuration without re-reading the file.
+    private AppSettings? mAppSettings;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -73,7 +77,7 @@ public partial class App : Application
             mNotifications.AttachTaskbarIcon(mTrayWindow.TrayIcon);
 
             mTrayViewModel = new TrayViewModel(
-                pairingService, this, mTrayWindow.TrayIcon, mNotifications, mAutoStart);
+                pairingService, this, mTrayWindow.TrayIcon, mNotifications, mAutoStart, mAppSettings!);
             mTrayWindow.DataContext = mTrayViewModel;
             // The window stays hidden — it only hosts the TaskbarIcon.
             mTrayWindow.Show();
@@ -93,7 +97,8 @@ public partial class App : Application
     private async Task StartWebHostAsync()
     {
         var builder = WebApplication.CreateSlimBuilder();
-        AppSettings settings = builder.AddApplicationConfiguration();
+        mAppSettings = builder.AddApplicationConfiguration();
+        AppSettings settings = mAppSettings;
 
         var beaconOptions = new BeaconServerOptions(settings.Server.Host, settings.Server.DiscoveryPort);
         var apiOptions = new WebApiOptions(settings.Server.ApiPort, settings.Server.ApiKey);

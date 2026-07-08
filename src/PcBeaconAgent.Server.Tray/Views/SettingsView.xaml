@@ -44,6 +44,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Host"
@@ -73,6 +74,12 @@
                                FontSize="13" Foreground="White"
                                VerticalAlignment="Center"
                                Margin="0,6,0,0"/>
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                               Text="To change these settings, edit appsettings.json and restart the application."
+                               FontSize="11" Foreground="#757575"
+                               TextWrapping="Wrap"
+                               Margin="0,10,0,0"/>
                 </Grid>
             </Expander>
 
