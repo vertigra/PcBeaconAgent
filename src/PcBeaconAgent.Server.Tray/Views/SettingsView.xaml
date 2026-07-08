@@ -8,7 +8,7 @@
 
             <!-- ── Startup ───────────────────────────────────── -->
             <Expander Header="Startup"
-                      IsExpanded="True"
+                      IsExpanded="False"
                       Margin="0,0,0,12"
                       Background="#2A2A2A" Foreground="#D0BCFF"
                       BorderBrush="#3A3A3A" BorderThickness="1"
@@ -25,14 +25,65 @@
                 </StackPanel>
             </Expander>
 
-            <!-- ── About ────────────────────────────────────── -->
-            <Expander Header="About"
-                      IsExpanded="True"
+            <!-- ── Network (read-only) ───────────────────────── -->
+            <!-- Editing host/ports requires a soft restart (Tier 3).
+                 For now the values are displayed read-only so the user
+                 can confirm what the server is bound to. -->
+            <Expander Header="Network"
+                      IsExpanded="False"
                       Margin="0,0,0,12"
                       Background="#2A2A2A" Foreground="#D0BCFF"
                       BorderBrush="#3A3A3A" BorderThickness="1"
                       Padding="12,8">
-                <StackPanel Margin="12,8,0,8" Orientation="Vertical">
+                <Grid Margin="12,8,12,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Host"
+                               FontSize="12" Foreground="#9E9E9E"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1"
+                               Text="{Binding Host, Mode=OneWay}"
+                               FontSize="13" Foreground="White"
+                               VerticalAlignment="Center"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="API port"
+                               FontSize="12" Foreground="#9E9E9E"
+                               VerticalAlignment="Center"
+                               Margin="0,6,0,0"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1"
+                               Text="{Binding ApiPort, Mode=OneWay}"
+                               FontSize="13" Foreground="White"
+                               VerticalAlignment="Center"
+                               Margin="0,6,0,0"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Discovery port"
+                               FontSize="12" Foreground="#9E9E9E"
+                               VerticalAlignment="Center"
+                               Margin="0,6,0,0"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1"
+                               Text="{Binding DiscoveryPort, Mode=OneWay}"
+                               FontSize="13" Foreground="White"
+                               VerticalAlignment="Center"
+                               Margin="0,6,0,0"/>
+                </Grid>
+            </Expander>
+
+            <!-- ── About ────────────────────────────────────── -->
+            <Expander Header="About"
+                      IsExpanded="False"
+                      Margin="0,0,0,12"
+                      Background="#2A2A2A" Foreground="#D0BCFF"
+                      BorderBrush="#3A3A3A" BorderThickness="1"
+                      Padding="12,8">
+                <StackPanel Margin="12,8,0,8">
                     <TextBlock FontSize="14" Foreground="White" Margin="0,0,0,8">
                         <Run Text="{Binding AppName, Mode=OneWay}" FontWeight="Bold"/>
                         <Run Text="  "/>
@@ -59,7 +110,7 @@
 
             <!-- ── Logs ─────────────────────────────────────── -->
             <Expander Header="Logs"
-                      IsExpanded="True"
+                      IsExpanded="False"
                       Background="#2A2A2A" Foreground="#D0BCFF"
                       BorderBrush="#3A3A3A" BorderThickness="1"
                       Padding="12,8">
@@ -77,10 +128,6 @@
                             HorizontalAlignment="Left"/>
                 </StackPanel>
             </Expander>
-
-            <!-- Future sections (Network, Security) will be added
-                 here as additional Expanders. Tracked in the roadmap
-                 (Tier 2/3 "Settings window"). -->
 
         </StackPanel>
     </ScrollViewer>
