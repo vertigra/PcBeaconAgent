@@ -28,17 +28,47 @@
             <!-- ── About ────────────────────────────────────── -->
             <Expander Header="About"
                       IsExpanded="True"
+                      Margin="0,0,0,12"
                       Background="#2A2A2A" Foreground="#D0BCFF"
                       BorderBrush="#3A3A3A" BorderThickness="1"
                       Padding="12,8">
-                <StackPanel Margin="12,8,0,8">
-                    <TextBlock FontSize="14" Foreground="White">
+                <StackPanel Margin="12,8,0,8" Orientation="Vertical">
+                    <TextBlock FontSize="14" Foreground="White" Margin="0,0,0,8">
                         <Run Text="{Binding AppName, Mode=OneWay}" FontWeight="Bold"/>
                         <Run Text="  "/>
                         <Run Text="{Binding AppVersion, Mode=OneWay}" Foreground="#9E9E9E"/>
                     </TextBlock>
-                    <Button Content="Open project page"
-                            Command="{Binding OpenProjectUrlCommand}"
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Open project page"
+                                Command="{Binding OpenProjectUrlCommand}"
+                                Padding="12,6"
+                                Background="Transparent" Foreground="#D0BCFF"
+                                BorderBrush="#3A3A3A" BorderThickness="1"
+                                FontSize="12"
+                                Cursor="Hand"/>
+                        <Button Content="Check for updates"
+                                Command="{Binding CheckForUpdatesCommand}"
+                                Padding="12,6"
+                                Background="Transparent" Foreground="#D0BCFF"
+                                BorderBrush="#3A3A3A" BorderThickness="1"
+                                FontSize="12"
+                                Cursor="Hand"/>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <!-- ── Logs ─────────────────────────────────────── -->
+            <Expander Header="Logs"
+                      IsExpanded="True"
+                      Background="#2A2A2A" Foreground="#D0BCFF"
+                      BorderBrush="#3A3A3A" BorderThickness="1"
+                      Padding="12,8">
+                <StackPanel Margin="12,8,0,8">
+                    <TextBlock Text="{Binding LogFilePath, Mode=OneWay}"
+                               FontSize="11" Foreground="#9E9E9E"
+                               Margin="0,0,0,8" TextWrapping="Wrap"/>
+                    <Button Content="Open log folder"
+                            Command="{Binding OpenLogFolderCommand}"
                             Padding="12,6"
                             Background="Transparent" Foreground="#D0BCFF"
                             BorderBrush="#3A3A3A" BorderThickness="1"
@@ -48,9 +78,9 @@
                 </StackPanel>
             </Expander>
 
-            <!-- Future sections (Network, Security, Updates, Logs)
-                 will be added here as additional Expanders. Each is
-                 tracked in the roadmap (Tier 2 "Settings window"). -->
+            <!-- Future sections (Network, Security) will be added
+                 here as additional Expanders. Tracked in the roadmap
+                 (Tier 2/3 "Settings window"). -->
 
         </StackPanel>
     </ScrollViewer>

@@ -6,8 +6,7 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
 {
     /// <summary>
     /// Root view model for <see cref="Views.MainWindow"/>. Owns the
-    /// three tab view models (Pairing / Settings / Files) and exposes
-    /// the header state (app name + version + icon source).
+    /// three tab view models (Pairing / Settings / Files).
     /// </summary>
     /// <remarks>
     /// The tab VMs are constructed once when the window is first
@@ -25,12 +24,6 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         public SettingsViewModel Settings { get; }
         public FilesViewModel Files { get; }
 
-        [ObservableProperty]
-        public partial string AppName { get; set; }
-
-        [ObservableProperty]
-        public partial string AppVersion { get; set; }
-
         public MainViewModel(
             IPairingService pairingService,
             IAutoStartService autoStart)
@@ -38,10 +31,6 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             mPairing = new PairingViewModel(pairingService);
             Settings = new SettingsViewModel(autoStart);
             Files = new FilesViewModel();
-
-            // Header text from the single source of truth.
-            AppName = AppInfo.Name;
-            AppVersion = AppInfo.Version;
         }
 
         /// <summary>
@@ -55,4 +44,3 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         }
     }
 }
-

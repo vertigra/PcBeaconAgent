@@ -139,6 +139,15 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       Split into [docs/server-cli.md](server-cli.md) and
       [docs/server-tray.md](server-tray.md); `README.md` updated with a
       comparison table and links to both.
+- [ ] **Status bar in MainWindow.**
+      Add a status bar at the bottom of MainWindow (below the
+      TabControl, common to all tabs) showing the connected-clients
+      count. Requires `BeaconServiceHub` to expose a thread-safe
+      `ConnectedClientsCount` property (or an event the VM
+      subscribes to) — today the hub tracks connections internally
+      but does not publish the count. The status bar should also
+      show the server's IP:port so the user can confirm the bind
+      address without opening Settings.
 - [ ] **Add unit and integration tests.**
       The project currently has no test projects. Add a
       `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the
@@ -233,6 +242,19 @@ note before implementation; the entries here are reminders.
       way to get pixel-perfect control. Defer until the rest of Tier 2
       ships; the current balloons are functional, just not pixel-aligned
       with the popup.
+- [ ] **Network interface binding + soft restart.**
+      Today the server binds to a single host address from
+      `appsettings.json` (`0.0.0.0` = all interfaces). Add a
+      Settings UI section that lists the machine's network
+      interfaces (enumerated via `NetworkInterface.GetAllNetworkInterfaces`)
+      and lets the user pick which one(s) to bind on. Changing the
+      bind address or port does not require restarting the whole
+      tray process — instead, implement a soft restart: stop the
+      Kestrel host, reconfigure, start again. The tray UI stays
+      alive throughout; only the web API + SignalR hub bounce.
+      Clients reconnect automatically on next beacon. Also covers
+      the IP/port/ApiKey settings that are currently read-only in
+      the Settings tab.
 - [ ] **Auto-update from GitHub Releases.**
       On startup (and periodically while running), the tray host queries
       the GitHub Releases API for the latest `server.v.*` tag. If a

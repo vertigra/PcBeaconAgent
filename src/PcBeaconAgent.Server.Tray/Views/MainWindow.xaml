@@ -11,19 +11,6 @@
         WindowStartupLocation="CenterScreen"
         Background="#1E1E1E">
     <Window.Resources>
-        <!-- Header style: title + version, with the app icon on the left. -->
-        <Style x:Key="HeaderTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#D0BCFF"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="HeaderVersion" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#9E9E9E"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
         <!-- TabItem style for dark background. The default WPF
              TabItem template paints the selected tab with
              SystemColors.ControlLightLightBrush (white), making
@@ -62,43 +49,17 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <!-- ── Header: icon + app name + version ─────────────── -->
-        <Border Grid.Row="0" Background="#2A2A2A" Padding="16,12">
-            <DockPanel>
-                <Image Source="pack://application:,,,/beacon.ico"
-                       Width="32" Height="32"
-                       VerticalAlignment="Center"
-                       Margin="0,0,12,0"/>
-                <TextBlock Style="{StaticResource HeaderTitle}"
-                           Text="{Binding AppName, Mode=OneWay}"
-                           DockPanel.Dock="Left"/>
-                <TextBlock Style="{StaticResource HeaderVersion}"
-                           Text="{Binding AppVersion, Mode=OneWay, StringFormat='  v{0}'}"
-                           DockPanel.Dock="Left"/>
-            </DockPanel>
-        </Border>
-
-        <!-- ── TabControl: Pairing / Settings / Files ────────── -->
-        <TabControl Grid.Row="1"
-                    Background="#1E1E1E"
-                    BorderThickness="0,1,0,0"
-                    BorderBrush="#2C2C2C"
-                    Padding="0">
-            <TabItem Header="Pairing" Style="{StaticResource DarkTabItem}">
-                <views:PairingView DataContext="{Binding Pairing}"/>
-            </TabItem>
-            <TabItem Header="Settings" Style="{StaticResource DarkTabItem}">
-                <views:SettingsView DataContext="{Binding Settings}"/>
-            </TabItem>
-            <TabItem Header="Files" Style="{StaticResource DarkTabItem}">
-                <views:FilesView DataContext="{Binding Files}"/>
-            </TabItem>
-        </TabControl>
-    </Grid>
+    <TabControl Background="#1E1E1E"
+                BorderThickness="0"
+                Padding="0">
+        <TabItem Header="Pairing" Style="{StaticResource DarkTabItem}">
+            <views:PairingView DataContext="{Binding Pairing}"/>
+        </TabItem>
+        <TabItem Header="Settings" Style="{StaticResource DarkTabItem}">
+            <views:SettingsView DataContext="{Binding Settings}"/>
+        </TabItem>
+        <TabItem Header="Files" Style="{StaticResource DarkTabItem}">
+            <views:FilesView DataContext="{Binding Files}"/>
+        </TabItem>
+    </TabControl>
 </Window>
