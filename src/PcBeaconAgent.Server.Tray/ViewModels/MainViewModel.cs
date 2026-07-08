@@ -1,48 +1,36 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using PcBeaconAgent.Server.Core.Configuration;
-using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Services;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
     /// <summary>
     /// Root view model for <see cref="Views.MainWindow"/>. Owns the
-    /// three tab view models (Pairing / Settings / Files).
+    /// three tab view models (Pairing / Settings / Files). All child
+    /// VMs are injected via DI — no <c>new</c> in the constructor.
     /// </summary>
-    /// <remarks>
-    /// The tab VMs are constructed once when the window is first
-    /// opened and reused for the lifetime of the window — closing
-    /// the window does not dispose them, but re-opening reuses the
-    /// same instance. This is intentional: settings made on the
-    /// Settings tab should persist across window open/close cycles
-    /// within a single process run.
-    /// </remarks>
     public partial class MainViewModel : ObservableObject
     {
-        private readonly PairingViewModel mPairing;
-
-        public PairingViewModel Pairing => mPairing;
+        public PairingViewModel Pairing { get; }
         public SettingsViewModel Settings { get; }
         public FilesViewModel Files { get; }
 
         public MainViewModel(
-            IPairingService pairingService,
-            IAutoStartService autoStart,
-            AppSettings appSettings)
+            PairingViewModel pairing,
+            SettingsViewModel settings,
+            FilesViewModel files)
         {
-            mPairing = new PairingViewModel(pairingService);
-            Settings = new SettingsViewModel(autoStart, appSettings);
-            Files = new FilesViewModel();
+            Pairing = pairing;
+            Settings = settings;
+            Files = files;
         }
 
         /// <summary>
-        /// Called by the window's Loaded handler (and by
-        /// <c>TrayViewModel.ShowWindow</c>) to refresh the PIN display
-        /// when the window opens. Passes through to the Pairing tab.
+        /// Called when the window is shown — refreshes the PIN display
+        /// on the Pairing tab so it is not stale.
         /// </summary>
         public void OnWindowShown()
         {
-            mPairing.RefreshPin();
+            Pairing.RefreshPin();
         }
     }
 }

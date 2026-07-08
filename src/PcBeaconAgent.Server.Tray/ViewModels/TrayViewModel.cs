@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Hardcodet.Wpf.TaskbarNotification;
-using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Events;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.Notifications;
@@ -27,8 +26,7 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     private readonly App mApp;
     private readonly TaskbarIcon mTrayIcon;
     private readonly INotificationService mNotifications;
-    private readonly IAutoStartService mAutoStart;
-    private readonly AppSettings mAppSettings;
+    private readonly MainViewModel mMainViewModel;
     private bool mDisposed;
 
     public TrayViewModel(
@@ -36,15 +34,13 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         App app,
         TaskbarIcon trayIcon,
         INotificationService notifications,
-        IAutoStartService autoStart,
-        AppSettings appSettings)
+        MainViewModel mainViewModel)
     {
         mPairingService = pairingService;
         mApp = app;
         mTrayIcon = trayIcon;
         mNotifications = notifications;
-        mAutoStart = autoStart;
-        mAppSettings = appSettings;
+        mMainViewModel = mainViewModel;
 
         mPairingService.PairingStateChanged += OnPairingStateChanged;
     }
@@ -145,12 +141,10 @@ public partial class TrayViewModel : ObservableObject, IDisposable
             var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
             if (mainWindow == null)
             {
-                var viewModel = new MainViewModel(mPairingService, mAutoStart, mAppSettings);
-                mainWindow = new Views.MainWindow { DataContext = viewModel };
+                mainWindow = new Views.MainWindow { DataContext = mMainViewModel };
             }
 
-            if (mainWindow.DataContext is MainViewModel vm)
-                vm.OnWindowShown();
+            mMainViewModel.OnWindowShown();
 
             mainWindow.Show();
             mainWindow.Activate();

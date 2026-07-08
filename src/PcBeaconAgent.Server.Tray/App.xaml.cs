@@ -28,13 +28,9 @@ public partial class App : Application
     private TrayViewModel? mTrayViewModel;
     private INotificationService? mNotifications;
     private SingleInstanceGuard? mSingleInstance;
-    // AutoStartService is constructed once and shared between the
-    // TrayViewModel (for the menu item, if we add one later) and the
-    // SettingsViewModel (for the checkbox).
-    private IAutoStartService? mAutoStart;
     // AppSettings is read from appsettings.json in StartWebHostAsync
-    // and shared with the Settings tab so it can display the network
-    // configuration without re-reading the file.
+    // and registered as a DI singleton so the Settings tab can read
+    // the network configuration without re-reading the file.
     private AppSettings? mAppSettings;
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -69,15 +65,20 @@ public partial class App : Application
             // INotificationService is constructed before the TaskbarIcon
             // exists — the icon lives in TrayWindow.xaml and is only
             // available after InitializeComponent. We pass it in via
-            // AttachTaskbarIcon below.
+            // AttachTaskbarIcon below. (Patch C will move this into DI.)
             mNotifications = new TrayNotificationService(this);
-            mAutoStart = new AutoStartService();
 
             mTrayWindow = new TrayWindow();
             mNotifications.AttachTaskbarIcon(mTrayWindow.TrayIcon);
 
+            // MainViewModel is resolved from DI — its child VMs
+            // (Pairing, Settings, Files) are resolved transitively
+            // with their own dependencies (IPairingService,
+            // IAutoStartService, AppSettings).
+            var mainViewModel = mWebApp.Services.GetRequiredService<MainViewModel>();
+
             mTrayViewModel = new TrayViewModel(
-                pairingService, this, mTrayWindow.TrayIcon, mNotifications, mAutoStart, mAppSettings!);
+                pairingService, this, mTrayWindow.TrayIcon, mNotifications, mainViewModel);
             mTrayWindow.DataContext = mTrayViewModel;
             // The window stays hidden — it only hosts the TaskbarIcon.
             mTrayWindow.Show();
@@ -116,6 +117,20 @@ public partial class App : Application
         builder.Services.AddDisplayService();
         builder.Services.AddPairingService();
         builder.Services.AddWebApi();
+
+        // Tray view models — singleton so the window state (PIN display,
+        // settings) survives open/close cycles within one process run.
+        // AppSettings and IAutoStartService are registered here so the
+        // child VMs can resolve them transitively. INotificationService
+        // stays manual until patch C (it needs the App instance, which
+        // is not available at DI registration time).
+        builder.Services.AddSingleton<AppSettings>(settings);
+        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.Services.IAutoStartService,
+            PcBeaconAgent.Server.Tray.Services.AutoStartService>();
+        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.PairingViewModel>();
+        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.SettingsViewModel>();
+        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.FilesViewModel>();
+        builder.Services.AddSingleton<PcBeaconAgent.Server.Tray.ViewModels.MainViewModel>();
 
         mWebApp = builder.Build();
 
