@@ -284,3 +284,84 @@ described in [CONTRIBUTING.md](../CONTRIBUTING.md). Recap:
   (`byte[] response = [pong, portBytes[0], portBytes[1]];`).
 - **`var`:** use when the type is obvious from the right-hand side. Use the
   explicit type when it adds readability (`BeaconDevice details = ...`).
+
+## 10. Anti-patterns to avoid
+
+These are concrete mistakes that have been made before. Each has a
+rule and a one-line "why". When in doubt, check this list before
+generating a patch.
+
+### 10.1 No hand-rolled JSON parsing
+
+Never parse JSON with `string.IndexOf` / `Substring` / manual int
+scanning. Use the existing `AppSettings` class (loaded by
+`Microsoft.Extensions.Configuration` in the host's composition root).
+If a view model needs a config value, inject `AppSettings` via
+constructor — do not re-read `appsettings.json` from disk.
+
+### 10.2 No `new` for services in view models
+
+Services are registered in DI. View models receive them via
+constructor injection. Never write `new XxxService()` in a VM
+constructor — it couples the VM to a concrete type, makes the
+service impossible to mock, and hides the dependency from the DI
+container. If a VM needs a child VM, register the child VM in DI
+too and inject it.
+
+### 10.3 No unsolicited features
+
+If the user asks for X, do X. Do not add Y "because it seems
+useful". Auto-generating a PIN when the user opens the main window
+is a real example — the PIN lifecycle was client-driven (Android
+client calls `/api/pair/regenerate` on PairingPage), and the
+auto-generate produced a PIN the client never asked for. When
+unsure whether to add something, ask — do not assume.
+
+### 10.4 WPF `StackPanel` does not support `Spacing`
+
+`Spacing` is a MAUI property. In WPF, use `Margin` on children or
+an `ItemsControl` with an item template. Never write
+`<StackPanel Spacing="8">` in WPF XAML — it compiles (MAUI vs WPF
+namespace confusion in some tooling) but is silently ignored or
+causes runtime issues.
+
+### 10.5 `UserControl` visibility must match partial class
+
+If the code-behind is `public partial class XxxView`, do not set
+`x:ClassModifier="internal"` in XAML. The modifiers must match.
+Mismatched modifiers cause compile errors or unexpected visibility.
+
+### 10.6 No trailing blank lines at EOF
+
+Files should end with exactly one newline after the last content
+line. `git apply` warns on trailing whitespace additions. Check
+with `tail -c 50 <file> | cat -A` before generating a patch.
+
+### 10.7 `Mode=OneWay` for read-only properties
+
+If a VM property has no setter (get-only, computed, or expression-
+bodied), the XAML binding MUST include `Mode=OneWay`. The WPF
+default is `TwoWay`, which throws `InvalidOperationException` at
+binding time when the binding engine tries to write back to a
+read-only property.
+
+### 10.8 Do not create services in a `Models/` or `ViewModels/` folder
+
+Services (DI-registered types with interfaces) live in `Services/`.
+Static helpers live in `Helpers/`. Data contracts / enums / DTOs
+live in `Models/`. View models live in `ViewModels`. Do not mix —
+a `Models/` folder that contains a service, or a `Services/`
+folder that contains a static helper, is a structural error.
+
+### 10.9 Patch filename: short, no hyphens
+
+Telegram replaces hyphens with underscores when downloading
+attachments. Name patch files with a short name without hyphens
+(e.g. `058fix.patch`, not `058-structure-cleanup-and-rename.patch`).
+The apply command in the caption must use the same name.
+
+### 10.10 Commit messages: short
+
+Commit message body should be a few sentences, not a wall of text.
+Describe what changed and why — the diff already shows the details.
+Do not repeat the file list (git already tracks that).

@@ -1,5 +1,6 @@
 using System;
 using Hardcodet.Wpf.TaskbarNotification;
+using PcBeaconAgent.Server.Tray.Models;
 
 namespace PcBeaconAgent.Server.Tray.Services
 {
