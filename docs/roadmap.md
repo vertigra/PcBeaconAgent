@@ -130,13 +130,14 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       was misleading documentation; it never actually worked. The
       always-on use case is handled by `Server.Tray` with auto-start
       on user login (still pending).
-- [ ] **CI/CD for Server.Tray.**
-      The `publish-server.yml` workflow should build and publish
-      `Server.Tray` alongside `Server.Cli` under the same
-      `server.v.X.Y.Z` tag. The release artifact should include both
-      ZIPs (or a combined ZIP). No new tag pattern — both hosts ship
-      under one tag. `Server.Tray` must be published without trimming
-      (`PublishTrimmed=false`) — WPF XAML bindings trim unreliably.
+- [x] **CI/CD for Server.Tray.** (`<TBD>`)
+      The `publish-server.yml` workflow now builds and publishes both
+      `Server.Cli` and `Server.Tray` under the same `server.v.X.Y.Z`
+      tag. The release includes both ZIPs. `Server.Tray` is published
+      with `PublishTrimmed=false` (WPF XAML bindings trim unreliably)
+      while `Server.Cli` keeps `PublishTrimmed=true`. Smoke test
+      covers `Server.Cli` only — `Server.Tray` is a GUI app that
+      needs a desktop session and cannot be easily smoke-tested in CI.
 - [x] **Documentation for Server.Tray.** (`e782f92`)
       Split into [docs/server-cli.md](server-cli.md) and
       [docs/server-tray.md](server-tray.md); `README.md` updated with a
