@@ -1,7 +1,7 @@
 # PIN Pairing — Algorithm Reference
 
 This document describes, in detail, how a client authenticates with a
-`PcBeaconAgent.Service` instance for the first time, and how the resulting
+`PcBeaconAgent.Server.Cli` instance for the first time, and how the resulting
 key is stored, reused, and revoked afterward.
 
 For a high-level overview, see the **🔐 Security & Pairing** section in
@@ -28,36 +28,52 @@ reference to consult when modifying the pairing code itself.
 process lifetime:
 
 ```
+                 ┌───────────────────────────────────────────┐
+   service start │                  INACTIVE                 │
+   ──────────────▶  (no PIN generated — /api/pair returns    │
+                 │   403 until RegeneratePin() is called)    │
+                 └───────────────────┬───────────────────────┘
+                                     │
+                          RegeneratePin()  (auto-called by the
+                          Android client when PairingPage appears,
+                          or manually via /api/pair/regenerate)
+                                     │
+                                     ▼
                  ┌─────────────────────┐
-   service start │                     │ RegeneratePin()
-   ──────────────▶      ACTIVE         │◀────────────────────┐
-                 │  (PIN valid, unused)│                      │
-                 └─────────┬───────────┘                      │
-                           │                                  │
-            correct PIN    │           wrong PIN              │
-            submitted      │           (attempts < 5)         │
-                           │                                  │
-                  ┌────────▼────────┐              ┌──────────┴────────┐
-                  │      USED        │              │  attempts < 5?    │
-                  │ (single-use,      │              │  yes → stay ACTIVE│
-                  │  key returned)    │              │  no  → LOCKED     │
-                  └───────────────────┘              └────────────────────┘
+                 │      ACTIVE         │◀────────────────────┐
+                 │  (PIN valid, unused)│                     │
+                 └─────────┬───────────┘                     │
+                           │                                 │
+            correct PIN    │           wrong PIN             │
+            submitted      │           (attempts < 5)        │
+                           │                                 │
+                  ┌────────▼──────────┐           ┌──────────┴────────┐
+                  │      USED         │           │  attempts < 5?    │
+                  │ (single-use,      │           │  yes → stay ACTIVE│
+                  │  key returned)    │           │  no  → LOCKED     │
+                  └───────────────────┘           └───────────────────┘
                            │                                  │
                   TTL expired                                 │
                   (5 minutes)                                 │
                            ▼                                  ▼
-                  ┌───────────────────────────────────────────┐
-                  │                  INACTIVE                  │
-                  │  (PIN expired / used / locked — /api/pair   │
-                  │   returns 403 until RegeneratePin() is      │
-                  │   called)                                   │
-                  └───────────────────────────────────────────┘
+                     ┌───────────────────────────────────────────┐
+                     │                  INACTIVE                 │
+                     │  (PIN expired / used / locked — /api/pair │
+                     │   returns 403 until RegeneratePin() is    │
+                     │   called)                                 │
+                     └───────────────────────────────────────────┘
 ```
 
-`IsPairingActive` is `true` only while: not used, attempts `< 5`, and
-`DateTime.UtcNow < expiry`. Any other state returns `403 Forbidden` from
-`/api/pair`, distinct from `401 Unauthorized` (wrong PIN, but pairing is
-still active).
+The service starts INACTIVE — no PIN is generated at construction.
+The Android client auto-requests `/api/pair/regenerate` when the
+PairingPage appears, so a startup PIN would be immediately discarded
+and only add noise to the log. Direct `/api/pair` callers (e.g. curl)
+must call `/api/pair/regenerate` first.
+
+`IsPairingActive` is `true` only while: PIN is non-empty, not used,
+attempts `< 5`, and `DateTime.UtcNow < expiry`. Any other state
+returns `403 Forbidden` from `/api/pair`, distinct from `401
+Unauthorized` (wrong PIN, but pairing is still active).
 
 ---
 
@@ -78,20 +94,20 @@ action that can throw `NotPairedException` — is the explicit **"Remember"**
 button press.
 
 ```
-┌─────────────┐        UDP only         ┌──────────────────────┐
-│ Start Scan   │ ───────────────────────▶│ DiscoveredDevices     │
-│ (no auth)    │   IP + Port only         │ (IP, Port; no name/MAC│
+┌─────────────┐        UDP only          ┌-──────────────────────┐
+│ Start Scan  │  ───────────────────────▶│ DiscoveredDevices     │
+│ (no auth)   │    IP + Port only        │ (IP, Port; no name/MAC│
 └─────────────┘                          │  until paired)        │
-                                          └──────────┬─────────────┘
-                                                     │
+                                         └──────────┬────────────┘
+                                                    │
                                           user clicks "Remember"
-                                                     │
-                                                     ▼
+                                                    │
+                                                    ▼
                                        ┌─────────────────────────────┐
-                                       │ ConnectAndFetchDetailsAsync   │   ← first point
-                                       │  (device)                     │     a key is
-                                       │  requires X-Api-Key            │     required
-                                       └──────────┬───────────────────┘
+                                       │ ConnectAndFetchDetailsAsync │   ← first point
+                                       │  (device)                   │     a key is
+                                       │  requires X-Api-Key         │     required
+                                       └──────────┬──────────────────┘
                                                   │
                               key missing/invalid │ key valid
                               ────────────────────┤────────────────────
@@ -113,7 +129,7 @@ Server                                  Client
 ──────                                  ──────
 Service starts
   │
-  ├─ BeaconAnnouncementService
+  ├─ BeaconServerIdentity
   │    resolves ApiKey (appsettings.json
   │    static value, or generates +
   │    persists to server.key)

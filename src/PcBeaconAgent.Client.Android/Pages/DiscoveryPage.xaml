@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:contractsModels="clr-namespace:PcBeaconAgent.Contracts.Models;assembly=PcBeaconAgent.Contracts"
+             xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
+             x:Class="PcBeaconAgent.Client.Android.Pages.DiscoveryPage"
+             x:DataType="vm:DiscoveryViewModel"
+             Title="Discovered Devices"
+             BackgroundColor="#121212">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="🔍"
+                     Command="{Binding StartScanCommand}"
+                     IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto, *" Padding="20" RowSpacing="10">
+
+        <!-- Scanning banner: thin row at top, does not cover the list -->
+        <HorizontalStackLayout Grid.Row="0" Spacing="10" IsVisible="{Binding IsScanning}" Margin="0,5,0,0">
+            <ActivityIndicator IsRunning="True"
+                               Color="#6750A4"
+                               WidthRequest="20" HeightRequest="20"/>
+            <Label Text="Scanning for devices..."
+                   TextColor="#D0BCFF"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"/>
+        </HorizontalStackLayout>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding DiscoveredDevices}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="contractsModels:BeaconDevice">
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="#212121" Margin="0,5" Padding="15">
+                        <Grid ColumnDefinitions="*, Auto">
+
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding IpAddress, StringFormat='IP: {0}'}" FontSize="14" TextColor="#BDBDBD"/>
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="1" Text="Remember"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DiscoveryViewModel}}, Path=RememberCommand}"
+                                    CommandParameter="{Binding .}"
+                                    BackgroundColor="#4CAF50" TextColor="White"
+                                    HeightRequest="40" WidthRequest="110" CornerRadius="8" VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                    <Label Text="🔍"
+                           FontSize="48"
+                           HorizontalOptions="Center"
+                           TextColor="#424242"/>
+                    <Label Text="No devices discovered yet."
+                           TextColor="#757575"
+                           FontSize="14"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Tap the scan icon in the toolbar to search."
+                           TextColor="#757575"
+                           FontSize="12"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

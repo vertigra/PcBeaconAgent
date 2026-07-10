@@ -1,6 +1,6 @@
 ﻿using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models.Client;
-using PcBeaconAgent.Client.Core.Models.Common;
+using PcBeaconAgent.Client.Core.Models;
+using PcBeaconAgent.Contracts.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -53,5 +53,5 @@ public class DeviceStore
         }
     }
 
-    private void Persist() => mStorage.SaveDevices(ManagedDevices.Select(m => m.Device));
+    private void Persist() => mStorage.SaveDevices(ManagedDevices.Select(x => x.Device));
 }

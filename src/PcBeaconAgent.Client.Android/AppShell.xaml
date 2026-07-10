@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell x:Class="PcBeaconAgent.Client.Android.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:PcBeaconAgent.Client.Android.Pages"
+       Title="BeaconClient">
+
+    <TabBar>
+        <ShellContent Title="Devices"
+                      ContentTemplate="{DataTemplate local:MainPage}"
+                      Route="MainPage"/>
+
+        
+        <ShellContent Title="Discovery"
+                      ContentTemplate="{DataTemplate local:DiscoveryPage}"
+                      Route="DiscoveryPage"/>
+
+        <ShellContent Title="Settings"
+                      ContentTemplate="{DataTemplate local:SettingsPage}"
+                      Route="SettingsPage"/>
+    </TabBar>
+
+</Shell>

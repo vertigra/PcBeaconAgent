@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
+             x:Class="PcBeaconAgent.Client.Android.Pages.AudioControlPage"
+             x:DataType="vm:AudioControlViewModel"
+             Title="Audio Devices">
+    
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, Auto, *" Padding="20" RowSpacing="12">
+
+        <Label Grid.Row="0" FontSize="16" FontAttributes="Bold" TextColor="White">
+            <Label.FormattedText>
+                <FormattedString>
+                    <Span Text="Device: " TextColor="#BDBDBD"/>
+                    <Span Text="{Binding MachineName}" TextColor="#D0BCFF"/>
+                </FormattedString>
+            </Label.FormattedText>
+        </Label>
+
+        <Button Grid.Row="1"
+                Text="Refresh"
+                Command="{Binding RefreshCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                BackgroundColor="#6750A4" TextColor="White"
+                CornerRadius="10" HeightRequest="44"/>
+
+        <Label Grid.Row="2"
+               Text="{Binding ErrorMessage}"
+               TextColor="#F44336" FontSize="13"
+               HorizontalOptions="Center"
+               VerticalOptions="Start"
+               IsVisible="{Binding HasError}"/>
+
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Devices}"
+                        IsVisible="{Binding HasError, Converter={StaticResource InvertedBoolConverter}}">
+            <CollectionView.EmptyView>
+                <Label Text="No audio devices found."
+                       TextColor="#757575" HorizontalOptions="Center" Margin="0,20"/>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:AudioDeviceItem">
+                    <Border StrokeShape="RoundRectangle 12"
+                            BackgroundColor="#212121" Margin="0,5" Padding="15">
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding FullName}" FontSize="15" TextColor="White"/>
+                                <Label Text="Default device" FontSize="11" TextColor="#4CAF50"
+                                       IsVisible="{Binding IsDefault}"/>
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="1"
+                                    Text="Set Default"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AudioControlViewModel}}, Path=SetDefaultCommand}"
+                                    CommandParameter="{Binding .}"
+                                    IsEnabled="{Binding IsDefault, Converter={StaticResource InvertedBoolConverter}}"
+                                    BackgroundColor="#6750A4" TextColor="White"
+                                    FontSize="12" CornerRadius="8"
+                                    WidthRequest="110" HeightRequest="38"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

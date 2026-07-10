@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:clientModels="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
+             xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
+             x:Class="PcBeaconAgent.Client.Android.Pages.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="Managed Devices"
+             BackgroundColor="#121212">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <conv:BoolToTextConverter x:Key="BoolToTextConverter" />
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *" Padding="20" RowSpacing="10">
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding ManagedDevices}"
+                        IsVisible="{Binding HasDevices}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="clientModels:ManagedDevice">
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="#322F35" Margin="0,5" Padding="15">
+                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="10">
+
+                            <!-- Row 0: Machine name + status -->
+                            <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                                <Label Grid.Column="0"
+                                       Text="{Binding Device.MachineName, TargetNullValue='Unknown'}"
+                                       FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                                <HorizontalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
+                                    <Ellipse WidthRequest="10" HeightRequest="10"
+                                             Fill="{Binding IsOnline, Converter={StaticResource BoolToColorConverter}}"/>
+                                    <Label Text="{Binding IsOnline, Converter={StaticResource BoolToTextConverter}}"
+                                           FontSize="10" TextColor="#BDBDBD" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                            </Grid>
+
+                            <!-- Row 1: Device info -->
+                            <VerticalStackLayout Grid.Row="1" Spacing="2">
+                                <Label Text="{Binding Device.IpAddress, StringFormat='IP: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.MacAddress, StringFormat='MAC: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.InterfaceName, StringFormat='Interface name: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                                <Label Text="{Binding Device.InterfaceType, StringFormat='Interface type: {0}'}" FontSize="12" TextColor="#BDBDBD"/>
+                            </VerticalStackLayout>
+
+                            <!-- Row 2: Action buttons (icons) -->
+                            <!-- Audio and Display buttons are disabled via
+                                 IsEnabled binding to IsOnline. Forget stays
+                                 enabled because it only removes the local
+                                 pairing key. -->
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *, Auto" ColumnSpacing="10" Margin="0,5,0,0">
+                                <Button Grid.Column="0" Text="🔊"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageAudioCommand}"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding IsOnline}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        HeightRequest="44" CornerRadius="8"
+                                        FontSize="20" Padding="0"
+                                        Opacity="1">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroupList>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <Setter Property="BackgroundColor" Value="#6750A4"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                                <VisualState x:Name="Disabled">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="Opacity" Value="0.3"/>
+                                                        <Setter Property="BackgroundColor" Value="#424242"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateGroupList>
+                                    </VisualStateManager.VisualStateGroups>
+                                </Button>
+                                <Button Grid.Column="1" Text="🖥️"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageDisplayCommand}"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding IsOnline}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        HeightRequest="44" CornerRadius="8"
+                                        FontSize="20" Padding="0"
+                                        Opacity="1">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroupList>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <Setter Property="BackgroundColor" Value="#6750A4"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                                <VisualState x:Name="Disabled">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="Opacity" Value="0.3"/>
+                                                        <Setter Property="BackgroundColor" Value="#424242"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateGroupList>
+                                    </VisualStateManager.VisualStateGroups>
+                                </Button>
+                                <Button Grid.Column="2" Text="🗑️"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#B3261E" TextColor="White"
+                                        HeightRequest="44" WidthRequest="60" CornerRadius="8"
+                                        FontSize="18" Padding="0"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Empty state: shown when there are no managed devices. -->
+        <!-- HasDevices is the inverse of ManagedDevices.Count == 0;
+             computed in MainViewModel. The button navigates to the
+             Discovery tab so the user can find and pair a device. -->
+        <VerticalStackLayout Grid.Row="1"
+                             IsVisible="{Binding HasNoDevices}"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="16">
+            <Label Text="No devices yet"
+                   FontSize="20" FontAttributes="Bold"
+                   TextColor="#9E9E9E"
+                   HorizontalOptions="Center"/>
+            <Label Text="Go to the Discovery tab to find and pair a PC on your network."
+                   FontSize="14"
+                   TextColor="#757575"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center"
+                   MaxLines="3"/>
+            <Button Text="Go to Discovery"
+                    Command="{Binding GoToDiscoveryCommand}"
+                    BackgroundColor="#6750A4" TextColor="White"
+                    Padding="20,10" CornerRadius="8"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

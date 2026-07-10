@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Client.Core.Constants;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
-using PcBeaconAgent.Client.Core.Models.Common;
-using PcBeaconAgent.Service.JsonContext;
+using PcBeaconAgent.Contracts;
+using PcBeaconAgent.Contracts.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -168,6 +168,8 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
         return string.IsNullOrEmpty(global) ? null : global;
     }
 
+    #region Structured logging definitions (allocation-free)
+
     private static readonly Action<ILogger, string, string, Exception?> LogErrorAction =
         LoggerMessage.Define<string, string>(LogLevel.Error,
             new EventId(1, "ConnectionError"), "Connection error for {IpAddress}: {Message}");
@@ -188,4 +190,6 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     private void LogConnectionStarted(string ip) => LogStartedAction(mLogger, ip, null);
     private void LogConnectionStopped(string ip) => LogStoppedAction(mLogger, ip, null);
     private void LogKeyForgotten(string ip) => LogKeyForgottenAction(mLogger, ip, null);
+
+    #endregion
 }

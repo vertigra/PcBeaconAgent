@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/coding-guidelines.md" />
+    <File Path="docs/pairing-reference.md" />
+    <File Path="docs/roadmap.md" />
+    <File Path="docs/server-cli.md" />
+    <File Path="docs/server-tray.md" />
+  </Folder>
   <Folder Name="/other/">
     <File Path=".github/workflows/generate-pr-description.yml" />
     <File Path=".github/workflows/publish-client.yml" />
@@ -10,10 +17,13 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj" Id="e7928992-ba00-4832-89e7-c3893a7e468f">
+    <Project Path="src/PcBeaconAgent.Client.Android/PcBeaconAgent.Client.Android.csproj" Id="e7928992-ba00-4832-89e7-c3893a7e468f">
       <Deploy Solution="Debug|*" />
     </Project>
     <Project Path="src/PcBeaconAgent.Client.Core/PcBeaconAgent.Client.Core.csproj" />
-    <Project Path="src/PcBeaconAgent.Service/PcBeaconAgent.Service.csproj" />
+    <Project Path="src/PcBeaconAgent.Contracts/PcBeaconAgent.Contracts.csproj" />
+    <Project Path="src/PcBeaconAgent.Server.Cli/PcBeaconAgent.Server.Cli.csproj" />
+    <Project Path="src/PcBeaconAgent.Server.Core/PcBeaconAgent.Server.Core.csproj" />
+    <Project Path="src/PcBeaconAgent.Server.Tray/PcBeaconAgent.Server.Tray.csproj" />
   </Folder>
 </Solution>

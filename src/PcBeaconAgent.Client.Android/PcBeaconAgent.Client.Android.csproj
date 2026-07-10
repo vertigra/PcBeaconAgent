@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-android</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+
+    <EnableDefaultMauiItems>true</EnableDefaultMauiItems>
+    <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
+
+    <AssemblyName>PcBeaconAgent.Client.Android</AssemblyName>
+    <RootNamespace>PcBeaconAgent.Client.Android</RootNamespace>
+    <ApplicationTitle>BeaconClient</ApplicationTitle>
+    <ApplicationId>com.vertigra.beaconclient</ApplicationId>
+    <ApplicationVersion Condition="'$(AppVersionCode)' == ''">1</ApplicationVersion>
+    <ApplicationVersion Condition="'$(AppVersionCode)' != ''">$(AppVersionCode)</ApplicationVersion>
+
+    <ApplicationVersionDisplay Condition="'$(AppVersionName)' == ''">1.0.0</ApplicationVersionDisplay>
+    <ApplicationVersionDisplay Condition="'$(AppVersionName)' != ''">$(AppVersionName)</ApplicationVersionDisplay>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundScale="0.65" Color="#1E1E1E" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="14.2.0" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.80" />
+    <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.80" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\AppIcon\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PcBeaconAgent.Client.Core\PcBeaconAgent.Client.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Pages\SettingsPage.xaml.cs">
+      <DependentUpon>SettingsPage.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <MauiXaml Update="Pages\AudioControlPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Pages\DiscoveryPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Pages\DisplayControlPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Pages\PairingPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Pages\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
+
+</Project>

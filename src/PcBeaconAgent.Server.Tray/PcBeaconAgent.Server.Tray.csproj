@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PcBeaconAgent.Server.Tray</AssemblyName>
+    <RootNamespace>PcBeaconAgent.Server.Tray</RootNamespace>
+    <NoWarn>$(NoWarn);IL2026;NU1701</NoWarn>
+    <!-- NU1903: Microsoft.AspNetCore.OpenApi 10.0.9 transitively pulls
+         Microsoft.OpenApi 2.0.0 which has GHSA-v5pm-xwqc-g5wc (high).
+         10.0.10+ does not exist yet on NuGet as of 2026-07. The advisory
+         affects OpenApiReader parsing of untrusted OpenAPI documents —
+         our usage is generate-only (AddOpenApi / MapOpenApi), we never
+         feed the library untrusted input, so the practical risk is nil.
+         Re-evaluate when a fixed Microsoft.AspNetCore.OpenApi ships. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <ApplicationIcon>beacon.ico</ApplicationIcon>
+
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <IncludeNativeLibrariesForSelfContained>true</IncludeNativeLibrariesForSelfContained>
+    <!-- WPF XAML bindings trim unreliably — never trim the tray host. -->
+    <PublishTrimmed>false</PublishTrimmed>
+
+    <Version Condition="'$(AppVersionName)' == ''">1.0.0</Version>
+    <Version Condition="'$(AppVersionName)' != ''">$(AppVersionName)</Version>
+    <AssemblyVersion Condition="'$(AppVersionName)' == ''">1.0.0.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AppVersionName)' != ''">$(AppVersionName).0</AssemblyVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.10" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PcBeaconAgent.Server.Core\PcBeaconAgent.Server.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Resource Include="beacon.ico" />
+  </ItemGroup>
+
+</Project>

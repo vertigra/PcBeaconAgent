@@ -1,37 +1,115 @@
 # PcBeaconAgentService <img src=".github/assets/beacon.png" align="right" height="45" alt="PcBeaconAgent Logo">
 
-[![Publish Server Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
-[![Publish Android Client Release](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml/badge.svg)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
+[![Server Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=server.v.*&label=Server&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
+[![Client Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=client.v.*&label=Client&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
+[![Publish Server Release](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-server.yml?label=Server%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
+[![Publish Android Client Release](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-client.yml?label=Client%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
 
 ### 📋 Description
-A solution designed to monitor PC status and manage it remotely. It consists of a background agent service for Windows and cross-platform clients.
+PcBeaconAgent is a remote control solution for Windows PCs. A lightweight
+agent runs on the PC and exposes a local Web API + SignalR hub over the
+LAN. An Android client discovers the agent via UDP broadcast, pairs via
+a one-time PIN, and then can:
 
-The **PcBeaconAgent.Service** is a Windows Background Service and Web API agent built on **.NET 10**. It monitors PC status, can send periodic beacon signals to a management server, and exposes a local Web API for client applications.
+- **Switch audio output devices** — list playback devices, change the
+  default output, without touching the Windows sound settings.
+- **Control displays** — list connected monitors, disable a specific
+  display, restore the original topology. The server correctly handles
+  primary-display promotion and clone/extend modes.
+- **Monitor online status** — the client sees which PCs are reachable
+  in real time, and control buttons disable automatically when a device
+  goes offline.
+
+The server is a self-contained .NET 10 single-file executable. The
+Android client is a .NET MAUI app. All traffic is plain HTTP (LAN-only);
+TLS is planned for a future release.
+
+The **PcBeaconAgent.Server.Cli** is a console host that runs the Web API
+and SignalR hub. The **PcBeaconAgent.Server.Tray** is a WPF tray host
+that runs the same business logic and adds a system tray icon, a PIN
+popup with countdown, and balloon notifications. Both share the same
+`Server.Core` — pick the one that fits your deployment:
+
+- **Server.Cli** — interactive console host for debugging and scripted
+  use. Detailed documentation: [docs/server-cli.md](docs/server-cli.md).
+- **Server.Tray** — interactive desktop sessions; auto-starts on user
+  login (planned), shows the PIN in a popup next to the taskbar.
+  Detailed documentation: [docs/server-tray.md](docs/server-tray.md).
 
 ### 💻 CLI Arguments (Silent Mode)
-By default, the agent duplicates all logs directly to the console window. For background or scripted execution, you can completely suppress terminal output using the following flags:
 
-    Run in silent mode (logs will be written to the file only):
-    ./PcBeaconAgent.Service.exe --no-console
+For background or scripted execution, the CLI host can suppress
+terminal output:
 
-    or:
-    ./PcBeaconAgent.Service.exe --silent
+    ./PcBeaconAgent.Server.Cli.exe --no-console
+    # or:
+    ./PcBeaconAgent.Server.Cli.exe --silent
+
+See [docs/server-cli.md](docs/server-cli.md) for the full CLI reference
+(appsettings.json schema, log file location, interactive-only notes).
 
 ### 🧠 System Architecture
 
-The project is structured into distinct layers to ensure loose coupling, high testability, and a clear separation of concerns.
+The solution is a monorepo with five projects arranged in a strict
+layering. The dependency arrows never point from server to client —
+both shared libraries depend on `Contracts`, never on each other.
 
-* **Core (`PcBeaconAgent.Client.Core`)**: Contains business logic, service abstractions (e.g., `IPreferencesService`), and domain models (`BeaconDevice`). This layer is platform-agnostic and does not depend on specific UI frameworks.
-* **Platform Implementation**: Contains concrete platform-specific implementations of the Core interfaces (e.g., `MauiPreferencesService` implemented for Android).
-* **Dependency Injection**: Service lifecycles are managed via the MAUI DI container in `MauiProgram.cs`, facilitating easy testing and future-proofing.
+```
+Contracts (DTOs, ProjectJsonContext — no dependencies)
+    ↑              ↑
+    │              │
+Client.Core    Server.Core
+    ↑              ↑
+    │              │
+Android        Server.Cli  •  Server.Tray
+```
+
+* **`PcBeaconAgent.Contracts`** — wire contracts only (DTOs,
+  `BeaconDevice`, `ProjectJsonContext`). No dependencies beyond the BCL.
+  Referenced by both `Client.Core` and `Server.Core`.
+* **`PcBeaconAgent.Client.Core`** — client-side business logic and UI
+  support types (`ManagedDevice`, `SignalService`, `AudioServiceClient`,
+  `DisplayServiceClient`, `PairingServiceClient`, `BeaconClient`).
+  References `Contracts`.
+* **`PcBeaconAgent.Server.Core`** — server-side business logic
+  (`BeaconServiceHub`, `BeaconServer`, `BeaconServerIdentity`,
+  `PairingService`, `DisplayController`, `AudioController`). Holds the
+  `FrameworkReference Microsoft.AspNetCore.App` and the Windows-only
+  NuGet packages (`WindowsDisplayAPI`, `AudioSwitcher`). References
+  `Contracts`.
+* **`PcBeaconAgent.Server.Cli`** — the console host (composition root,
+  HTTP endpoint mapping, `BeaconBackgroundService`). Interactive-only —
+  the controllers require a desktop session, so it cannot run as a
+  Windows Service. References `Server.Core`. See
+  [docs/server-cli.md](docs/server-cli.md).
+* **`PcBeaconAgent.Server.Tray`** — the WPF tray host. Runs the same
+  `Server.Core` business logic and adds a system tray icon, a PIN popup
+  with countdown, and balloon notifications via `INotificationService`.
+  Suitable for interactive desktop sessions. References `Server.Core`.
+  See [docs/server-tray.md](docs/server-tray.md).
+* **`PcBeaconAgent.Client.Android`** — the .NET MAUI Android client.
+  References `Client.Core`.
 
 **Data Flow & Security:**
-The architecture follows a clear "Discovery-to-RPC" lifecycle to maintain security while ensuring network flexibility.
+The architecture follows a clear "Discovery-to-RPC" lifecycle to
+maintain security while ensuring network flexibility.
 
-1. **UDP Beacon (Discovery)**: The scanner identifies network devices via UDP broadcast. At this stage, only raw `IP:Port` metadata is available. This phase is unauthenticated.
-2. **SignalR RPC (Request-Response)**: Once the user initiates a connection ("Remember"), the client establishes a persistent SignalR connection. Instead of event-based push patterns, the system uses **authenticated RPC calls** (`InvokeAsync`) to fetch device metadata. This ensures deterministic state management and tight control over data exposure.
-3. **Storage Sync & Indexing**: Device identities are persisted via `IDeviceStorageService`. To maintain integrity, the system uses a **thread-safe index** (`IndexLock`) of stored keys, allowing for granular management and preventing data corruption during concurrent pairing operations.
-4. **Identity Tracking**: The `BeaconDevice` model utilizes robust `Equals`/`GetHashCode` overrides to ensure consistent identity tracking even if the network configuration changes.
+1. **UDP Beacon (Discovery)**: The scanner identifies network devices
+   via UDP broadcast. At this stage, only raw `IP:Port` metadata is
+   available. This phase is unauthenticated.
+2. **SignalR RPC (Request-Response)**: Once the user initiates a
+   connection ("Remember"), the client establishes a persistent SignalR
+   connection. Instead of event-based push patterns, the system uses
+   **authenticated RPC calls** (`InvokeAsync`) to fetch device metadata.
+   This ensures deterministic state management and tight control over
+   data exposure.
+3. **Storage Sync & Indexing**: Device identities are persisted via
+   `IDeviceStorageService`. The client maintains a thread-safe index of
+   stored API keys, allowing for granular management and preventing data
+   corruption during concurrent pairing operations.
+4. **Identity Tracking**: The `BeaconDevice` model utilizes robust
+   `Equals`/`GetHashCode` overrides to ensure consistent identity
+   tracking even if the network configuration changes.
  
 ### 🔐 Security & Pairing
 The system utilizes a secure, PIN-based pairing mechanism to ensure that only authorized clients can access device metadata or control signals. The pairing process is designed with the "Principle of Least Privilege":
@@ -54,12 +132,20 @@ The project utilizes automated deployment pipelines configured via **GitHub Acti
 
 ### 🏷️ Release Tag Formats
 
-To trigger a release workflow, push a tag matching one of the strict naming conventions below from your local terminal:
+To trigger a release workflow, push a tag matching one of the strict naming conventions below from your local terminal. The version number `X.Y.Z` must follow the [versioning rules](CONTRIBUTING.md#versioning) defined in `CONTRIBUTING.md`.
 
 | Component | Tag Pattern | Target Workflow | Release Name Example |
 | :--- | :--- | :--- | :--- |
-| **Windows Service (Server)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
+| **Server (Cli + Tray)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
 | **Android App (Client)** | `client.v.X.Y.Z` | `publish-client.yml` | `Client Android Release X.Y.Z` |
+
+> ℹ️ **Single `server.v.*` tag publishes both hosts.** The
+> `publish-server.yml` workflow currently builds `Server.Cli` only.
+> Adding `Server.Tray` to the same workflow (and shipping both ZIPs
+> under one tag) is tracked in the [roadmap](docs/roadmap.md). When
+> that lands, the same `server.v.X.Y.Z` tag will produce a release
+> containing both `PcBeaconAgent.Server.Cli.zip` and
+> `PcBeaconAgent.Server.Tray.zip` — no new tag pattern is introduced.
 
 > 💡 **Branch & Tag Isolation Note:** Git tags point directly to a specific commit, completely independent of branches. You can safely create and push release tags from development branches (e.g., `devel`). GitHub Actions will check out and compile the exact commit historical snapshot bound to that tag, provided that the corresponding workflow `.yml` file exists within that commit.
 
@@ -93,10 +179,20 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 
 ### ⚙️ Internal Version Processing Mechanics
 
-#### 🖥️ Server (PcBeaconAgent.Service)
-* **Pipeline Output:** A standalone, native Windows x64 single-file executable packed inside a `.zip` archive.
-* **Compilation Flags:** Automated trimming (`-p:PublishTrimmed=true`), dead code elimination, and embedded assembly compilation attributes.
-* **Metadata Extraction:** The pipeline strips the `server.v.` prefix and injects the raw `X.Y.Z` value directly into the executable's `Version` and `AssemblyVersion` properties. You can verify this inside the compiled binary properties in Windows Explorer.
+#### 🖥️ Server (PcBeaconAgent.Server.Cli + PcBeaconAgent.Server.Tray)
+* **Pipeline Output:** Both hosts compile to standalone, native Windows
+  x64 single-file executables, each packed inside its own `.zip`
+  archive. A single `server.v.X.Y.Z` tag produces both artifacts once
+  the `publish-server.yml` workflow is updated to build them together
+  (see [roadmap](docs/roadmap.md)).
+* **Compilation Flags:** Automated trimming (`-p:PublishTrimmed=true`),
+  dead code elimination, and embedded assembly compilation attributes.
+  `Server.Tray` is published without trimming — WPF reflection-heavy
+  XAML bindings trim unreliably.
+* **Metadata Extraction:** The pipeline strips the `server.v.` prefix
+  and injects the raw `X.Y.Z` value directly into both executables'
+  `Version` and `AssemblyVersion` properties. You can verify this
+  inside the compiled binary properties in Windows Explorer.
 
 #### 📱 Android Client (PcBeaconAgent.Client.Android)
 * **Pipeline Output:** A standalone, signed optimization architecture `.apk` package.
@@ -115,3 +211,5 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification to maintain a clean project history and enable automated changelog generation.
 
 * Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on commit message formats, types, and scopes.
+* For coding conventions (naming, logging, DI, async, JSON), see the **[Coding Guidelines](docs/coding-guidelines.md)**.
+* For the project roadmap and planned features, see the **[Roadmap](docs/roadmap.md)**.

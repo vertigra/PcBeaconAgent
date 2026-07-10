@@ -1,0 +1,66 @@
+<Window x:Class="PcBeaconAgent.Server.Tray.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:PcBeaconAgent.Server.Tray.ViewModels"
+        xmlns:views="clr-namespace:PcBeaconAgent.Server.Tray.Views"
+        xmlns:srv="clr-namespace:PcBeaconAgent.Server.Tray.Helpers"
+        Title="{Binding Source={x:Static srv:AppInfo.Version}, StringFormat='PcBeaconAgent v{0}'}"
+        Height="540" Width="480"
+        WindowStyle="SingleBorderWindow"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E1E">
+    <Window.Resources>
+        <!-- TabItem style for dark background. The default WPF
+             TabItem template paints the selected tab with
+             SystemColors.ControlLightLightBrush (white), making
+             white-foreground headers invisible. We override only
+             the ControlTemplate to control the selected/unselected
+             colours, keeping the rest of the default behaviour. -->
+        <Style x:Key="DarkTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border"
+                                Background="#1E1E1E"
+                                BorderThickness="0,0,0,3"
+                                BorderBrush="Transparent"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="#D0BCFF"/>
+                                <Setter TargetName="Border" Property="Background" Value="#2A2A2A"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#D0BCFF"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <TabControl Background="#1E1E1E"
+                BorderThickness="0"
+                Padding="0">
+        <TabItem Header="Pairing" Style="{StaticResource DarkTabItem}">
+            <views:PairingView DataContext="{Binding Pairing}"/>
+        </TabItem>
+        <TabItem Header="Settings" Style="{StaticResource DarkTabItem}">
+            <views:SettingsView DataContext="{Binding Settings}"/>
+        </TabItem>
+        <TabItem Header="Files" Style="{StaticResource DarkTabItem}">
+            <views:FilesView DataContext="{Binding Files}"/>
+        </TabItem>
+    </TabControl>
+</Window>
