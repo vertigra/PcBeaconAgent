@@ -282,17 +282,42 @@ note before implementation; the entries here are reminders.
       (text payloads first, binaryfiles later) with a SignalR push event to notify the receivingside 
       would make the PcBeaconAgent a single-purpose tool forthe "I just need to get this string to my PC" 
       problem. The trayhost is the natural receiver surface for incoming transfers.
-- [ ] **Local AI agent integration.**
+- [ ] **Local AI agent integration with sandboxed tools.**
       Send and receive commands to a local AI agent (e.g. LM Studio,
       Ollama) running on the managed PC. The Android client types a
       prompt, the server forwards it to the local LLM via its HTTP API
       (OpenAI-compatible `POST /v1/chat/completions`), and streams the
-      response back. Use cases: ask the PC to summarise a file, run a
-      quick calculation, draft text — without leaving the phone. The
-      server exposes `POST /api/ai/chat` and a SignalR streaming hub
-      method; the client shows a simple chat UI. Requires a config
-      section for the LLM endpoint and model name. No model files are
-      bundled — the user installs LM Studio / Ollama separately.
+      response back. The agent has access to a set of sandboxed tools
+      invoked via the OpenAI function-calling protocol:
+
+      - **File system** — read/write/list files inside one or more
+        user-configured sandbox folders (not a single hardcoded path;
+        the user adds/removes folders in Settings). All file paths
+        are validated against the configured roots — no path traversal
+        outside the sandbox. No process-level isolation (option b from
+        the design discussion) — designated-folder + path validation
+        is the security boundary.
+
+      - **GitHub** — read access to issues, pull requests, commits,
+        and releases via the GitHub REST API. Requires a
+        user-provided personal access token (stored in appsettings.json
+        or a separate config file). Public repos work without a token
+        (rate-limited); the token lifts the rate limit and unlocks
+        private repos.
+
+      - **Web search** — DuckDuckGo (HTML scraping or the lite
+        endpoint). No API key needed. Results are parsed and returned
+        to the agent as structured text.
+
+      The agent runs a multi-turn loop: user prompt → LLM responds
+      with tool calls → server executes the tools (validating
+      filesystem paths, checking the GitHub token, rate-limiting
+      web search) → results fed back to the LLM → LLM produces the
+      final answer → streamed to the client. The server exposes
+      `POST /api/ai/chat` and a SignalR streaming hub method; the
+      client shows a chat UI with tool-call visibility (so the user
+      sees what the agent is doing). No model files are bundled —
+      the user installs LM Studio / Ollama separately.
 
 ## Tier 4 — security hardening (deferred until TLS lands)
 
