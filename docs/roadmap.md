@@ -282,6 +282,17 @@ note before implementation; the entries here are reminders.
       (text payloads first, binaryfiles later) with a SignalR push event to notify the receivingside 
       would make the PcBeaconAgent a single-purpose tool forthe "I just need to get this string to my PC" 
       problem. The trayhost is the natural receiver surface for incoming transfers.
+- [ ] **Local AI agent integration.**
+      Send and receive commands to a local AI agent (e.g. LM Studio,
+      Ollama) running on the managed PC. The Android client types a
+      prompt, the server forwards it to the local LLM via its HTTP API
+      (OpenAI-compatible `POST /v1/chat/completions`), and streams the
+      response back. Use cases: ask the PC to summarise a file, run a
+      quick calculation, draft text — without leaving the phone. The
+      server exposes `POST /api/ai/chat` and a SignalR streaming hub
+      method; the client shows a simple chat UI. Requires a config
+      section for the LLM endpoint and model name. No model files are
+      bundled — the user installs LM Studio / Ollama separately.
 
 ## Tier 4 — security hardening (deferred until TLS lands)
 
