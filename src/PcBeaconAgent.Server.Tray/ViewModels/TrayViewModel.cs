@@ -42,20 +42,15 @@ public partial class TrayViewModel : ObservableObject, IDisposable
 
     private void OnPairingStateChanged(PairingStateEventArgs e)
     {
-        // The Expired event is raised from a thread-pool continuation;
-        // the others come from the caller's thread (HTTP request for
-        // Used/Locked/Generated-via-regenerate, UI thread for
-        // Generated via the tray menu's Regenerate). We must marshal
-        // to the UI thread before touching any WPF state — in
-        // particular IsMainWindowVisible reads Application.Windows,
-        // which throws on cross-thread access.
-        //
-        // INotificationService also marshals internally, but the
-        // IsMainWindowVisible check below runs BEFORE we call into
-        // the service, so the dispatcher hop has to happen here.
+        // Use BeginInvoke (asynchronous) instead of Invoke (synchronous)
+        // so the calling thread — typically an HTTP request thread —
+        // is not blocked. Blocking the HTTP thread would delay the
+        // response to the client (buttons stay disabled) and risks
+        // deadlock if the UI thread tries to acquire a lock that the
+        // HTTP thread holds.
         if (!mApp.Dispatcher.CheckAccess())
         {
-            mApp.Dispatcher.Invoke(() => HandleStateChange(e));
+            mApp.Dispatcher.BeginInvoke(new Action(() => HandleStateChange(e)));
             return;
         }
         HandleStateChange(e);

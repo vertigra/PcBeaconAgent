@@ -61,6 +61,9 @@ namespace PcBeaconAgent.Server.Core.Services
         /// <inheritdoc />
         public string? ValidateAndExchangePin(string pin)
         {
+            PairingState? stateToRaise = null;
+            string? apiKey = null;
+
             lock (mStateLock)
             {
                 if (!IsPairingActive)
@@ -82,10 +85,7 @@ namespace PcBeaconAgent.Server.Core.Services
                     {
                         LogPairingLocked();
                         mExpiryCts?.Cancel();
-                        PairingStateChanged?.Invoke(new PairingStateEventArgs
-                        {
-                            State = PairingState.Locked
-                        });
+                        stateToRaise = PairingState.Locked;
                     }
 
                     return null;
@@ -95,23 +95,37 @@ namespace PcBeaconAgent.Server.Core.Services
                 mPinUsed = true;
                 mExpiryCts?.Cancel();
                 LogPairingSuccess();
+                stateToRaise = PairingState.Used;
+                apiKey = mIdentity.ApiKey;
+            }
 
+            // Raise events OUTSIDE the lock. The event handler calls
+            // Dispatcher.BeginInvoke → GetCurrentPin (which acquires
+            // the lock). If we raised inside the lock, the UI thread
+            // would block on GetCurrentPin while the HTTP thread blocks
+            // on the event — classic deadlock.
+            if (stateToRaise.HasValue)
+            {
                 PairingStateChanged?.Invoke(new PairingStateEventArgs
                 {
-                    State = PairingState.Used
+                    State = stateToRaise.Value
                 });
-
-                return mIdentity.ApiKey;
             }
+
+            return apiKey;
         }
 
         /// <inheritdoc />
         public void RegeneratePin()
         {
-            lock (mStateLock)
-            {
-                GeneratePin();
-            }
+            // GeneratePin manages its own locking internally — it
+            // acquires mStateLock, generates the PIN, releases the
+            // lock, THEN raises the Generated event. Do NOT wrap
+            // GeneratePin in an outer lock here: the event is raised
+            // outside GeneratePin's lock scope, and if an outer lock
+            // were held, the event handler (which calls Dispatcher.BeginInvoke
+            // and then GetCurrentPin → lock) would deadlock.
+            GeneratePin();
         }
 
         /// <inheritdoc />
