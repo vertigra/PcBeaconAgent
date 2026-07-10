@@ -66,13 +66,13 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         switch (e.State)
         {
             case PairingState.Generated:
-                // Suppress both popup and balloon when the user is already
-                // looking at the PIN in MainWindow (e.g. they just clicked
-                // Regenerate there). External triggers (HTTP
-                // /api/pair/regenerate from the Android client) still get
-                // the popup because MainWindow is not visible in that flow.
+                // When MainWindow is open, suppress the popup (the user
+                // is already looking at the PIN) but refresh the Pairing
+                // tab so the display shows the new PIN instead of the
+                // stale one. When MainWindow is closed, show the popup.
                 if (IsMainWindowVisible)
                 {
+                    mMainViewModel.Pairing.RefreshPin();
                     mTrayIcon.ToolTipText = "PcBeaconAgent — PIN active";
                     break;
                 }
@@ -82,6 +82,8 @@ public partial class TrayViewModel : ObservableObject, IDisposable
 
             case PairingState.Used:
                 mNotifications.ClosePinPopup();
+                if (IsMainWindowVisible)
+                    mMainViewModel.Pairing.RefreshPin();
                 mNotifications.ShowTransient(
                     "Pairing complete",
                     "A client has paired with this PC.",
@@ -91,6 +93,8 @@ public partial class TrayViewModel : ObservableObject, IDisposable
 
             case PairingState.Expired:
                 mNotifications.ClosePinPopup();
+                if (IsMainWindowVisible)
+                    mMainViewModel.Pairing.RefreshPin();
                 mNotifications.ShowTransient(
                     "PIN expired",
                     "The pairing PIN was not used and has expired.",
@@ -100,6 +104,8 @@ public partial class TrayViewModel : ObservableObject, IDisposable
 
             case PairingState.Locked:
                 mNotifications.ClosePinPopup();
+                if (IsMainWindowVisible)
+                    mMainViewModel.Pairing.RefreshPin();
                 mNotifications.ShowTransient(
                     "Pairing locked",
                     "Too many failed attempts. Restart the service to reset.",
