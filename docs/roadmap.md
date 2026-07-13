@@ -142,15 +142,17 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       Split into [docs/server-cli.md](server-cli.md) and
       [docs/server-tray.md](server-tray.md); `README.md` updated with a
       comparison table and links to both.
-- [ ] **Status bar in MainWindow.**
-      Add a status bar at the bottom of MainWindow (below the
+- [x] **Status bar in MainWindow.** (`<TBD>`)
+      MainWindow now has a status bar at the bottom (below the
       TabControl, common to all tabs) showing the connected-clients
-      count. Requires `BeaconServiceHub` to expose a thread-safe
-      `ConnectedClientsCount` property (or an event the VM
-      subscribes to) — today the hub tracks connections internally
-      but does not publish the count. The status bar should also
-      show the server's IP:port so the user can confirm the bind
-      address without opening Settings.
+      count. `BeaconServiceHub` registers/unregisters authorised
+      connections with an `IConnectionTracker` singleton (in
+      `Server.Core/Services`), which stores a
+      `Dictionary<string, ClientInfo>` keyed by SignalR connection ID.
+      The tracker captures a `SynchronizationContext` at construction
+      time so `CountChanged` fires on the UI thread in the tray host.
+      `MainViewModel` subscribes and exposes `ConnectedClients` as an
+      observable property.
 - [ ] **Add unit and integration tests.**
       The project currently has no test projects. Add a
       `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the

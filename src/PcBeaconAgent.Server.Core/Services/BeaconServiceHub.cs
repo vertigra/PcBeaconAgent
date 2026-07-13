@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Contracts.Models;
 using PcBeaconAgent.Server.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Services;
 using System;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
-    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger) : Hub
+    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger, IConnectionTracker mTracker) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -22,12 +23,27 @@ namespace PcBeaconAgent.Server.Core.Services
 
             LogClientConnected();
 
+            // Register the client with the connection tracker. Only
+            // authorised connections are tracked — rejected ones never
+            // reach this point.
+            var http = Context.GetHttpContext();
+            mTracker.Register(Context.ConnectionId, new ClientInfo
+            {
+                RemoteIp = http?.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = http?.Request.Headers.UserAgent.ToString()
+            });
+
             await base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             LogClientDisconnected(exception?.Message);
+
+            // Unregister is a no-op if the connection was never
+            // registered (e.g. it was rejected before authorisation).
+            mTracker.Unregister(Context.ConnectionId);
+
             return base.OnDisconnectedAsync(exception);
         }
 
