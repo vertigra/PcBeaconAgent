@@ -1,4 +1,5 @@
 using PcBeaconAgent.Server.Core.Services;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -77,27 +78,49 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         [Fact]
         public void CountChanged_RaisedOnRegister()
         {
-            var tracker = new ConnectionTracker();
-            int? raisedCount = null;
-            tracker.CountChanged += c => raisedCount = c;
+            // xUnit installs its own SynchronizationContext, which
+            // makes ConnectionTracker.Post asynchronous — the callback
+            // would not fire before the assertion. Null it out so the
+            // tracker fires the event synchronously.
+            var prevCtx = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(null);
+            try
+            {
+                var tracker = new ConnectionTracker();
+                int? raisedCount = null;
+                tracker.CountChanged += c => raisedCount = c;
 
-            tracker.Register("conn-1", new ClientInfo());
+                tracker.Register("conn-1", new ClientInfo());
 
-            Assert.Equal(1, raisedCount);
+                Assert.Equal(1, raisedCount);
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(prevCtx);
+            }
         }
 
         [Fact]
         public void CountChanged_RaisedOnUnregister()
         {
-            var tracker = new ConnectionTracker();
-            tracker.Register("conn-1", new ClientInfo());
+            var prevCtx = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(null);
+            try
+            {
+                var tracker = new ConnectionTracker();
+                tracker.Register("conn-1", new ClientInfo());
 
-            int? raisedCount = null;
-            tracker.CountChanged += c => raisedCount = c;
+                int? raisedCount = null;
+                tracker.CountChanged += c => raisedCount = c;
 
-            tracker.Unregister("conn-1");
+                tracker.Unregister("conn-1");
 
-            Assert.Equal(0, raisedCount);
+                Assert.Equal(0, raisedCount);
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(prevCtx);
+            }
         }
 
         [Fact]
@@ -132,14 +155,14 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             // Simulate 50 concurrent connections. If the locking is
             // broken, the count will be less than 50 due to lost
             // increments.
-            var tasks = new System.Threading.Tasks.Task[50];
+            var tasks = new Task[50];
             for (int i = 0; i < 50; i++)
             {
                 int idx = i;
-                tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                tasks[i] = Task.Run(() =>
                     tracker.Register($"conn-{idx}", new ClientInfo()));
             }
-            await System.Threading.Tasks.Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
 
             Assert.Equal(50, tracker.ConnectedCount);
         }
@@ -152,11 +175,11 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             // Half the tasks register, half unregister. The final
             // count must equal (registered - unregistered) with no
             // lost updates.
-            var tasks = new System.Threading.Tasks.Task[100];
+            var tasks = new Task[100];
             for (int i = 0; i < 50; i++)
             {
                 int idx = i;
-                tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                tasks[i] = Task.Run(() =>
                     tracker.Register($"conn-{idx}", new ClientInfo()));
             }
             for (int i = 0; i < 50; i++)
@@ -165,7 +188,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
                 tasks[50 + i] = System.Threading.Tasks.Task.Run(() =>
                     tracker.Unregister($"conn-{idx}"));
             }
-            await System.Threading.Tasks.Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
 
             // 50 registered, 50 unregistered (same IDs) → 0.
             Assert.Equal(0, tracker.ConnectedCount);
