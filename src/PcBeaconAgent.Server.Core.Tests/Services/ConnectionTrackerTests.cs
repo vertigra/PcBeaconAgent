@@ -1,0 +1,174 @@
+using PcBeaconAgent.Server.Core.Services;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace PcBeaconAgent.Server.Core.Tests.Services
+{
+    public class ConnectionTrackerTests
+    {
+        [Fact]
+        public void NewTracker_HasZeroConnections()
+        {
+            var tracker = new ConnectionTracker();
+            Assert.Equal(0, tracker.ConnectedCount);
+            Assert.Empty(tracker.ConnectedClients);
+        }
+
+        [Fact]
+        public void Register_IncrementsCount()
+        {
+            var tracker = new ConnectionTracker();
+            tracker.Register("conn-1", new ClientInfo { RemoteIp = "10.0.0.1" });
+
+            Assert.Equal(1, tracker.ConnectedCount);
+            Assert.Single(tracker.ConnectedClients);
+        }
+
+        [Fact]
+        public void Register_StoresClientInfo()
+        {
+            var tracker = new ConnectionTracker();
+            var info = new ClientInfo { RemoteIp = "10.0.0.1", UserAgent = "TestAgent" };
+            tracker.Register("conn-1", info);
+
+            var snapshot = tracker.ConnectedClients;
+            Assert.True(snapshot.ContainsKey("conn-1"));
+            Assert.Equal("10.0.0.1", snapshot["conn-1"].RemoteIp);
+            Assert.Equal("TestAgent", snapshot["conn-1"].UserAgent);
+        }
+
+        [Fact]
+        public void Unregister_DecrementsCount()
+        {
+            var tracker = new ConnectionTracker();
+            tracker.Register("conn-1", new ClientInfo { RemoteIp = "10.0.0.1" });
+            tracker.Register("conn-2", new ClientInfo { RemoteIp = "10.0.0.2" });
+
+            tracker.Unregister("conn-1");
+
+            Assert.Equal(1, tracker.ConnectedCount);
+            Assert.DoesNotContain("conn-1", tracker.ConnectedClients.Keys);
+            Assert.Contains("conn-2", tracker.ConnectedClients.Keys);
+        }
+
+        [Fact]
+        public void Unregister_UnknownConnectionId_IsNoOp()
+        {
+            var tracker = new ConnectionTracker();
+            tracker.Register("conn-1", new ClientInfo());
+
+            tracker.Unregister("nonexistent");
+
+            Assert.Equal(1, tracker.ConnectedCount);
+        }
+
+        [Fact]
+        public void Register_DuplicateConnectionId_OverwritesInfo()
+        {
+            var tracker = new ConnectionTracker();
+            tracker.Register("conn-1", new ClientInfo { RemoteIp = "10.0.0.1" });
+
+            tracker.Register("conn-1", new ClientInfo { RemoteIp = "10.0.0.99" });
+
+            Assert.Equal(1, tracker.ConnectedCount);
+            Assert.Equal("10.0.0.99", tracker.ConnectedClients["conn-1"].RemoteIp);
+        }
+
+        [Fact]
+        public void CountChanged_RaisedOnRegister()
+        {
+            var tracker = new ConnectionTracker();
+            int? raisedCount = null;
+            tracker.CountChanged += c => raisedCount = c;
+
+            tracker.Register("conn-1", new ClientInfo());
+
+            Assert.Equal(1, raisedCount);
+        }
+
+        [Fact]
+        public void CountChanged_RaisedOnUnregister()
+        {
+            var tracker = new ConnectionTracker();
+            tracker.Register("conn-1", new ClientInfo());
+
+            int? raisedCount = null;
+            tracker.CountChanged += c => raisedCount = c;
+
+            tracker.Unregister("conn-1");
+
+            Assert.Equal(0, raisedCount);
+        }
+
+        [Fact]
+        public void CountChanged_NotRaisedWhenNoSubscribers()
+        {
+            var tracker = new ConnectionTracker();
+            // No subscribers — should not throw.
+            tracker.Register("conn-1", new ClientInfo());
+            tracker.Unregister("conn-1");
+            Assert.Equal(0, tracker.ConnectedCount);
+        }
+
+        [Fact]
+        public void ConnectedClients_ReturnsSnapshot_NotLiveReference()
+        {
+            var tracker = new ConnectionTracker();
+            tracker.Register("conn-1", new ClientInfo());
+
+            var snapshot = tracker.ConnectedClients;
+            tracker.Register("conn-2", new ClientInfo());
+
+            // The snapshot should not have changed — it's a copy.
+            Assert.Single(snapshot);
+            Assert.Equal(2, tracker.ConnectedClients.Count);
+        }
+
+        [Fact]
+        public async Task ConcurrentRegisters_AreThreadSafe()
+        {
+            var tracker = new ConnectionTracker();
+
+            // Simulate 50 concurrent connections. If the locking is
+            // broken, the count will be less than 50 due to lost
+            // increments.
+            var tasks = new System.Threading.Tasks.Task[50];
+            for (int i = 0; i < 50; i++)
+            {
+                int idx = i;
+                tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                    tracker.Register($"conn-{idx}", new ClientInfo()));
+            }
+            await System.Threading.Tasks.Task.WhenAll(tasks);
+
+            Assert.Equal(50, tracker.ConnectedCount);
+        }
+
+        [Fact]
+        public async Task ConcurrentRegisterUnregister_ProducesConsistentCount()
+        {
+            var tracker = new ConnectionTracker();
+
+            // Half the tasks register, half unregister. The final
+            // count must equal (registered - unregistered) with no
+            // lost updates.
+            var tasks = new System.Threading.Tasks.Task[100];
+            for (int i = 0; i < 50; i++)
+            {
+                int idx = i;
+                tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                    tracker.Register($"conn-{idx}", new ClientInfo()));
+            }
+            for (int i = 0; i < 50; i++)
+            {
+                int idx = i;
+                tasks[50 + i] = System.Threading.Tasks.Task.Run(() =>
+                    tracker.Unregister($"conn-{idx}"));
+            }
+            await System.Threading.Tasks.Task.WhenAll(tasks);
+
+            // 50 registered, 50 unregistered (same IDs) → 0.
+            Assert.Equal(0, tracker.ConnectedCount);
+        }
+    }
+}
