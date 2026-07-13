@@ -352,3 +352,18 @@ they protect against the wrong threat model.
       scenarios where the host process runs elevated. The Windows
       console experience is poor enough that process management above
       is the recommended path for the common case.
+- [ ] **Migrate Server.Tray from WPF to Avalonia UI.**
+      WPF pulls in 5 native DLLs (`D3DCompiler_47_cor3.dll`,
+      `wpfgfx_cor3.dll`, `PresentationNative_cor3.dll`,
+      `PenImc_cor3.dll`, `vcruntime140_cor3.dll`) — ~7 MB of
+      Windows-only binaries that clutter the release and block any
+      future cross-platform tray host. Avalonia is a cross-platform
+      XAML framework with no native WPF artifacts and a smaller
+      footprint. The migration is a full rewrite of the Views layer
+      (MainWindow, PairingView, SettingsView, FilesView,
+      PinPopupWindow, TrayWindow) and the Hardcodet tray icon
+      (Avalonia has its own tray icon support via
+      `Avalonia.Controls.ApplicationLifetimes`). ViewModels stay as-is
+      (CommunityToolkit.Mvvm works with both). Defer until the rest of
+      Tier 4 ships — the WPF artifacts are a cosmetic issue, not a
+      functional one.
