@@ -1,3 +1,5 @@
+using PcBeaconAgent.Server.Core.Interfaces;
+
 namespace PcBeaconAgent.Server.Core.Services
 {
     /// <summary>

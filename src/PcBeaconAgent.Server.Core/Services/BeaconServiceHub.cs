@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using PcBeaconAgent.Contracts.Models;
 using PcBeaconAgent.Server.Core.Interfaces;
-using PcBeaconAgent.Server.Core.Services;
 using System;
 using System.Linq;
 using System.Net.NetworkInformation;

@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using PcBeaconAgent.Server.Core.Services;
+using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using System;
 

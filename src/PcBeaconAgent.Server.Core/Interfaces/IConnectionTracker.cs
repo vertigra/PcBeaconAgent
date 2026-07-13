@@ -1,7 +1,8 @@
+using PcBeaconAgent.Server.Core.Services;
 using System;
 using System.Collections.Generic;
 
-namespace PcBeaconAgent.Server.Core.Services
+namespace PcBeaconAgent.Server.Core.Interfaces
 {
     /// <summary>
     /// Tracks SignalR connections to <see cref="BeaconServiceHub"/>.
