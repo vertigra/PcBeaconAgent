@@ -24,33 +24,35 @@ jobs:
       - name: Test
         run: dotnet test src/PcBeaconAgent.Server.Core.Tests/PcBeaconAgent.Server.Core.Tests.csproj --configuration Release --logger trx --collect:"XPlat Code Coverage"
 
-      - name: Generate coverage badge
-        id: coverage
+      - name: Upload to Coveralls
+        if: github.ref == 'refs/heads/devel'
         shell: pwsh
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
         run: |
           $coverageFile = Get-ChildItem -Path . -Filter coverage.cobertura.xml -Recurse | Select-Object -First 1
-          if ($coverageFile) {
-            [xml]$xml = Get-Content $coverageFile.FullName
-            $lineRate = [double]$xml.coverage.'line-rate'
-            $pct = [math]::Round($lineRate * 100)
-            $color = if ($pct -ge 80) { "brightgreen" } elseif ($pct -ge 60) { "yellow" } elseif ($pct -ge 40) { "orange" } else { "red" }
-            echo "percentage=$pct" >> $env:GITHUB_OUTPUT
-            echo "color=$color" >> $env:GITHUB_OUTPUT
-            echo "Coverage: $pct% (color: $color)"
-          } else {
-            echo "percentage=0" >> $env:GITHUB_OUTPUT
-            echo "color=red" >> $env:GITHUB_OUTPUT
-            echo "No coverage file found"
+          if (-not $coverageFile) {
+            Write-Error "No coverage file found"
+            exit 1
           }
-
-      - name: Create coverage badge
-        if: github.ref == 'refs/heads/devel'
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_TOKEN }}
-          gistID: ${{ secrets.COVERAGE_GIST_ID }}
-          filename: coverage.json
-          label: coverage
-          message: ${{ steps.coverage.outputs.percentage }}%
-          color: ${{ steps.coverage.outputs.color }}
-
+          $json = @{
+            repo_token = $env:COVERALLS_REPO_TOKEN
+            source_files = @()
+          }
+          [xml]$xml = Get-Content $coverageFile.FullName
+          foreach ($file in $xml.coverage.packages.package.classes.class) {
+            $sourcePath = $file.filename
+            if (-not $sourcePath) { continue }
+            $lines = @()
+            foreach ($line in $file.lines.line) {
+              $lines += [int]$line.hits
+            }
+            $json.source_files += @{
+              name = $sourcePath
+              source_digest = ""
+              coverage = $lines
+            }
+          }
+          $jsonBody = $json | ConvertTo-Json -Depth 10 -Compress
+          $response = Invoke-RestMethod -Uri "https://coveralls.io/api/v1/jobs" -Method Post -Body @{ json = $jsonBody }
+          Write-Host "Coveralls response: $($response | ConvertTo-Json)"
