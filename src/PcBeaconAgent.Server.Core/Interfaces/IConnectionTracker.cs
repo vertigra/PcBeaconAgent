@@ -1,4 +1,4 @@
-using PcBeaconAgent.Server.Core.Services;
+using PcBeaconAgent.Server.Core.Models;
 using System;
 using System.Collections.Generic;
 

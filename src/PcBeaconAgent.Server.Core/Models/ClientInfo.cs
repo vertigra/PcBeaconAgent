@@ -1,12 +1,11 @@
-using PcBeaconAgent.Server.Core.Interfaces;
-
-namespace PcBeaconAgent.Server.Core.Services
+namespace PcBeaconAgent.Server.Core.Models
 {
     /// <summary>
     /// Information about a connected client. Stored as the value in
-    /// <see cref="IConnectionTracker"/>'s dictionary, keyed by SignalR
-    /// connection ID. Keeps enough context to identify a client without
-    /// holding a reference to the SignalR connection itself.
+    /// <see cref="Interfaces.IConnectionTracker"/>'s dictionary, keyed
+    /// by SignalR connection ID. Keeps enough context to identify a
+    /// client without holding a reference to the SignalR connection
+    /// itself.
     /// </summary>
     public sealed class ClientInfo
     {

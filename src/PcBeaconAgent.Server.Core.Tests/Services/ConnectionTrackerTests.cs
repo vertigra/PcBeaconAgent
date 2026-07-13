@@ -1,3 +1,4 @@
+using PcBeaconAgent.Server.Core.Models;
 using PcBeaconAgent.Server.Core.Services;
 using System.Threading;
 using System.Threading.Tasks;

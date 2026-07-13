@@ -22,4 +22,35 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Test
-        run: dotnet test src/PcBeaconAgent.Server.Core.Tests/PcBeaconAgent.Server.Core.Tests.csproj --configuration Release --logger trx
+        run: dotnet test src/PcBeaconAgent.Server.Core.Tests/PcBeaconAgent.Server.Core.Tests.csproj --configuration Release --logger trx --collect:"XPlat Code Coverage"
+
+      - name: Generate coverage badge
+        id: coverage
+        shell: pwsh
+        run: |
+          $coverageFile = Get-ChildItem -Path . -Filter coverage.cobertura.xml -Recurse | Select-Object -First 1
+          if ($coverageFile) {
+            [xml]$xml = Get-Content $coverageFile.FullName
+            $lineRate = [double]$xml.coverage.'line-rate'
+            $pct = [math]::Round($lineRate * 100)
+            $color = if ($pct -ge 80) { "brightgreen" } elseif ($pct -ge 60) { "yellow" } elseif ($pct -ge 40) { "orange" } else { "red" }
+            echo "percentage=$pct" >> $env:GITHUB_OUTPUT
+            echo "color=$color" >> $env:GITHUB_OUTPUT
+            echo "Coverage: $pct% (color: $color)"
+          } else {
+            echo "percentage=0" >> $env:GITHUB_OUTPUT
+            echo "color=red" >> $env:GITHUB_OUTPUT
+            echo "No coverage file found"
+          }
+
+      - name: Create coverage badge
+        if: github.ref == 'refs/heads/devel'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ secrets.COVERAGE_GIST_ID }}
+          filename: coverage.json
+          label: coverage
+          message: ${{ steps.coverage.outputs.percentage }}%
+          color: ${{ steps.coverage.outputs.color }}
+

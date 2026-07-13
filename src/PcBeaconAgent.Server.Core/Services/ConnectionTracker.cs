@@ -1,4 +1,5 @@
 using PcBeaconAgent.Server.Core.Interfaces;
+using PcBeaconAgent.Server.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
