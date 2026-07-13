@@ -214,3 +214,4 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 * Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on commit message formats, types, and scopes.
 * For coding conventions (naming, logging, DI, async, JSON), see the **[Coding Guidelines](docs/coding-guidelines.md)**.
 * For the project roadmap and planned features, see the **[Roadmap](docs/roadmap.md)**.
+* For test structure and what is covered, see **[Testing](docs/testing.md)**.

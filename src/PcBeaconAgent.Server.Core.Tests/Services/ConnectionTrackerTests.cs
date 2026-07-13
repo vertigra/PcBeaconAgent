@@ -169,29 +169,30 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         }
 
         [Fact]
-        public async Task ConcurrentRegisterUnregister_ProducesConsistentCount()
+        public async Task ConcurrentRegistersThenUnregisters_AllSucceed()
         {
             var tracker = new ConnectionTracker();
 
-            // Half the tasks register, half unregister. The final
-            // count must equal (registered - unregistered) with no
-            // lost updates.
-            var tasks = new Task[100];
+            // Phase 1: register 50 connections concurrently.
+            var registerTasks = new Task[50];
             for (int i = 0; i < 50; i++)
             {
                 int idx = i;
-                tasks[i] = Task.Run(() =>
+                registerTasks[i] = Task.Run(() =>
                     tracker.Register($"conn-{idx}", new ClientInfo()));
             }
+            await Task.WhenAll(registerTasks);
+            Assert.Equal(50, tracker.ConnectedCount);
+
+            // Phase 2: unregister all 50 concurrently.
+            var unregisterTasks = new Task[50];
             for (int i = 0; i < 50; i++)
             {
                 int idx = i;
-                tasks[50 + i] = System.Threading.Tasks.Task.Run(() =>
+                unregisterTasks[i] = Task.Run(() =>
                     tracker.Unregister($"conn-{idx}"));
             }
-            await Task.WhenAll(tasks);
-
-            // 50 registered, 50 unregistered (same IDs) → 0.
+            await Task.WhenAll(unregisterTasks);
             Assert.Equal(0, tracker.ConnectedCount);
         }
     }

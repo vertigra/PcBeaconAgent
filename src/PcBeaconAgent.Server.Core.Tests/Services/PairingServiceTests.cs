@@ -25,7 +25,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
 
         private PairingService CreateService() => new(mIdentityMock.Object, mLoggerMock.Object);
 
-        // ── Basic state ──────────────────────────────────────────
+        // Basic state
 
         [Fact]
         public void NewService_HasNoActivePin()
@@ -36,7 +36,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Null(svc.GetCurrentPinExpiryUtc());
         }
 
-        // ── RegeneratePin ───────────────────────────────────────
+        // RegeneratePin
 
         [Fact]
         public void RegeneratePin_ActivatesPairing()
@@ -79,7 +79,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.NotEqual(pin1, pin2);
         }
 
-        // ── Events ──────────────────────────────────────────────
+        // Events
 
         [Fact]
         public void RegeneratePin_RaisesGeneratedEvent()
@@ -126,7 +126,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Equal(string.Empty, svc.GetCurrentPin());
         }
 
-        // ── Single-use ──────────────────────────────────────────
+        // Single-use
 
         [Fact]
         public void ValidateAndExchangePin_PinIsSingleUse()
@@ -142,7 +142,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Null(apiKey2);
         }
 
-        // ── Invalid PIN ─────────────────────────────────────────
+        // Invalid PIN
 
         [Fact]
         public void ValidateAndExchangePin_WrongPin_ReturnsNull()
@@ -169,7 +169,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Equal(TestApiKey, apiKey);
         }
 
-        // ── Lockout ─────────────────────────────────────────────
+        // Lockout
 
         [Fact]
         public void ValidateAndExchangePin_FiveFailedAttempts_LocksAndRaisesLockedEvent()
@@ -207,7 +207,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Null(apiKey);
         }
 
-        // ── Inactive state ──────────────────────────────────────
+        // Inactive state
 
         [Fact]
         public void ValidateAndExchangePin_WhenInactive_ReturnsNull()
@@ -218,7 +218,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Null(apiKey);
         }
 
-        // ── Regenerate resets failed attempts ───────────────────
+        // Regenerate resets failed attempts
 
         [Fact]
         public void RegeneratePin_ResetsFailedAttemptCounter()
@@ -243,7 +243,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Equal(TestApiKey, apiKey);
         }
 
-        // ── Event sequence ──────────────────────────────────────
+        // Event sequence
 
         [Fact]
         public void EventSequence_GenerateThenValidate_ProducesGeneratedThenUsed()
@@ -261,7 +261,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Equal(PairingState.Used, states[1]);
         }
 
-        // ── Regenerate cancels previous expiry ──────────────────
+        // Regenerate cancels previous expiry
 
         [Fact]
         public async Task RegeneratePin_Twice_DoesNotFireExpiredForFirst()
@@ -283,7 +283,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.DoesNotContain(PairingState.Expired, states);
         }
 
-        // ── Concurrent access ───────────────────────────────────
+        // Concurrent access
 
         [Fact]
         public async Task ConcurrentValidate_PinIsSingleUse_UnderConcurrency()
@@ -324,6 +324,104 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             await Task.WhenAll(tasks);
 
             Assert.False(svc.IsPairingActive);
+        }
+
+        // Additional edge cases
+
+        [Fact]
+        public void ValidateAndExchangePin_WrongPin_DoesNotDecrementRemaining()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+
+            // 4 wrong attempts — still active (1 remaining).
+            for (int i = 0; i < 4; i++)
+                svc.ValidateAndExchangePin("000000");
+
+            Assert.True(svc.IsPairingActive);
+
+            // Correct PIN still works.
+            string? apiKey = svc.ValidateAndExchangePin(svc.GetCurrentPin());
+            Assert.Equal(TestApiKey, apiKey);
+        }
+
+        [Fact]
+        public void ValidateAndExchangePin_AfterLock_RegenerateReactivates()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+
+            // Lock it.
+            for (int i = 0; i < 5; i++)
+                svc.ValidateAndExchangePin("000000");
+
+            Assert.False(svc.IsPairingActive);
+
+            // Regenerate → active again.
+            svc.RegeneratePin();
+            Assert.True(svc.IsPairingActive);
+        }
+
+        [Fact]
+        public void ValidateAndExchangePin_EmptyString_ReturnsNull()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+
+            string? apiKey = svc.ValidateAndExchangePin("");
+            Assert.Null(apiKey);
+            Assert.True(svc.IsPairingActive);
+        }
+
+        [Fact]
+        public void ValidateAndExchangePin_Null_ReturnsNull()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+
+            // Null pin → Trim() throws NullReferenceException. The
+            // service does not guard against this today — the
+            // endpoint layer is expected to pass a non-null string.
+            // This test documents the current behaviour.
+            Assert.Throws<NullReferenceException>(() => svc.ValidateAndExchangePin(null!));
+        }
+
+        [Fact]
+        public void GetCurrentPin_AfterUsed_ReturnsEmpty()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+            string pin = svc.GetCurrentPin();
+
+            svc.ValidateAndExchangePin(pin);
+
+            Assert.Equal(string.Empty, svc.GetCurrentPin());
+        }
+
+        [Fact]
+        public void GetCurrentPinExpiryUtc_AfterUsed_ReturnsNull()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+            string pin = svc.GetCurrentPin();
+
+            svc.ValidateAndExchangePin(pin);
+
+            Assert.Null(svc.GetCurrentPinExpiryUtc());
+        }
+
+        [Fact]
+        public void RegeneratePin_AfterUsed_ReactivatesPairing()
+        {
+            var svc = CreateService();
+            svc.RegeneratePin();
+            svc.ValidateAndExchangePin(svc.GetCurrentPin());
+
+            Assert.False(svc.IsPairingActive);
+
+            svc.RegeneratePin();
+            Assert.True(svc.IsPairingActive);
+            Assert.False(string.IsNullOrEmpty(svc.GetCurrentPin()));
         }
     }
 }
