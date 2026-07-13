@@ -1,0 +1,66 @@
+name: Test WSL Runner and GPU v10 - Final
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-environment:
+    runs-on: [self-hosted, Linux, X64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      # Cache .NET SDK to speed up subsequent runs
+      - name: Cache .NET SDK
+        uses: actions/cache@v4
+        id: cache-dotnet
+        with:
+          path: ~/dotnet-10
+          key: dotnet-10-${{ runner.os }}-10.0.100
+          restore-keys: |
+            dotnet-10-${{ runner.os }}-
+
+      # Install .NET 10 only if cache miss occurs
+      - name: Install .NET 10 SDK if not cached
+        if: steps.cache-dotnet.outputs.cache-hit != 'true'
+        run: |
+          INSTALL_DIR=$HOME/dotnet-10
+          
+          mkdir -p $INSTALL_DIR
+          
+          curl -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+          chmod +x dotnet-install.sh
+          
+          ./dotnet-install.sh --version 10.0.100 --install-dir $INSTALL_DIR --no-path
+          
+          echo "DOTNET_ROOT=$INSTALL_DIR" >> $GITHUB_ENV
+          echo "$INSTALL_DIR" >> $GITHUB_PATH
+
+      # Set environment variables if cache hit occurred
+      - name: Set paths for cached .NET
+        if: steps.cache-dotnet.outputs.cache-hit == 'true'
+        run: |
+          echo "DOTNET_ROOT=$HOME/dotnet-10" >> $GITHUB_ENV
+          echo "$HOME/dotnet-10" >> $GITHUB_PATH
+
+      # Display installed tooling information
+      - name: Verify installation
+        run: dotnet --info
+
+      # Restore NuGet dependencies
+      - name: Restore NuGet packages
+        working-directory: src/PcBeaconAgent.Server.Core
+        run: dotnet restore
+
+      # Build Server.Cli executable for Linux x64
+      - name: Publish Server.Cli
+        working-directory: ${{ github.workspace }} 
+        run: |
+          echo "Starting publish process..."
+          dotnet publish src/PcBeaconAgent.Server.Cli/PcBeaconAgent.Server.Cli.csproj \
+          -c Release \
+          -r linux-x64 \
+          --self-contained \
+          -o out
+          echo "Publish finished."
