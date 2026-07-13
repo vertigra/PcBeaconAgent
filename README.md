@@ -4,6 +4,8 @@
 [![Client Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=client.v.*&label=Client&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
 [![Publish Server Release](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-server.yml?label=Server%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
 [![Publish Android Client Release](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-client.yml?label=Client%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/tests.yml?branch=devel&label=Tests)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/tests.yml)
+[![Coverage](https://coveralls.io/repos/github/vertigra/PcBeaconAgent/badge.svg?branch=devel)](https://coveralls.io/github/vertigra/PcBeaconAgent?branch=devel)
 
 ### 📋 Description
 PcBeaconAgent is a remote control solution for Windows PCs. A lightweight
@@ -213,3 +215,4 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 * Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on commit message formats, types, and scopes.
 * For coding conventions (naming, logging, DI, async, JSON), see the **[Coding Guidelines](docs/coding-guidelines.md)**.
 * For the project roadmap and planned features, see the **[Roadmap](docs/roadmap.md)**.
+* For test structure and what is covered, see **[Testing](docs/testing.md)**.

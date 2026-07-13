@@ -63,6 +63,7 @@ namespace PcBeaconAgent.Server.Core.Services
         {
             PairingState? stateToRaise = null;
             string? apiKey = null;
+            bool reject = false;
 
             lock (mStateLock)
             {
@@ -88,15 +89,17 @@ namespace PcBeaconAgent.Server.Core.Services
                         stateToRaise = PairingState.Locked;
                     }
 
-                    return null;
+                    reject = true;
                 }
-
-                // PIN is correct — single-use: invalidate immediately.
-                mPinUsed = true;
-                mExpiryCts?.Cancel();
-                LogPairingSuccess();
-                stateToRaise = PairingState.Used;
-                apiKey = mIdentity.ApiKey;
+                else
+                {
+                    // PIN is correct — single-use: invalidate immediately.
+                    mPinUsed = true;
+                    mExpiryCts?.Cancel();
+                    LogPairingSuccess();
+                    stateToRaise = PairingState.Used;
+                    apiKey = mIdentity.ApiKey;
+                }
             }
 
             // Raise events OUTSIDE the lock. The event handler calls
@@ -112,7 +115,7 @@ namespace PcBeaconAgent.Server.Core.Services
                 });
             }
 
-            return apiKey;
+            return reject ? null : apiKey;
         }
 
         /// <inheritdoc />

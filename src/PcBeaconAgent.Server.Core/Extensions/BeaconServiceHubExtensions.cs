@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using PcBeaconAgent.Contracts;
+using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
 
 namespace PcBeaconAgent.Server.Core.Extensions
@@ -20,6 +21,13 @@ namespace PcBeaconAgent.Server.Core.Extensions
                  options.PayloadSerializerOptions.TypeInfoResolverChain.Clear();
                  options.PayloadSerializerOptions.TypeInfoResolverChain.Add(ProjectJsonContext.Default);
             });
+
+            // ConnectionTracker is a singleton so it survives across
+            // hub instances (the hub is transient, created per
+            // connection). Constructed on the UI thread in the tray
+            // host so it captures the WPF Dispatcher sync context.
+            services.AddSingleton<IConnectionTracker, ConnectionTracker>();
+
             return services;
         }
 

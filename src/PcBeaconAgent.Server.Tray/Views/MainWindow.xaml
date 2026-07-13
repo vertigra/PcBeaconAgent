@@ -50,17 +50,37 @@
         </Style>
     </Window.Resources>
 
-    <TabControl Background="#1E1E1E"
-                BorderThickness="0"
-                Padding="0">
-        <TabItem Header="Pairing" Style="{StaticResource DarkTabItem}">
-            <views:PairingView DataContext="{Binding Pairing}"/>
-        </TabItem>
-        <TabItem Header="Settings" Style="{StaticResource DarkTabItem}">
-            <views:SettingsView DataContext="{Binding Settings}"/>
-        </TabItem>
-        <TabItem Header="Files" Style="{StaticResource DarkTabItem}">
-            <views:FilesView DataContext="{Binding Files}"/>
-        </TabItem>
-    </TabControl>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl Grid.Row="0"
+                    Background="#1E1E1E"
+                    BorderThickness="0"
+                    Padding="0">
+            <TabItem Header="Pairing" Style="{StaticResource DarkTabItem}">
+                <views:PairingView DataContext="{Binding Pairing}"/>
+            </TabItem>
+            <TabItem Header="Settings" Style="{StaticResource DarkTabItem}">
+                <views:SettingsView DataContext="{Binding Settings}"/>
+            </TabItem>
+            <TabItem Header="Files" Style="{StaticResource DarkTabItem}">
+                <views:FilesView DataContext="{Binding Files}"/>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status bar — common to all tabs, shows connected clients count. -->
+        <Border Grid.Row="1"
+                Background="#2A2A2A"
+                BorderBrush="#2C2C2C"
+                BorderThickness="0,1,0,0"
+                Padding="16,6">
+            <TextBlock FontSize="12" Foreground="#9E9E9E">
+                <Run Text="Connected:"/>
+                <Run Text="{Binding ConnectedClients, Mode=OneWay}" Foreground="#D0BCFF" FontWeight="Medium"/>
+            </TextBlock>
+        </Border>
+    </Grid>
 </Window>

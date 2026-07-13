@@ -142,15 +142,17 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       Split into [docs/server-cli.md](server-cli.md) and
       [docs/server-tray.md](server-tray.md); `README.md` updated with a
       comparison table and links to both.
-- [ ] **Status bar in MainWindow.**
-      Add a status bar at the bottom of MainWindow (below the
+- [x] **Status bar in MainWindow.** (`<TBD>`)
+      MainWindow now has a status bar at the bottom (below the
       TabControl, common to all tabs) showing the connected-clients
-      count. Requires `BeaconServiceHub` to expose a thread-safe
-      `ConnectedClientsCount` property (or an event the VM
-      subscribes to) — today the hub tracks connections internally
-      but does not publish the count. The status bar should also
-      show the server's IP:port so the user can confirm the bind
-      address without opening Settings.
+      count. `BeaconServiceHub` registers/unregisters authorised
+      connections with an `IConnectionTracker` singleton (in
+      `Server.Core/Services`), which stores a
+      `Dictionary<string, ClientInfo>` keyed by SignalR connection ID.
+      The tracker captures a `SynchronizationContext` at construction
+      time so `CountChanged` fires on the UI thread in the tray host.
+      `MainViewModel` subscribes and exposes `ConnectedClients` as an
+      observable property.
 - [ ] **Add unit and integration tests.**
       The project currently has no test projects. Add a
       `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the
@@ -352,3 +354,18 @@ they protect against the wrong threat model.
       scenarios where the host process runs elevated. The Windows
       console experience is poor enough that process management above
       is the recommended path for the common case.
+- [ ] **Migrate Server.Tray from WPF to Avalonia UI.**
+      WPF pulls in 5 native DLLs (`D3DCompiler_47_cor3.dll`,
+      `wpfgfx_cor3.dll`, `PresentationNative_cor3.dll`,
+      `PenImc_cor3.dll`, `vcruntime140_cor3.dll`) — ~7 MB of
+      Windows-only binaries that clutter the release and block any
+      future cross-platform tray host. Avalonia is a cross-platform
+      XAML framework with no native WPF artifacts and a smaller
+      footprint. The migration is a full rewrite of the Views layer
+      (MainWindow, PairingView, SettingsView, FilesView,
+      PinPopupWindow, TrayWindow) and the Hardcodet tray icon
+      (Avalonia has its own tray icon support via
+      `Avalonia.Controls.ApplicationLifetimes`). ViewModels stay as-is
+      (CommunityToolkit.Mvvm works with both). Defer until the rest of
+      Tier 4 ships — the WPF artifacts are a cosmetic issue, not a
+      functional one.

@@ -5,6 +5,7 @@
     <File Path="docs/roadmap.md" />
     <File Path="docs/server-cli.md" />
     <File Path="docs/server-tray.md" />
+    <File Path="docs/testing.md" />
   </Folder>
   <Folder Name="/other/">
     <File Path=".github/workflows/generate-pr-description.yml" />
@@ -25,5 +26,6 @@
     <Project Path="src/PcBeaconAgent.Server.Cli/PcBeaconAgent.Server.Cli.csproj" />
     <Project Path="src/PcBeaconAgent.Server.Core/PcBeaconAgent.Server.Core.csproj" />
     <Project Path="src/PcBeaconAgent.Server.Tray/PcBeaconAgent.Server.Tray.csproj" />
+    <Project Path="src/PcBeaconAgent.Server.Core.Tests/PcBeaconAgent.Server.Core.Tests.csproj" />
   </Folder>
 </Solution>
