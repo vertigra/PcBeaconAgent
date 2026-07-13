@@ -24,10 +24,18 @@ jobs:
       - name: Test
         run: dotnet test src/PcBeaconAgent.Server.Core.Tests/PcBeaconAgent.Server.Core.Tests.csproj --configuration Release --logger trx --collect:"XPlat Code Coverage"
 
+      - name: Find coverage file
+        id: find
+        shell: pwsh
+        run: |
+          $file = Get-ChildItem -Path . -Filter coverage.cobertura.xml -Recurse | Select-Object -First 1
+          if (-not $file) { Write-Error "No coverage file found"; exit 1 }
+          echo "path=$($file.FullName)" >> $env:GITHUB_OUTPUT
+
       - name: Coveralls
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           flag-name: Server.Core
           format: cobertura
-          file: ${{ github.workspace }}/Server.Core.Tests/TestResults/**/coverage.cobertura.xml
+          file: ${{ steps.find.outputs.path }}
