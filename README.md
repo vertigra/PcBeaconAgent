@@ -1,9 +1,8 @@
 # PcBeaconAgentService <img src=".github/assets/beacon.png" align="right" height="45" alt="PcBeaconAgent Logo">
 
-[![Server Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=server.v.*&label=Server&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
-[![Client Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=client.v.*&label=Client&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
-[![Publish Server Release](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-server.yml?label=Server%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-server.yml)
-[![Publish Android Client Release](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-client.yml?label=Client%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-client.yml)
+[![Server Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=release.v.*&label=Server&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
+[![Client Release](https://img.shields.io/github/v/tag/vertigra/PcBeaconAgent?filter=release.v.*&label=Client&color=blue)](https://github.com/vertigra/PcBeaconAgent/releases)
+[![Release CI](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-all.yml?label=Release%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-all.yml)
 [![Tests](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/tests.yml?branch=devel&label=Tests)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/tests.yml)
 [![Coverage](https://coveralls.io/repos/github/vertigra/PcBeaconAgent/badge.svg?branch=devel)](https://coveralls.io/github/vertigra/PcBeaconAgent?branch=devel)
 
@@ -130,50 +129,29 @@ For a technical deep-dive into the state machine, failure modes, and cryptograph
 
 ## 🚀 CI/CD Automation & Releases
 
-The project utilizes automated deployment pipelines configured via **GitHub Actions**. Server and client applications are completely decoupled and managed using independent versioning tracks via Git tags.
+The project utilizes automated deployment pipelines configured via **GitHub Actions**. A single `release.v.*` tag publishes both the server (Cli + Tray) and the Android client in one unified release.
 
-### 🏷️ Release Tag Formats
+### 🏷️ Release Tag Format
 
-To trigger a release workflow, push a tag matching one of the strict naming conventions below from your local terminal. The version number `X.Y.Z` must follow the [versioning rules](CONTRIBUTING.md#versioning) defined in `CONTRIBUTING.md`.
+To trigger a release, push a tag matching the naming convention below. The version number `X.Y.Z` must follow the [versioning rules](CONTRIBUTING.md#versioning) defined in `CONTRIBUTING.md`.
 
 | Component | Tag Pattern | Target Workflow | Release Name Example |
 | :--- | :--- | :--- | :--- |
-| **Server (Cli + Tray)** | `server.v.X.Y.Z` | `publish-server.yml` | `Server Release X.Y.Z` |
-| **Android App (Client)** | `client.v.X.Y.Z` | `publish-client.yml` | `Client Android Release X.Y.Z` |
-
-> ℹ️ **Single `server.v.*` tag publishes both hosts.** The
-> `publish-server.yml` workflow currently builds `Server.Cli` only.
-> Adding `Server.Tray` to the same workflow (and shipping both ZIPs
-> under one tag) is tracked in the [roadmap](docs/roadmap.md). When
-> that lands, the same `server.v.X.Y.Z` tag will produce a release
-> containing both `PcBeaconAgent.Server.Cli.zip` and
-> `PcBeaconAgent.Server.Tray.zip` — no new tag pattern is introduced.
+| **All (Server + Client)** | `release.v.X.Y.Z` | `publish-all.yml` | `Release X.Y.Z` |
 
 > 💡 **Branch & Tag Isolation Note:** Git tags point directly to a specific commit, completely independent of branches. You can safely create and push release tags from development branches (e.g., `devel`). GitHub Actions will check out and compile the exact commit historical snapshot bound to that tag, provided that the corresponding workflow `.yml` file exists within that commit.
 
-> ⚠️ **Important:** The version string `X.Y.Z` must follow strict semantic versioning numbers (e.g., `1.0.4`). Do not add extra prefixes or suffixes, otherwise the tag parsing engine in the pipeline will fail.
+> ⚠️ **Important:** The version string `X.Y.Z` must follow strict semantic versioning numbers (e.g., `2.0.0`). Do not add extra prefixes or suffixes, otherwise the tag parsing engine in the pipeline will fail.
 
 ---
 
 ### 🛠️ How to Publish a New Version
 
-1. Commit and push all your changes to the remote branch (e.g., `main`).
-2. Create and push the component-specific tag using your Git CLI:
+1. Commit and push all your changes to the remote branch (e.g., `devel`).
+2. Create and push the release tag:
 
-        # Example: Deploying a new Server build
-        git tag server.v.1.2.0
-        git push origin server.v.1.2.0
-
-        # Example: Deploying a new Android Client build
-        git tag client.v.1.0.5
-        git push origin client.v.1.0.5
-
-> ⚠️ **Simultaneous Release Warning (Same Commit):** If you need to release both the Server and Client from the exact same commit snapshot, **do not** push their tags sequentially in separate commands. GitHub Actions may ignore the second trigger. Instead, create both tags locally and push them simultaneously using a single command:
-> ```bash
-> git push origin server.v.1.2.0 client.v.1.0.5
-> # Or push all local tags at once:
-> git push origin --tags
-> ```
+        git tag release.v.2.0.0
+        git push origin release.v.2.0.0
 
 3. Navigate to the **Actions** tab of your GitHub repository to monitor the live build logs.
 
@@ -184,28 +162,25 @@ To trigger a release workflow, push a tag matching one of the strict naming conv
 #### 🖥️ Server (PcBeaconAgent.Server.Cli + PcBeaconAgent.Server.Tray)
 * **Pipeline Output:** Both hosts compile to standalone, native Windows
   x64 single-file executables, each packed inside its own `.zip`
-  archive. A single `server.v.X.Y.Z` tag produces both artifacts once
-  the `publish-server.yml` workflow is updated to build them together
-  (see [roadmap](docs/roadmap.md)).
-* **Compilation Flags:** Automated trimming (`-p:PublishTrimmed=true`),
-  dead code elimination, and embedded assembly compilation attributes.
-  `Server.Tray` is published without trimming — WPF reflection-heavy
-  XAML bindings trim unreliably.
-* **Metadata Extraction:** The pipeline strips the `server.v.` prefix
-  and injects the raw `X.Y.Z` value directly into both executables'
-  `Version` and `AssemblyVersion` properties. You can verify this
-  inside the compiled binary properties in Windows Explorer.
+  archive.
+* **Compilation Flags:** `Server.Cli` uses trimming
+  (`-p:PublishTrimmed=true`); `Server.Tray` is published without
+  trimming — WPF XAML bindings trim unreliably.
+* **Metadata Extraction:** The pipeline strips the `release.v.`
+  prefix and injects the raw `X.Y.Z` value into both executables'
+  `Version` and `AssemblyVersion` properties.
 
 #### 📱 Android Client (PcBeaconAgent.Client.Android)
-* **Pipeline Output:** A standalone, signed optimization architecture `.apk` package.
-* **Version Code Calculation:** Android requires a monotonically increasing integer for its `versionCode`. The pipeline automatically computes this value on the fly from your tag using a positioning multiplier formula:
+* **Pipeline Output:** A standalone `.apk` package.
+* **Version Code Calculation:** Android requires a monotonically
+  increasing integer for its `versionCode`. The pipeline computes
+  this from the tag:
 
-    The formula used is:
     `VersionCode = (Major × 1,000,000) + (Minor × 1,000) + Build`
 
-    *Example:* Tag `client.v.2.4.12` results in:
-    - `versionCode` = `2,004,012`
-    - `versionName` = `2.4.12`
+    *Example:* Tag `release.v.2.0.0` results in:
+    - `versionCode` = `2,000,000`
+    - `versionName` = `2.0.0`
 
 ---
 ## 🤝 Development Standards

@@ -42,7 +42,7 @@ Each commit message must follow this structure:
 This project follows [Semantic Versioning](https://semver.org/) with the
 rules below. The version lives in the `Version` and `AssemblyVersion`
 properties of the project's `.csproj` and is injected from the Git tag by
-the CI pipeline (`server.v.X.Y.Z` / `client.v.X.Y.Z`).
+the CI pipeline (`release.v.X.Y.Z`).
 
 ### Bump rules
 
@@ -69,12 +69,11 @@ a new DTO field (MINOR) results in a MINOR bump.
 
 ### Server vs client
 
-Server and client are versioned **independently** because they ship
-separately. A server change that does not affect the client (e.g. a
-`lock` inside `PairingService`) bumps only the server version. A client
-change that does not affect the server (e.g. a UI refactor) bumps only
-the client version. A wire-protocol change (e.g. a new DTO field) bumps
-**both**, because both sides must understand the new contract.
+Server and client are versioned **together** under a single
+`release.v.X.Y.Z` tag. A wire-protocol change (e.g. a new DTO field)
+affects both sides, so both must understand the new contract. A
+server-only change (e.g. a `lock` inside `PairingService`) and a
+client-only change (e.g. a UI refactor) ship in the same release.
 
 ### Worked example: 1.0.0 → 1.1.0
 

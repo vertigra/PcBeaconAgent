@@ -153,22 +153,19 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       time so `CountChanged` fires on the UI thread in the tray host.
       `MainViewModel` subscribes and exposes `ConnectedClients` as an
       observable property.
-- [ ] **Add unit and integration tests.**
-      The project currently has no test projects. Add a
-      `PcBeaconAgent.Server.Core.Tests` project (xUnit) covering the
-      pure-logic services: `PairingService` (PIN state machine, lockout,
-      expiry, thread safety, the `PairingStateChanged` event sequence
-      under regenerate/use/expire races), `BeaconServerIdentity` (key
-      loading / generation). Add a `PcBeaconAgent.Client.Core.Tests`
-      project covering `DeviceStore`, `DeviceFactory`, `SignalService`
-      (mocked SignalR). Controllers that wrap Windows-only COM / CCD
-      APIs (`AudioController`, `DisplayController`) are tested manually
-      on a real machine — mark them with `[Trait("Category",
-      "RequiresWindows")]` so CI can skip them. `INotificationService`
-      in `Server.Tray` is testable by mocking the interface — verify
-      that `TrayViewModel` routes each `PairingState` to the expected
-      `ShowPinPopup` / `ClosePinPopup` / `ShowTransient` calls and
-      suppresses them when `IsMainWindowVisible`.
+- [x] **Add unit and integration tests.** (`<TBD>`)
+      `PcBeaconAgent.Server.Core.Tests` project (xUnit + Moq) covers
+      `PairingService` (PIN lifecycle, single-use, lockout, events,
+      concurrency), `ConnectionTracker` (register/unregister, count,
+      threading), `BeaconServerIdentity` (load/generate key),
+      `SingleInstanceGuard` (acquire/release), `BeaconServer` (UDP
+      loopback integration). Windows-only controllers
+      (`AudioController`, `DisplayController`) are tested manually —
+      they require real COM/CCD hardware. CI runs tests on every
+      push to devel and before every release via `tests.yml`.
+      Coverage is collected via coverlet and uploaded to Coveralls.
+      `Client.Core.Tests` (DeviceStore, SignalService) is still
+      pending — tracked as a follow-up.
 
 ## Tier 3 — new feature modules
 

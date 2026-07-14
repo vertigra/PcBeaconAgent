@@ -9,8 +9,7 @@
   </Folder>
   <Folder Name="/other/">
     <File Path=".github/workflows/generate-pr-description.yml" />
-    <File Path=".github/workflows/publish-client.yml" />
-    <File Path=".github/workflows/publish-server.yml" />
+    <File Path=".github/workflows/publish-all.yml" />
     <File Path=".gitignore" />
     <File Path="cliff.toml" />
     <File Path="CONTRIBUTING.md" />
