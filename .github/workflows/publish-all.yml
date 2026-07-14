@@ -137,14 +137,7 @@ jobs:
             -p:AppVersionCode=${{ steps.parse_version.outputs.VERSION_CODE }} `
             -p:AppVersionName=${{ steps.parse_version.outputs.VERSION_NAME }}
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-apk-package
-          path: |
-            ./BeaconClient-v.*.apk
-
-      - name: Prepare Artifact
+      - name: Prepare APK Artifact
         shell: pwsh
         run: |
           $apkPath = Get-ChildItem -Path src/PcBeaconAgent.Client.Android/ -Filter *.apk -Recurse | Select-Object -First 1
@@ -154,6 +147,12 @@ jobs:
               Write-Error "APK not found!"
               exit 1
           }
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-apk-package
+          path: ./BeaconClient-v.${{ steps.parse_version.outputs.VERSION_NAME }}.apk
 
   smoke-test:
     needs: [build-server, build-client]
