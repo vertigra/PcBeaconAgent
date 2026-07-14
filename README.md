@@ -5,6 +5,7 @@
 [![Release CI](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/publish-all.yml?label=Release%20CI)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/publish-all.yml)
 [![Tests](https://img.shields.io/github/actions/workflow/status/vertigra/PcBeaconAgent/tests.yml?branch=devel&label=Tests)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/tests.yml)
 [![Coverage](https://coveralls.io/repos/github/vertigra/PcBeaconAgent/badge.svg?branch=devel)](https://coveralls.io/github/vertigra/PcBeaconAgent?branch=devel)
+[![CodeQL](https://github.com/vertigra/PcBeaconAgent/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/vertigra/PcBeaconAgent/actions/workflows/github-code-scanning/codeql)
 
 ### 📋 Description
 PcBeaconAgent is a remote control solution for Windows PCs. A lightweight
