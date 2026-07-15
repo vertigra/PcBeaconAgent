@@ -25,7 +25,7 @@
                        FontSize="42" FontWeight="Bold" Foreground="White"
                        HorizontalAlignment="Center"
                        FontFamily="Consolas"/>
-            <TextBlock Text="Open the pairing page on your Android device to enter this code."
+            <TextBlock Text="Enter this code on pairing page in your Android device"
                        FontSize="11" Foreground="#757575"
                        HorizontalAlignment="Center"
                        Margin="0,12,0,0"
@@ -42,15 +42,18 @@
                        HorizontalAlignment="Center"
                        FontFamily="Consolas"
                        Margin="0,0,0,16"
-                       Text=" /\_/\
-                             ( o.o )
-                             &gt; ^ &lt;"/>
+                       TextAlignment="Center">
+                <Run Text=" /\_/\"/><LineBreak/>
+                <Run Text=" ( o.o )"/><LineBreak/>
+                <Run Text=" &gt; ^ &lt;"/>
+            </TextBlock>
             <TextBlock Text="Waiting for a pairing request..."
                        FontSize="14" Foreground="#757575"
                        HorizontalAlignment="Center"/>
             <TextBlock Text="Open the PcBeaconAgent app on your Android device and navigate to the pairing page. The PIN will appear here automatically."
                        FontSize="11" Foreground="#555555"
                        HorizontalAlignment="Center"
+                       
                        Margin="0,8,0,0"
                        TextWrapping="Wrap"
                        MaxWidth="320"/>
