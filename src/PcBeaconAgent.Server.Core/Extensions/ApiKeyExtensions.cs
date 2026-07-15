@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using PcBeaconAgent.Server.Core.Configuration;
+using PcBeaconAgent.Server.Core.Interfaces;
 using System;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,15 +9,18 @@ namespace PcBeaconAgent.Server.Core.Extensions
 {
     public static class ApiKeyExtensions
     {
-        public static RouteGroupBuilder RequireApiKey(this RouteGroupBuilder group, AppSettings settings)
+        /// <summary>
+        /// Requires an API key on all endpoints in the group. The key
+        /// is resolved from <see cref="IBeaconServerIdentity.ApiKey"/>
+        /// (loaded from appsettings.json or server.key), NOT from
+        /// AppSettings.Server.ApiKey — the latter is empty when the key
+        /// is auto-generated.
+        /// </summary>
+        public static RouteGroupBuilder RequireApiKey(this RouteGroupBuilder group, IBeaconServerIdentity identity)
         {
             group.AddEndpointFilter(async (context, next) =>
             {
-                // Fail-closed: empty or whitespace ApiKey means no key is
-                // configured — reject all requests. The server generates a
-                // key on first run (server.key), so this only triggers if
-                // the key file is missing or corrupted.
-                if (string.IsNullOrWhiteSpace(settings.Server.ApiKey))
+                if (string.IsNullOrWhiteSpace(identity.ApiKey))
                 {
                     return Results.Unauthorized();
                 }
@@ -25,10 +28,7 @@ namespace PcBeaconAgent.Server.Core.Extensions
                 string? provided = context.HttpContext.Request.Headers["X-Api-Key"];
 
                 // Query-string fallback for REST clients (Android app
-                // sends the key via ?api_key= query parameter). This is
-                // acceptable for REST endpoints over LAN — query strings
-                // are only logged by proxies if one is in front, which is
-                // not the case for a direct LAN connection.
+                // sends the key via ?api_key= query parameter).
                 if (string.IsNullOrEmpty(provided))
                 {
                     provided = context.HttpContext.Request.Query["api_key"];
@@ -39,8 +39,7 @@ namespace PcBeaconAgent.Server.Core.Extensions
                     return Results.Unauthorized();
                 }
 
-                // Constant-time comparison to prevent timing attacks.
-                if (!FixedTimeEquals(provided, settings.Server.ApiKey))
+                if (!FixedTimeEquals(provided, identity.ApiKey))
                 {
                     return Results.Unauthorized();
                 }

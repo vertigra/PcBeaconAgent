@@ -117,8 +117,9 @@ public partial class App : Application
 
         mWebApp.MapSignalHubs();
         mWebApp.ConfigureWebApi();
-        mWebApp.MapAudioServiceEndpoints(settings);
-        mWebApp.MapDisplayServiceEndpoints(settings);
+        var identity = mWebApp.Services.GetRequiredService<IBeaconServerIdentity>();
+        mWebApp.MapAudioServiceEndpoints(settings, identity);
+        mWebApp.MapDisplayServiceEndpoints(settings, identity);
         mWebApp.MapPairingEndpoints();
 
         await mWebApp.StartAsync();

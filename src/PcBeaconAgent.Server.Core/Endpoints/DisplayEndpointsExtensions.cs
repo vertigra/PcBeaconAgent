@@ -6,6 +6,7 @@ using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Contracts.Models;
 using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Extensions;
+using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
 using System;
 
@@ -13,9 +14,9 @@ namespace PcBeaconAgent.Server.Core.Endpoints
 {
     public static class DisplayEndpointsExtensions
     {
-        public static IEndpointRouteBuilder MapDisplayServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
+        public static IEndpointRouteBuilder MapDisplayServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings, IBeaconServerIdentity identity)
         {
-            RouteGroupBuilder displayGroup = app.MapGroup("/api/display").RequireApiKey(settings);
+            RouteGroupBuilder displayGroup = app.MapGroup("/api/display").RequireApiKey(identity);
 
             displayGroup.MapGet("/list", ([FromServices] DisplayController controller) =>
             {
