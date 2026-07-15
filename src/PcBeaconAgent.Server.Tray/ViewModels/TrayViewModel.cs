@@ -121,17 +121,17 @@ public partial class TrayViewModel : ObservableObject, IDisposable
     private bool IsMainWindowVisible =>
         mApp.Windows.OfType<Views.MainWindow>().Any(w => w.IsVisible);
 
+    private bool mWindowOpening;
+
     [RelayCommand]
     public void ShowWindow()
     {
-        // Left-click on the tray icon (and the "Show window" context menu
-        // item) always opens MainWindow — it is the interactive hub (PIN
-        // display + Regenerate today, Settings + server status in the
-        // future per the roadmap). The popup is a passive notification
-        // surface driven by the Generated event, not by user clicks. If
-        // the user wants to see the PIN without opening MainWindow, the
-        // popup is already on screen (Generated opened it) — they don't
-        // need to click anything.
+        // Guard against rapid double-click creating two MainWindows.
+        // Both ShowWindow calls would find no existing window and both
+        // would create a new one. The flag is set before the check and
+        // cleared after Show() completes (synchronous on the UI thread).
+        if (mWindowOpening) return;
+        mWindowOpening = true;
         try
         {
             var mainWindow = mApp.Windows.OfType<Views.MainWindow>().FirstOrDefault();
@@ -147,18 +147,16 @@ public partial class TrayViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            // If the window construction fails (XAML parse error,
-            // resource not found, binding exception, etc.) the user
-            // would otherwise see nothing — the tray icon stays but
-            // no window appears, and the unhandled exception may
-            // destabilise the dispatcher. Surface the error so we
-            // can diagnose it.
             Log.Fatal(ex, "Failed to open MainWindow");
             MessageBox.Show(
                 $"Failed to open main window:\n\n{ex}",
                 "PcBeaconAgent",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
+        }
+        finally
+        {
+            mWindowOpening = false;
         }
     }
 

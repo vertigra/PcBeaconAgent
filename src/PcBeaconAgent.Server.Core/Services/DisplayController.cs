@@ -173,6 +173,13 @@ namespace PcBeaconAgent.Server.Core.Services
 
         public async Task RestoreAll()
         {
+            // Guard: if the topology was never overridden (no display was
+            // disabled via DisableAsync), restoring would revert to the
+            // stale snapshot captured at construction — potentially undoing
+            // the user's manually-changed display settings.
+            if (!mIsTopologyOverridden)
+                return;
+
             await mDisplayLock.WaitAsync();
             try
             {

@@ -6,6 +6,8 @@ using PcBeaconAgent.Server.Core.Models;
 using System;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Server.Core.Services
@@ -23,9 +25,6 @@ namespace PcBeaconAgent.Server.Core.Services
 
             LogClientConnected();
 
-            // Register the client with the connection tracker. Only
-            // authorised connections are tracked — rejected ones never
-            // reach this point.
             var http = Context.GetHttpContext();
             mTracker.Register(Context.ConnectionId, new ClientInfo
             {
@@ -39,11 +38,7 @@ namespace PcBeaconAgent.Server.Core.Services
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             LogClientDisconnected(exception?.Message);
-
-            // Unregister is a no-op if the connection was never
-            // registered (e.g. it was rejected before authorisation).
             mTracker.Unregister(Context.ConnectionId);
-
             return base.OnDisconnectedAsync(exception);
         }
 
@@ -51,15 +46,33 @@ namespace PcBeaconAgent.Server.Core.Services
 
         private bool IsAuthorized()
         {
-            if (string.IsNullOrEmpty(mIdentity.ApiKey))
-                return true;
+            // Fail-closed: empty ApiKey means auth is required but no key
+            // is configured — reject all connections. To allow anonymous
+            // connections, set ApiKey to a non-empty value AND add
+            // "AllowAnonymous": true in appsettings.json (future).
+            if (string.IsNullOrWhiteSpace(mIdentity.ApiKey))
+                return false;
 
             var http = Context.GetHttpContext();
             string? provided = http?.Request.Headers["X-Api-Key"];
-            if (string.IsNullOrEmpty(provided))
-                provided = http?.Request.Query["api_key"];
 
-            return string.Equals(provided, mIdentity.ApiKey, StringComparison.Ordinal);
+            // Query-string fallback removed for security (query strings
+            // are logged by proxies and Serilog HTTP request logging).
+            // SignalR clients should use the header via AccessTokenFactory.
+
+            if (string.IsNullOrEmpty(provided))
+                return false;
+
+            // Constant-time comparison to prevent timing attacks.
+            return FixedTimeEquals(provided, mIdentity.ApiKey);
+        }
+
+        private static bool FixedTimeEquals(string a, string b)
+        {
+            byte[] aBytes = Encoding.UTF8.GetBytes(a);
+            byte[] bBytes = Encoding.UTF8.GetBytes(b);
+            return aBytes.Length == bBytes.Length &&
+                   CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
         }
 
         private BeaconDevice GetLocalDeviceData()

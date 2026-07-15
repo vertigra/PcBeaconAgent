@@ -49,15 +49,20 @@ namespace PcBeaconAgent.Server.Tray.Services
                     // on a normal Windows install, but CreateKey handles
                     // both cases without us having to branch.
                     using RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);
-                    string? exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                    if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
+                    // Process.MainModule throws NotSupportedException in
+                    // single-file publish scenarios — it's not just null.
+                    // Environment.ProcessPath is the reliable fallback.
+                    string? exePath;
+                    try
                     {
-                        // MainModule can be null on some hosting
-                        // configurations (single-file publish pre-.NET 6
-                        // bundle, alternative hosts). Fall back to
-                        // AppContext.BaseDirectory + assembly name — not
-                        // perfect, but covers the single-file publish
-                        // case where MainModule is unreliable.
+                        exePath = Process.GetCurrentProcess().MainModule?.FileName;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        exePath = null;
+                    }
+                    if (string.IsNullOrEmpty(exePath))
+                    {
                         exePath = Environment.ProcessPath;
                     }
                     if (string.IsNullOrEmpty(exePath))

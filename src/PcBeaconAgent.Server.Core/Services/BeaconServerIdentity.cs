@@ -25,7 +25,13 @@ namespace PcBeaconAgent.Server.Core.Services
             }
             else
             {
-                ApiKey = LoadOrCreateKey("server.key");
+                // Resolve server.key relative to the executable directory,
+                // NOT the working directory. CWD varies by launch method
+                // (shortcut → user profile, service → System32, CLI →
+                // wherever the user cd'd). AppContext.BaseDirectory is
+                // stable and predictable.
+                string keyPath = Path.Combine(AppContext.BaseDirectory, "server.key");
+                ApiKey = LoadOrCreateKey(keyPath);
             }
         }
 

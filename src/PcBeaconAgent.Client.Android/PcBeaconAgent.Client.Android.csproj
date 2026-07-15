@@ -23,6 +23,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AndroidResource Remove="PcBeaconAgent.Client.Android\**" />
+    <Compile Remove="PcBeaconAgent.Client.Android\**" />
+    <EmbeddedResource Remove="PcBeaconAgent.Client.Android\**" />
+    <MauiCss Remove="PcBeaconAgent.Client.Android\**" />
+    <MauiXaml Remove="PcBeaconAgent.Client.Android\**" />
+    <None Remove="PcBeaconAgent.Client.Android\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundScale="0.65" Color="#1E1E1E" />
   </ItemGroup>
   

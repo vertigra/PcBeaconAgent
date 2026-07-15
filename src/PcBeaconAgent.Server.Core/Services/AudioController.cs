@@ -9,11 +9,12 @@ using System.Threading;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
-    public class AudioController
+    public class AudioController : IDisposable
     {
         private readonly ILogger<AudioController> mLogger;
         private CoreAudioController? mController;
         private readonly Lock mControllerLock = new();
+        private bool mDisposed;
 
         public AudioController(ILogger<AudioController> logger)
         {
@@ -151,5 +152,19 @@ namespace PcBeaconAgent.Server.Core.Services
         private void LogSetDefaultError(string id, Exception ex) => LogSetDefaultErrorAction(mLogger, id, ex);
 
         #endregion
+
+        public void Dispose()
+        {
+            if (mDisposed) return;
+            mDisposed = true;
+
+            lock (mControllerLock)
+            {
+                mController?.Dispose();
+                mController = null;
+            }
+
+            GC.SuppressFinalize(this);
+        }
     }
 }

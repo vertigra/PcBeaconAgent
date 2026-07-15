@@ -30,8 +30,23 @@ namespace PcBeaconAgent.Server.Core.Services
         public async Task StartAsync(CancellationToken stoppingToken)
         {
             using var udpServer = new UdpClient();
-            udpServer.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            udpServer.Client.Bind(new IPEndPoint(IPAddress.Parse(mBeaconServerOptions.BindingIp), mBeaconServerOptions.DiscoveryPort));
+
+            // Bind in try/catch — if the discovery port is in use by
+            // another application, log a clear error and exit the
+            // background service. The web API continues to work, but
+            // discovery is dead. SingleInstanceGuard only protects
+            // against other PcBeaconAgent instances, not third-party apps.
+            try
+            {
+                udpServer.Client.Bind(new IPEndPoint(
+                    IPAddress.Parse(mBeaconServerOptions.BindingIp),
+                    mBeaconServerOptions.DiscoveryPort));
+            }
+            catch (SocketException ex)
+            {
+                LogBindError(mBeaconServerOptions.DiscoveryPort, ex);
+                return;
+            }
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -58,6 +73,10 @@ namespace PcBeaconAgent.Server.Core.Services
                 catch (Exception ex)
                 {
                     LogListenError(ex);
+                    // Back-off to prevent busy-spin if ReceiveAsync throws
+                    // repeatedly (e.g. ICMP port unreachable on every
+                    // packet from a stale client).
+                    await Task.Delay(100, stoppingToken);
                 }
             }
         }
@@ -82,9 +101,16 @@ namespace PcBeaconAgent.Server.Core.Services
                 new EventId(42, "ListenError"),
                 "An error occurred while listening for UDP broadcasts");
 
+        private static readonly Action<ILogger, int, Exception?> LogBindErrorAction =
+            LoggerMessage.Define<int>(
+                LogLevel.Error,
+                new EventId(43, "BindError"),
+                "Failed to bind UDP discovery port {Port}. Discovery is disabled. The web API continues to work.");
+
         private void LogPortSent(int port, IPEndPoint endPoint) => LogPortSentAction(mLogger, port, endPoint, null);
         private void LogShuttingDown() => LogShuttingDownAction(mLogger, null);
         private void LogListenError(Exception ex) => LogListenErrorAction(mLogger, ex);
+        private void LogBindError(int port, Exception ex) => LogBindErrorAction(mLogger, port, ex);
 
         #endregion
     }

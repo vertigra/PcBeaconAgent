@@ -79,7 +79,17 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             bool ok = mAutoStart.SetEnabled(value);
             if (!ok)
             {
-                AutoStartEnabled = mAutoStart.IsEnabled;
+                // Prevent recursive re-entry when we set AutoStartEnabled
+                // back to the actual registry state.
+                CanChangeAutoStart = false;
+                try
+                {
+                    AutoStartEnabled = mAutoStart.IsEnabled;
+                }
+                finally
+                {
+                    CanChangeAutoStart = true;
+                }
             }
         }
 

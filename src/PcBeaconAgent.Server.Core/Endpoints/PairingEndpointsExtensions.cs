@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Contracts.Models;
 using PcBeaconAgent.Server.Core.Interfaces;
+using System.Threading.RateLimiting;
 
 namespace PcBeaconAgent.Server.Core.Endpoints
 {
@@ -14,8 +15,16 @@ namespace PcBeaconAgent.Server.Core.Endpoints
         {
             var pairingGroup = app.MapGroup("/api/pair");
 
-            pairingGroup.MapPost("/", ([FromBody] PairRequestDto request, [FromServices] IPairingService pairing) =>
+            pairingGroup.MapPost("/", ([FromBody] PairRequestDto? request, [FromServices] IPairingService pairing) =>
             {
+                if (request is null || string.IsNullOrWhiteSpace(request.Pin))
+                {
+                    return Results.Json(
+                        new MessageDto("PIN is required."),
+                        ProjectJsonContext.Default.MessageDto,
+                        statusCode: StatusCodes.Status400BadRequest);
+                }
+
                 if (!pairing.IsPairingActive)
                 {
                     return Results.Json(
@@ -29,7 +38,7 @@ namespace PcBeaconAgent.Server.Core.Endpoints
                 if (apiKey is null)
                 {
                     return Results.Json(
-                        new MessageDto("Invalid PIN or pairing locked due to too many failed attempts."),
+                        new MessageDto("Pairing failed."),
                         ProjectJsonContext.Default.MessageDto,
                         statusCode: StatusCodes.Status401Unauthorized);
                 }
@@ -40,14 +49,17 @@ namespace PcBeaconAgent.Server.Core.Endpoints
                     statusCode: StatusCodes.Status200OK);
             });
 
+            // Rate-limit regeneration: 1 request per 10 seconds per IP.
+            // Prevents DoS (constant regeneration to reset the brute-force
+            // counter) and brute-force acceleration.
             pairingGroup.MapPost("/regenerate", ([FromServices] IPairingService pairing) =>
             {
                 pairing.RegeneratePin();
                 return Results.Json(
-                    new MessageDto("New PIN generated. Check the server console."),
+                    new MessageDto("New PIN generated. Check the popup next to the server's system tray."),
                     ProjectJsonContext.Default.MessageDto,
                     statusCode: StatusCodes.Status200OK);
-            });
+            }).RequireRateLimiting("pairing-regenerate");
 
             return app;
         }

@@ -124,26 +124,31 @@ public partial class App : Application
         await mWebApp.StartAsync();
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    protected override void OnExit(ExitEventArgs e)
     {
         mTrayViewModel?.Dispose();
-        // Close any open popup before the app unwinds — otherwise the
-        // popup's DispatcherTimer could tick against a disposed window.
         mNotifications?.ClosePinPopup();
         mTrayWindow?.Close();
 
+        // Sync-over-async: WPF's OnExit does not await async methods.
+        // If we use 'async void OnExit', the await mWebApp.StopAsync()
+        // returns control to WPF, which tears down the process before
+        // the mutex is released. GetAwaiter().GetResult() blocks until
+        // the host stops, then we release the mutex and flush logs.
         if (mWebApp != null)
         {
-            await mWebApp.StopAsync();
-            await mWebApp.DisposeAsync();
+            try
+            {
+                mWebApp.StopAsync().GetAwaiter().GetResult();
+                mWebApp.DisposeAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Error during web host shutdown");
+            }
         }
 
-        // Release the single-instance mutex so the next PcBeaconAgent
-        // process can start. Must come after the web host stops —
-        // otherwise a new instance could acquire the mutex and try to
-        // bind ports before this one has released them.
         mSingleInstance?.Dispose();
-
         Log.CloseAndFlush();
         base.OnExit(e);
     }
