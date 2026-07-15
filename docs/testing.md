@@ -11,6 +11,15 @@ src/PcBeaconAgent.Server.Core.Tests/
     BeaconServerIdentityTests.cs
     SingleInstanceGuardTests.cs
     BeaconServerTests.cs
+
+src/PcBeaconAgent.Client.Core.Tests/
+  PcBeaconAgent.Client.Core.Tests.csproj
+  Stores/
+    DeviceStoreTests.cs
+  Helpers/
+    UrlHelpersTests.cs
+  Models/
+    ManagedDeviceTests.cs
 ```
 
 ## Framework
@@ -48,6 +57,14 @@ Moq to create proxies for `ILogger<T>` where `T` is an internal type.
 | `BeaconServerIdentity` | Static key from config, load from file, generate new, 32-char hex format, trim whitespace, persistence across instances |
 | `SingleInstanceGuard` | First acquire succeeds, second acquire fails, dispose releases |
 | `BeaconServer` | UDP ping/pong integration test (loopback, random port) |
+
+### Client.Core.Tests
+
+| Class | Coverage |
+|-------|----------|
+| `DeviceStore` | Add/forget device, duplicate prevention, different IP, persistence (SaveDevices called), load from storage, duplicate load dedup |
+| `UrlHelpers` | BuildUrl with various IP/port/path combinations |
+| `ManagedDevice` | Equals (same, different, null, self-ref), GetHashCode, IsOnline default + PropertyChanged |
 
 ## What is NOT tested
 
