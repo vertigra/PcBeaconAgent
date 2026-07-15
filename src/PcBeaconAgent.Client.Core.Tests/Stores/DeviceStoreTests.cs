@@ -1,5 +1,6 @@
 using Moq;
 using PcBeaconAgent.Client.Core.Interfaces;
+using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;
 using PcBeaconAgent.Contracts.Models;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ namespace PcBeaconAgent.Client.Core.Tests.Stores
                 new Mock<System.Net.Http.IHttpClientFactory>().Object,
                 new Mock<IPreferencesService>().Object);
             mFactoryMock.Setup(f => f.Create(It.IsAny<BeaconDevice>()))
-                .Returns((BeaconDevice d) => new Models.ManagedDevice(d, null!, null!));
+                .Returns((BeaconDevice d) => new ManagedDevice(d, null!, null!));
         }
 
         private static BeaconDevice MakeDevice(string ip = "10.0.0.1") => new()
