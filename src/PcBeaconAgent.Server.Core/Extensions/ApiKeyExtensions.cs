@@ -24,6 +24,16 @@ namespace PcBeaconAgent.Server.Core.Extensions
 
                 string? provided = context.HttpContext.Request.Headers["X-Api-Key"];
 
+                // Query-string fallback for REST clients (Android app
+                // sends the key via ?api_key= query parameter). This is
+                // acceptable for REST endpoints over LAN — query strings
+                // are only logged by proxies if one is in front, which is
+                // not the case for a direct LAN connection.
+                if (string.IsNullOrEmpty(provided))
+                {
+                    provided = context.HttpContext.Request.Query["api_key"];
+                }
+
                 if (string.IsNullOrEmpty(provided))
                 {
                     return Results.Unauthorized();

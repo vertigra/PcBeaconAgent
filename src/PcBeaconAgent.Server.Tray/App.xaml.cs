@@ -124,23 +124,21 @@ public partial class App : Application
         await mWebApp.StartAsync();
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    protected override async void OnExit(ExitEventArgs e)
     {
         mTrayViewModel?.Dispose();
         mNotifications?.ClosePinPopup();
         mTrayWindow?.Close();
 
-        // Sync-over-async: WPF's OnExit does not await async methods.
-        // If we use 'async void OnExit', the await mWebApp.StopAsync()
-        // returns control to WPF, which tears down the process before
-        // the mutex is released. GetAwaiter().GetResult() blocks until
-        // the host stops, then we release the mutex and flush logs.
+        // Stop the web host on a background thread to avoid deadlocking
+        // the UI thread (WPF's OnExit runs on the Dispatcher, and
+        // StopAsync may try to marshal back to it).
         if (mWebApp != null)
         {
             try
             {
-                mWebApp.StopAsync().GetAwaiter().GetResult();
-                mWebApp.DisposeAsync().GetAwaiter().GetResult();
+                await Task.Run(() => mWebApp.StopAsync());
+                await mWebApp.DisposeAsync();
             }
             catch (Exception ex)
             {

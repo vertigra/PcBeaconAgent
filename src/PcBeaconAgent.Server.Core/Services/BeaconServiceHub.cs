@@ -56,9 +56,14 @@ namespace PcBeaconAgent.Server.Core.Services
             var http = Context.GetHttpContext();
             string? provided = http?.Request.Headers["X-Api-Key"];
 
-            // Query-string fallback removed for security (query strings
-            // are logged by proxies and Serilog HTTP request logging).
-            // SignalR clients should use the header via AccessTokenFactory.
+            // Query-string fallback for SignalR WebSocket handshake.
+            // SignalR clients on Android cannot set custom headers on
+            // the WebSocket upgrade request — the key must go in the
+            // query string. This is the standard SignalR auth pattern.
+            if (string.IsNullOrEmpty(provided))
+            {
+                provided = http?.Request.Query["api_key"];
+            }
 
             if (string.IsNullOrEmpty(provided))
                 return false;
