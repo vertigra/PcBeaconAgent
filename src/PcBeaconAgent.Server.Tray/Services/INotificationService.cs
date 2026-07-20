@@ -1,5 +1,4 @@
 using System;
-using Hardcodet.Wpf.TaskbarNotification;
 using PcBeaconAgent.Server.Tray.Models;
 
 namespace PcBeaconAgent.Server.Tray.Services
@@ -7,7 +6,7 @@ namespace PcBeaconAgent.Server.Tray.Services
     /// <summary>
     /// Owns the user-facing notification surface for the tray host:
     /// the persistent PIN popup (stateful — opened on Generated, closed
-    /// on terminal states) and the transient balloons (Used / Expired /
+    /// on terminal states) and the transient toast (Used / Expired /
     /// Locked). Encapsulates Win32 taskbar positioning so view models
     /// and views stay P/Invoke-free.
     /// </summary>
@@ -29,18 +28,12 @@ namespace PcBeaconAgent.Server.Tray.Services
         void ClosePinPopup();
 
         /// <summary>
-        /// Shows a short transient notification (balloon today, custom
-        /// WPF popup once Tier 3 lands). Windows clamps the on-screen
-        /// duration to ~10–30s; we cannot control it.
+        /// Shows a short transient toast (custom WPF popup). Windows
+        /// clamped the old <c>Shell_NotifyIcon</c> balloon to ~10–30s
+        /// and positioned it wherever it liked; the custom toast has a
+        /// fixed 5s duration and snaps to the taskbar edge, pixel-aligned
+        /// with the PIN popup.
         /// </summary>
         void ShowTransient(string title, string message, NotificationSeverity severity);
-
-        /// <summary>
-        /// Hands the service the <see cref="TaskbarIcon"/> reference
-        /// after the <c>TrayWindow</c> has constructed it. The icon is
-        /// declared in XAML, so it is not available at DI resolution
-        /// time — the host calls this method once during startup.
-        /// </summary>
-        void AttachTaskbarIcon(TaskbarIcon icon);
     }
 }

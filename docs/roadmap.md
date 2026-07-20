@@ -86,11 +86,11 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
   Shipped.
 - **PIN popup with countdown** (`PinPopupWindow` + `PinPopupViewModel`)
   snapped to the taskbar edge via `SHAppBarMessage`. Shipped.
-- **Balloon notifications** for terminal pairing states (Used / Expired /
-  Locked) via `INotificationService`. Shipped. Custom positioning of the
-  balloons themselves is tracked in Tier 3 — Windows positions
-  `Shell_NotifyIcon` balloons next to the tray icon and we cannot
-  control it.
+- **Transient terminal-state toast** for pairing states (Used / Expired /
+  Locked) via `INotificationService`. Shipped as a `Shell_NotifyIcon`
+  balloon initially; later replaced by a custom WPF toast popup
+  (`TransientToastWindow`) pixel-aligned with the PIN popup — see the
+  Tier 3 entry "Custom balloon / toast positioning" for the full story.
 - [x] **Auto-start on user login.** (`0003cec`)
       Implemented via `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
       (no admin rights needed). Off by default — the user opts in via
@@ -229,21 +229,31 @@ note before implementation; the entries here are reminders.
       mechanism so the tray host inherits the locale from the OS or
       from a setting in `appsettings.json`. ClI host stays English-only
       (its output is log-shaped, not user-facing prose).
-- [ ] **Custom balloon / toast positioning.**
+- [x] **Custom balloon / toast positioning.** (`<TBD>`)
       The Windows `Shell_NotifyIcon` balloon API positions the balloon
-      next to the tray icon — the app cannot control it. The PIN popup
-      (patch #39) snaps to the taskbar via `SHAppBarMessage`, but the
-      transient terminal-state balloons (Used / Expired / Locked) still
-      appear wherever Windows decides. Two options: (a) switch to the
-      UWP Toast API (`Microsoft.Toolkit.Uwp.Notifications`) which gives
-      a richer UI and lands in the Action Center but still doesn't let
-      us pick the on-screen position; (b) replace balloons entirely
-      with a small transient WPF popup (similar to `PinPopupWindow`
-      but auto-closing after a few seconds) positioned next to the
-      tray icon via `Shell_NotifyIconGetRect`. Option (b) is the only
-      way to get pixel-perfect control. Defer until the rest of Tier 2
-      ships; the current balloons are functional, just not pixel-aligned
-      with the popup.
+      next to the tray icon — the app cannot control it. Replaced the
+      balloons entirely with a small transient WPF popup
+      (`TransientToastWindow` + `TransientToastViewModel`), modelled on
+      `PinPopupWindow` but auto-closing after 5 seconds. Position is
+      computed by the same `SHAppBarMessage`-based `ApplyPosition`
+      helper in `NotificationService`, so the toast is pixel-aligned
+      with the PIN popup (bottom / top / left / right taskbar aware,
+      multi-monitor fallback via `SystemParameters.WorkArea`).
+      Click-to-dismiss is wired through `Window.OnMouseLeftButtonDown`.
+      The `INotificationService.AttachTaskbarIcon` method was removed
+      at the same time — it existed only to feed the balloon API and is
+      no longer needed.
+      <br/>**Trade-off:** the original design note suggested
+      `Shell_NotifyIconGetRect` for true per-icon pixel alignment.
+      Hardcodet 2.x does not expose the underlying `hWnd`/`uID` of the
+      registered shell icon publicly, so using that API would require
+      reflection on Hardcodet internals (fragile across upgrades) or a
+      small fork. Since the goal was visual alignment with the PIN
+      popup (not per-icon precision), reusing the existing
+      `SHAppBarMessage` positioning was the cleaner choice. If
+      per-icon precision ever becomes important, the
+      `Shell_NotifyIconGetRect` P/Invoke can be added to
+      `NotificationService` without changing the public contract.
 - [ ] **Network interface binding + soft restart.**
       Today the server binds to a single host address from
       `appsettings.json` (`0.0.0.0` = all interfaces). Add a

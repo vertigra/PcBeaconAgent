@@ -58,7 +58,6 @@ public partial class App : Application
             mNotifications = mWebApp.Services.GetRequiredService<INotificationService>();
 
             mTrayWindow = new TrayWindow();
-            mNotifications.AttachTaskbarIcon(mTrayWindow.TrayIcon);
 
             var mainViewModel = mWebApp.Services.GetRequiredService<MainViewModel>();
 
