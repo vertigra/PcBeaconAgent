@@ -80,10 +80,11 @@ tray host. They stay in the backlog:
       `DisplayTopologyKind` enum); the XAML picks the layout via
       `DataTrigger`s on the enum value.
 
-## Tier 2 — tray host
+## Tier 2 — tray host ✅ DONE
 
 The `PcBeaconAgent.Server.Cli` console host stays. A new
-`PcBeaconAgent.Server.Tray` project is added alongside it:
+`PcBeaconAgent.Server.Tray` project is added alongside it. All Tier 2
+items shipped:
 
 - WPF + `Hardcodet.NotifyIcon.Wpf` (pure WPF tray icon — no WinForms
   interop). Shipped.
@@ -134,15 +135,16 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       nothing to control in Session 0. The service-mode registration
       was misleading documentation; it never actually worked. The
       always-on use case is handled by `Server.Tray` with auto-start
-      on user login (still pending).
+      on user login (off by default, opt-in via Settings).
 - [x] **CI/CD for Server.Tray.** (`<TBD>`)
-      The `publish-server.yml` workflow now builds and publishes both
-      `Server.Cli` and `Server.Tray` under the same `server.v.X.Y.Z`
-      tag. The release includes both ZIPs. `Server.Tray` is published
-      with `PublishTrimmed=false` (WPF XAML bindings trim unreliably)
-      while `Server.Cli` keeps `PublishTrimmed=true`. Smoke test
-      covers `Server.Cli` only — `Server.Tray` is a GUI app that
-      needs a desktop session and cannot be easily smoke-tested in CI.
+      The `publish-all.yml` workflow builds and publishes both
+      `Server.Cli` and `Server.Tray` (plus the Android client) under the
+      same `release.v.X.Y.Z` tag. The release includes both ZIPs.
+      `Server.Tray` is published with `PublishTrimmed=false` (WPF XAML
+      bindings trim unreliably) while `Server.Cli` keeps
+      `PublishTrimmed=true`. Smoke test covers `Server.Cli` only —
+      `Server.Tray` is a GUI app that needs a desktop session and cannot
+      be easily smoke-tested in CI.
 - [x] **Documentation for Server.Tray.** (`e782f92`)
       Split into [docs/server-cli.md](server-cli.md) and
       [docs/server-tray.md](server-tray.md); `README.md` updated with a
@@ -169,8 +171,9 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       they require real COM/CCD hardware. CI runs tests on every
       push to devel and before every release via `tests.yml`.
       Coverage is collected via coverlet and uploaded to Coveralls.
-      `Client.Core.Tests` (DeviceStore, SignalService) is still
-      pending — tracked as a follow-up.
+      `Client.Core.Tests` (DeviceStore, UrlHelpers, ManagedDevice)
+      shipped — covers add/forget, persistence, equality, and URL
+      building.
 
 ## Tier 3 — new feature modules
 

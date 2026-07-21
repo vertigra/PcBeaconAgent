@@ -7,15 +7,16 @@ UDP beacon, but adds a WPF UI on top:
 - A system tray icon (`Hardcodet.NotifyIcon.Wpf`) with a context menu.
 - A persistent PIN popup with a live countdown, snapped to the
   taskbar edge.
-- Transient balloon notifications for terminal pairing states
-  (Used / Expired / Locked).
+- A transient toast (custom WPF popup) for terminal pairing states
+  (Used / Expired / Locked), pixel-aligned with the PIN popup.
 - A `MainWindow` for explicit PIN management (regenerate, view).
 
 Both hosts share the same `Server.Core` business logic, so behaviour
 does not drift. The two are mutually exclusive — they bind the same
 ports, so a second instance of either will fail on socket bind. A
-single-instance mutex to make the error message friendlier is tracked
-in the [roadmap](roadmap.md).
+single-instance mutex (`Global\PcBeaconAgent-SingleInstance`) makes
+the error message friendlier: the second process logs a clear error
+and exits instead of crashing on `AddressAlreadyInUse`.
 
 ## When to use which
 
@@ -56,7 +57,7 @@ the tray context menu → Exit for that.
 The host subscribes to `IPairingService.PairingStateChanged` and reacts
 to each transition:
 
-| State | Popup | Balloon | Tray tooltip |
+| State | Popup | Toast | Tray tooltip |
 |---|---|---|---|
 | `Generated` | Opens (with PIN + countdown) | — | "PIN active" |
 | `Generated` while `MainWindow` is open | Skipped (avoid duplicate UI) | — | "PIN active" |
@@ -66,10 +67,10 @@ to each transition:
 
 The popup is the persistent display — it stays open for the entire
 validity window (5 minutes by default) so the user can read the PIN
-while switching to the phone. Balloons are short transient signals
-(Windows clamps the on-screen duration to ~15 seconds — we cannot
-control this). Custom balloon positioning is tracked in the
-[roadmap](roadmap.md).
+while switching to the phone. The toast is a short transient signal
+(5 seconds, click-to-dismiss), positioned next to the taskbar via the
+same `SHAppBarMessage`-based logic as the popup so the two surfaces
+stay pixel-aligned.
 
 ## PIN popup details
 
@@ -122,9 +123,12 @@ dotnet publish src/PcBeaconAgent.Server.Tray/PcBeaconAgent.Server.Tray.csproj \
   -r win-x64
 ```
 
-CI/CD integration for the tray host is tracked in the
-[roadmap](roadmap.md) — the plan is for `publish-server.yml` to build
-both hosts and ship them together under the same `server.v.X.Y.Z` tag.
+CI/CD: `publish-all.yml` builds and publishes both `Server.Cli` and
+`Server.Tray` (plus the Android client) under the same `release.v.X.Y.Z`
+tag. `Server.Tray` is published with `PublishTrimmed=false` (WPF XAML
+bindings trim unreliably) while `Server.Cli` keeps `PublishTrimmed=true`.
+Smoke test covers `Server.Cli` only — `Server.Tray` is a GUI app that
+needs a desktop session and cannot be easily smoke-tested in CI.
 
 ## What's not in Server.Tray
 
