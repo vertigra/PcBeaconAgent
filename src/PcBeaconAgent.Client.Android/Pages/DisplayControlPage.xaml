@@ -35,10 +35,9 @@
                  The exact topology name is still shown as text next to
                  the icon so there is no ambiguity (e.g. for
                  accessibility / screen readers). -->
-            <Grid WidthRequest="32" HeightRequest="20"
-                  VerticalOptions="Center">
+            <Grid WidthRequest="34" HeightRequest="20" VerticalOptions="Center">
                 <!-- Monitor 1 (left). Faded only for External. -->
-                <Border WidthRequest="16" HeightRequest="12"
+                <Border WidthRequest="16" HeightRequest="13"
                         StrokeShape="RoundRectangle 2"
                         BackgroundColor="#D0BCFF"
                         StrokeThickness="0"
@@ -48,7 +47,7 @@
                         <Style TargetType="Border">
                             <Setter Property="Opacity" Value="1"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding TopologyKind}" Value="External">
+                                <DataTrigger TargetType="Border" Binding="{Binding TopologyKind}" Value="External">
                                     <Setter Property="Opacity" Value="0.3"/>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -57,7 +56,7 @@
                 </Border>
                 <!-- Monitor 2 (right). Overlaps for Clone, faded for
                      Internal. -->
-                <Border WidthRequest="16" HeightRequest="12"
+                <Border WidthRequest="16" HeightRequest="13"
                         StrokeShape="RoundRectangle 2"
                         BackgroundColor="#D0BCFF"
                         StrokeThickness="0"
@@ -68,10 +67,10 @@
                             <Setter Property="Opacity" Value="1"/>
                             <Setter Property="TranslationX" Value="0"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding TopologyKind}" Value="Clone">
+                                <DataTrigger TargetType="Border" Binding="{Binding TopologyKind}" Value="Clone">
                                     <Setter Property="TranslationX" Value="-6"/>
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding TopologyKind}" Value="Internal">
+                                <DataTrigger TargetType="Border" Binding="{Binding TopologyKind}" Value="Internal">
                                     <Setter Property="Opacity" Value="0.3"/>
                                 </DataTrigger>
                             </Style.Triggers>
