@@ -69,11 +69,16 @@ tray host. They stay in the backlog:
       for clear visual feedback. The Forget button stays enabled —
       forgetting a device only removes the local pairing key and does not
       require a live connection.
-- [ ] **Display: improve topology UI.**
-      The current topology indicator is a plain text label ("Topology:
-      Extend"). Consider replacing it with monitor icons (e.g. two
-      overlapping rectangles for Clone, side-by-side for Extend) for
-      better visual clarity.
+- [x] **Display: improve topology UI.**
+      The plain text "Topology: Extend" label on `DisplayControlPage`
+      is replaced by an icon row: two monitor rectangles whose layout
+      reflects the active topology (Extend → side-by-side, Clone →
+      second monitor overlaps the first, Internal → second monitor
+      faded, External → first monitor faded), plus the original text
+      label for accessibility / screen readers. The mapping lives in
+      `DisplayControlViewModel.OnCurrentTopologyChanged` (string →
+      `DisplayTopologyKind` enum); the XAML picks the layout via
+      `DataTrigger`s on the enum value.
 
 ## Tier 2 — tray host
 

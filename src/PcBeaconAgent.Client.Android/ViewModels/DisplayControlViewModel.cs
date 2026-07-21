@@ -39,6 +39,36 @@ public partial class DisplayControlViewModel : ObservableObject
 
     public bool HasTopology => !string.IsNullOrEmpty(CurrentTopology);
 
+    /// <summary>
+    /// Parsed view of <see cref="CurrentTopology"/> for the icon row.
+    /// The server returns the Windows CCD
+    /// <c>DisplayConfigTopologyId</c> enum name as a string
+    /// (<c>Extend</c>, <c>Clone</c>, <c>Internal</c>, <c>External</c>);
+    /// we map it to a small fixed set so XAML <c>DataTrigger</c>s can
+    /// pick the right icon layout without re-parsing the string.
+    /// </summary>
+    [ObservableProperty]
+    public partial DisplayTopologyKind TopologyKind { get; set; }
+
+    /// <summary>
+    /// Recompute <see cref="TopologyKind"/> whenever the server reports
+    /// a new topology string. Case-insensitive match — the CCD enum
+    /// names are PascalCase but the wire format has shifted once
+    /// already (Windows 10 vs 11), so being lenient here costs nothing
+    /// and avoids a surprise break.
+    /// </summary>
+    partial void OnCurrentTopologyChanged(string value)
+    {
+        TopologyKind = value?.Trim().ToLowerInvariant() switch
+        {
+            "extend" => DisplayTopologyKind.Extend,
+            "clone" => DisplayTopologyKind.Clone,
+            "internal" => DisplayTopologyKind.Internal,
+            "external" => DisplayTopologyKind.External,
+            _ => DisplayTopologyKind.None
+        };
+    }
+
     public ObservableCollection<DisplayInfo> Displays { get; } = [];
 
     public DisplayControlViewModel(DeviceStore deviceStore, ILogger<DisplayControlViewModel> logger)
