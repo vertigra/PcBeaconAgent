@@ -4,8 +4,6 @@ using Android.Content.PM;
 using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Android.ViewModels;
 
 namespace PcBeaconAgent.Client.Android;
@@ -81,36 +79,17 @@ public class MainActivity : MauiAppCompatActivity
     /// is reused, and we receive the new text here.
     /// </summary>
     /// <remarks>
-    /// This method stashes the shared text AND navigates to
-    /// <see cref="Pages.ShareTextPage"/>. We navigate here directly
-    /// (not relying on <c>App.OnResume</c>) because after
-    /// <c>MoveTaskToBack</c> the <c>OnResume</c> callback proved
-    /// unreliable — it either did not fire or fired after the
-    /// <c>PendingSharedText</c> was already consumed. Navigating here
-    /// is safe because the Shell is already initialised (the app was
-    /// running). <c>App.OnResume</c> still has its own navigation
-    /// check as a fallback for the cold-start path (new activity
-    /// created, <c>OnNewIntent</c> not called) — no race because
-    /// <c>ShareTextPage.OnAppearing</c> clears
-    /// <c>PendingSharedText</c> before <c>OnResume</c> can read it.
+    /// This method ONLY stashes the shared text. Navigation is handled
+    /// by <c>App.OnResume</c> via <c>NavigateToSharePageIfPending</c>,
+    /// which uses retry logic to handle Shell-not-ready races. Having
+    /// <c>OnNewIntent</c> navigate directly caused silent failures when
+    /// the Shell was not ready (the navigation call returned without
+    /// throwing, but the page never appeared).
     /// </remarks>
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);
         ConsumeShareIntent(intent);
-
-        if (!string.IsNullOrEmpty(ShareTextViewModel.PendingSharedText))
-        {
-            // Navigate on the UI thread (MAUI Shell requirement).
-            // No delay — the Shell is already initialised for a
-            // warm-start share. No MainPage-reset — if the user is
-            // still on ShareTextPage from a previous invocation,
-            // Shell.GoToAsync with the same absolute route is a
-            // no-op for the page state but OnAppearing will re-fire
-            // and re-consume the freshly stashed text.
-            _ = MainThread.InvokeOnMainThreadAsync(() =>
-                Shell.Current.GoToAsync($"///{nameof(Pages.ShareTextPage)}"));
-        }
     }
 
     private static void ConsumeShareIntent(Intent? intent)
