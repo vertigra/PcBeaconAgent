@@ -25,4 +25,15 @@ public partial class ShareTextPage : ContentPage
         base.OnAppearing();
         mViewModel.OnPageAppearing();
     }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        // Dispose the VM to unsubscribe from DeviceStatusChanged.
+        // ShareTextViewModel is Transient — each page opening creates
+        // a new instance. Without Dispose, every opening leaks a
+        // subscription, and RefreshDevices would be called N times
+        // per status change after N openings.
+        mViewModel.Dispose();
+    }
 }

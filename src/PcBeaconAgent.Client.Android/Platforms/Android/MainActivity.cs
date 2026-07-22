@@ -4,7 +4,10 @@ using Android.Content.PM;
 using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Android.ViewModels;
+using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Android;
 
@@ -73,6 +76,33 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnNewIntent(intent);
         ConsumeShareIntent(intent);
+
+        // If a share text was stashed, navigate to ShareTextPage now.
+        // OnResume is NOT called when the activity is already in the
+        // resumed state — only OnNewIntent fires. Without this direct
+        // navigation, the second share-sheet invocation would silently
+        // do nothing (the user would see the previous page instead of
+        // the bottom sheet).
+        if (!string.IsNullOrEmpty(ShareTextViewModel.PendingSharedText))
+        {
+            _ = MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await Task.Delay(150);
+
+                // If the user is still on ShareTextPage (e.g. they
+                // opened the share sheet again before dismissing the
+                // previous modal), absolute navigation to the same
+                // route is a no-op. Force a fresh page by going to
+                // MainPage first, then to ShareTextPage.
+                if (Shell.Current.CurrentPage is Pages.ShareTextPage)
+                {
+                    await Shell.Current.GoToAsync("//MainPage");
+                    await Task.Delay(50);
+                }
+
+                await Shell.Current.GoToAsync($"///{nameof(Pages.ShareTextPage)}");
+            });
+        }
     }
 
     private static void ConsumeShareIntent(Intent? intent)

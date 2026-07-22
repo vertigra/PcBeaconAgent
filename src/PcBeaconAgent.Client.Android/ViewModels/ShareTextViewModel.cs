@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
@@ -26,9 +28,10 @@ namespace PcBeaconAgent.Client.Android.ViewModels;
 /// the Intent arrives on the native <c>MainActivity</c> side, and the
 /// MAUI side picks it up on the next navigation.
 /// </remarks>
-public partial class ShareTextViewModel : ObservableObject
+public partial class ShareTextViewModel : ObservableObject, IDisposable
 {
     private readonly DeviceStore mDeviceStore;
+    private readonly ISignalService mSignalService;
     private readonly ILogger<ShareTextViewModel> mLogger;
 
     /// <summary>
@@ -53,8 +56,8 @@ public partial class ShareTextViewModel : ObservableObject
 
     /// <summary>
     /// Devices the user can send to. Only online devices are shown —
-    /// sending to an offline device would fail immediately, so hiding
-    /// them avoids a dead-end tap.
+    /// sending to an offline device would fail immediately (the server
+    /// is not reachable), so hiding them avoids a dead-end tap.
     /// </summary>
     public ObservableCollection<ManagedDevice> Devices { get; } = [];
 
@@ -64,10 +67,20 @@ public partial class ShareTextViewModel : ObservableObject
     [ObservableProperty]
     public partial string? SendingToDeviceName { get; set; }
 
-    public ShareTextViewModel(DeviceStore deviceStore, ILogger<ShareTextViewModel> logger)
+    public ShareTextViewModel(DeviceStore deviceStore, ISignalService signalService, ILogger<ShareTextViewModel> logger)
     {
         mDeviceStore = deviceStore;
+        mSignalService = signalService;
         mLogger = logger;
+
+        // Subscribe to online/offline transitions so the device list
+        // updates live. Without this, the list is a snapshot taken at
+        // OnPageAppearing — if SignalR reconnects after the page opens
+        // (common when sharing from another app, because OnResume's
+        // ConnectToManagedDevicesAsync runs in parallel with the
+        // navigation), the device would stay hidden until the user
+        // closes and reopens the sheet.
+        mSignalService.DeviceStatusChanged += OnDeviceStatusChanged;
     }
 
     /// <summary>
@@ -84,6 +97,15 @@ public partial class ShareTextViewModel : ObservableObject
         }
 
         RefreshDevices();
+    }
+
+    private void OnDeviceStatusChanged(string ipAddress, bool isOnline)
+    {
+        // Marshal to UI thread — DeviceStatusChanged fires on the
+        // SignalR thread, and ObservableCollection mutation must happen
+        // on the UI thread. MainThread.BeginInvokeOnMainThread is
+        // asynchronous — we do not block the SignalR thread.
+        MainThread.BeginInvokeOnMainThread(RefreshDevices);
     }
 
     private void RefreshDevices()
@@ -150,5 +172,10 @@ public partial class ShareTextViewModel : ObservableObject
     public async Task CloseAsync()
     {
         await Shell.Current.GoToAsync("//MainPage");
+    }
+
+    public void Dispose()
+    {
+        mSignalService.DeviceStatusChanged -= OnDeviceStatusChanged;
     }
 }
