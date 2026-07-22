@@ -171,18 +171,27 @@ public partial class ShareTextViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task CloseAsync()
     {
-        // Navigate to MainPage first so the app opens there next time,
-        // not on the share modal.
+        // Navigate to MainPage first so the Shell's current page is
+        // MainPage (not ShareTextPage). This state survives activity
+        // recreation — when the next share creates a new activity, it
+        // reconnects to the same App/Shell, which shows MainPage.
         await Shell.Current.GoToAsync("//MainPage");
 
 #if ANDROID
-        // Move the task to back — returns the user to the previous app
-        // (typically the browser they shared from). This is the AirDrop-
-        // like UX: share → pick device → sent → back to the source app.
-        // Must be called on the UI thread; we are already on it (command
-        // handler runs on UI thread).
+        // Finish() destroys the activity completely. Android then
+        // returns to the previous app in the back stack (the browser
+        // the user shared from) — same AirDrop-like UX as
+        // MoveTaskToBack, but without leaving a zombie activity.
+        //
+        // Why not MoveTaskToBack: it leaves the activity alive in a
+        // stopped state. The next share fires OnNewIntent on that
+        // zombie, but the MAUI lifecycle gets confused — OnResume
+        // either doesn't fire or fires too late, navigation silently
+        // fails, and the user sees MainPage instead of ShareTextPage.
+        // Finish() forces a clean OnCreate on the next share, which
+        // reliably triggers OnResume → navigate.
         var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
-        activity?.MoveTaskToBack(true);
+        activity?.Finish();
 #endif
     }
 
