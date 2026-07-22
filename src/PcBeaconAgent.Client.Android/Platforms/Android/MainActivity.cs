@@ -4,10 +4,7 @@ using Android.Content.PM;
 using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Android.ViewModels;
-using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Android;
 
@@ -22,6 +19,14 @@ namespace PcBeaconAgent.Client.Android;
 [Activity(
     Theme = "@style/Maui.SplashTheme",
     MainLauncher = true,
+    // SingleTop ensures that a share-sheet invocation reuses the
+    // existing activity instance (firing OnNewIntent) instead of
+    // creating a new one. Without this, the default 'standard'
+    // launch mode creates a new MainActivity on every share, which
+    // breaks the static hand-off pattern (the new instance stashes
+    // text, but App.OnStart does not fire again, so nobody
+    // navigates).
+    LaunchMode = LaunchMode.SingleTop,
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 [IntentFilter(
     new[] { Intent.ActionSend },
@@ -68,41 +73,25 @@ public class MainActivity : MauiAppCompatActivity
     /// <inheritdoc />
     /// <summary>
     /// Called when a new intent arrives while the activity is already
-    /// running (single-top behaviour). This is the common path for
+    /// running (single-top behaviour, requires
+    /// <see cref="LaunchMode.SingleTop"/>). This is the path for
     /// share-sheet invocations after the first launch — the activity
     /// is reused, and we receive the new text here.
     /// </summary>
+    /// <remarks>
+    /// This method ONLY stashes the shared text. Navigation is handled
+    /// by <c>App.OnResume</c>, which fires immediately after
+    /// <c>OnNewIntent</c> when the app returns from background. Having
+    /// both <c>OnNewIntent</c> and <c>OnResume</c> navigate caused a
+    /// race: <c>OnResume</c> opened ShareTextPage (clearing
+    /// <c>PendingSharedText</c>), then <c>OnNewIntent</c>'s delayed
+    /// navigation saw it was already on ShareTextPage, reset to
+    /// MainPage, and reopened an empty ShareTextPage.
+    /// </remarks>
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);
         ConsumeShareIntent(intent);
-
-        // If a share text was stashed, navigate to ShareTextPage now.
-        // OnResume is NOT called when the activity is already in the
-        // resumed state — only OnNewIntent fires. Without this direct
-        // navigation, the second share-sheet invocation would silently
-        // do nothing (the user would see the previous page instead of
-        // the bottom sheet).
-        if (!string.IsNullOrEmpty(ShareTextViewModel.PendingSharedText))
-        {
-            _ = MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                await Task.Delay(150);
-
-                // If the user is still on ShareTextPage (e.g. they
-                // opened the share sheet again before dismissing the
-                // previous modal), absolute navigation to the same
-                // route is a no-op. Force a fresh page by going to
-                // MainPage first, then to ShareTextPage.
-                if (Shell.Current.CurrentPage is Pages.ShareTextPage)
-                {
-                    await Shell.Current.GoToAsync("//MainPage");
-                    await Task.Delay(50);
-                }
-
-                await Shell.Current.GoToAsync($"///{nameof(Pages.ShareTextPage)}");
-            });
-        }
     }
 
     private static void ConsumeShareIntent(Intent? intent)
