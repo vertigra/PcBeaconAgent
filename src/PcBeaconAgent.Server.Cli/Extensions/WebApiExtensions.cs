@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Scalar.AspNetCore;
+using System;
 using System.Threading.RateLimiting;
 
 namespace PcBeaconAgent.Server.Cli.Extensions
