@@ -63,6 +63,7 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             if (!mDisposed)
             {
                 mTracker.CountChanged -= OnCountChanged;
+                Files.Dispose();
                 mDisposed = true;
                 GC.SuppressFinalize(this);
             }

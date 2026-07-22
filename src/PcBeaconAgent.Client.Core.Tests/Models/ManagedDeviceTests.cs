@@ -20,8 +20,8 @@ namespace PcBeaconAgent.Client.Core.Tests.Models
         public void Equals_SameDevice_ReturnsTrue()
         {
             var device = MakeDevice();
-            var a = new ManagedDevice(device, null!, null!);
-            var b = new ManagedDevice(device, null!, null!);
+            var a = new ManagedDevice(device, null!, null!, null!);
+            var b = new ManagedDevice(device, null!, null!, null!);
 
             Assert.True(a.Equals(b));
         }
@@ -29,8 +29,8 @@ namespace PcBeaconAgent.Client.Core.Tests.Models
         [Fact]
         public void Equals_DifferentDevice_ReturnsFalse()
         {
-            var a = new ManagedDevice(MakeDevice("10.0.0.1"), null!, null!);
-            var b = new ManagedDevice(MakeDevice("10.0.0.2"), null!, null!);
+            var a = new ManagedDevice(MakeDevice("10.0.0.1"), null!, null!, null!);
+            var b = new ManagedDevice(MakeDevice("10.0.0.2"), null!, null!, null!);
 
             Assert.False(a.Equals(b));
         }
@@ -38,14 +38,14 @@ namespace PcBeaconAgent.Client.Core.Tests.Models
         [Fact]
         public void Equals_Null_ReturnsFalse()
         {
-            var a = new ManagedDevice(MakeDevice(), null!, null!);
+            var a = new ManagedDevice(MakeDevice(), null!, null!, null!);
             Assert.False(a.Equals(null));
         }
 
         [Fact]
         public void Equals_SameReference_ReturnsTrue()
         {
-            var a = new ManagedDevice(MakeDevice(), null!, null!);
+            var a = new ManagedDevice(MakeDevice(), null!, null!, null!);
             Assert.True(a.Equals(a));
         }
 
@@ -53,8 +53,8 @@ namespace PcBeaconAgent.Client.Core.Tests.Models
         public void GetHashCode_SameDevice_SameHash()
         {
             var device = MakeDevice();
-            var a = new ManagedDevice(device, null!, null!);
-            var b = new ManagedDevice(device, null!, null!);
+            var a = new ManagedDevice(device, null!, null!, null!);
+            var b = new ManagedDevice(device, null!, null!, null!);
 
             Assert.Equal(a.GetHashCode(), b.GetHashCode());
         }
@@ -62,14 +62,14 @@ namespace PcBeaconAgent.Client.Core.Tests.Models
         [Fact]
         public void IsOnline_DefaultFalse()
         {
-            var managed = new ManagedDevice(MakeDevice(), null!, null!);
+            var managed = new ManagedDevice(MakeDevice(), null!, null!, null!);
             Assert.False(managed.IsOnline);
         }
 
         [Fact]
         public void IsOnline_SetTrue_RaisesPropertyChanged()
         {
-            var managed = new ManagedDevice(MakeDevice(), null!, null!);
+            var managed = new ManagedDevice(MakeDevice(), null!, null!, null!);
             bool raised = false;
             managed.PropertyChanged += (_, _) => raised = true;
 

@@ -53,7 +53,7 @@
                                  IsEnabled binding to IsOnline. Forget stays
                                  enabled because it only removes the local
                                  pairing key. -->
-                            <Grid Grid.Row="2" ColumnDefinitions="*, *, Auto" ColumnSpacing="10" Margin="0,5,0,0">
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *, *, Auto" ColumnSpacing="10" Margin="0,5,0,0">
                                 <Button Grid.Column="0" Text="🔊"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ManageAudioCommand}"
                                         CommandParameter="{Binding .}"
@@ -108,7 +108,34 @@
                                         </VisualStateGroupList>
                                     </VisualStateManager.VisualStateGroups>
                                 </Button>
-                                <Button Grid.Column="2" Text="🗑️"
+                                <Button Grid.Column="2" Text="📤"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=SendTextCommand}"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding IsOnline}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        HeightRequest="44" CornerRadius="8"
+                                        FontSize="18" Padding="0"
+                                        Opacity="1">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroupList>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <Setter Property="BackgroundColor" Value="#6750A4"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                                <VisualState x:Name="Disabled">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="Opacity" Value="0.3"/>
+                                                        <Setter Property="BackgroundColor" Value="#424242"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateGroupList>
+                                    </VisualStateManager.VisualStateGroups>
+                                </Button>
+                                <Button Grid.Column="3" Text="🗑️"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ForgetCommand}"
                                         CommandParameter="{Binding .}"
                                         BackgroundColor="#B3261E" TextColor="White"

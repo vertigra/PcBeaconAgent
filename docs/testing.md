@@ -57,6 +57,7 @@ Moq to create proxies for `ILogger<T>` where `T` is an internal type.
 | `BeaconServerIdentity` | Static key from config, load from file, generate new, 32-char hex format, trim whitespace, persistence across instances |
 | `SingleInstanceGuard` | First acquire succeeds, second acquire fails, dispose releases |
 | `BeaconServer` | UDP ping/pong integration test (loopback, random port) |
+| `TransferController` | Basic receive, validation (empty/whitespace/size cap), history ordering, history cap eviction, event raising outside lock, source IP normalisation, concurrency (50 parallel, cap+20 overflow) |
 
 ### Client.Core.Tests
 
