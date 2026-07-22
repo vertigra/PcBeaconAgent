@@ -60,7 +60,16 @@ public partial class App : Application
 
     protected override void OnSleep()
     {
-        _ = Task.Run(DisconnectAllAsync);
+        // Intentionally do NOT disconnect SignalR connections here.
+        // Previously this called DisconnectAllAsync, which dropped
+        // every connection when the app went to background. For the
+        // share-sheet flow this was catastrophic: each share required
+        // a fresh reconnection (1-2 seconds), during which
+        // ShareTextPage showed no devices ("offline"). Keeping
+        // connections alive in background is fine for a LAN app —
+        // SignalR's WithAutomaticReconnect handles transient drops,
+        // and OnResume's ConnectToManagedDevicesAsync re-establishes
+        // any connection the OS may have killed during long background.
         base.OnSleep();
     }
 
@@ -109,21 +118,6 @@ public partial class App : Application
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
                 Shell.Current.GoToAsync($"{nameof(PairingPage)}?ip={firstNotPairedDevice.IpAddress}&port={firstNotPairedDevice.ApiPort}"));
-        }
-    }
-
-    private async Task DisconnectAllAsync()
-    {
-        foreach (var device in ManagedDevices.Select(x => x.Device).ToList())
-        {
-            try
-            {
-                await mSignalService.DisconnectBeaconHubAsync(device);
-            }
-            catch (Exception ex)
-            {
-                mLogger.LogWarning(ex, "Failed to disconnect from {Ip} on sleep", device.IpAddress);
-            }
         }
     }
 }

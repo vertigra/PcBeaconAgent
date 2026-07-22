@@ -171,7 +171,19 @@ public partial class ShareTextViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task CloseAsync()
     {
+        // Navigate to MainPage first so the app opens there next time,
+        // not on the share modal.
         await Shell.Current.GoToAsync("//MainPage");
+
+#if ANDROID
+        // Move the task to back — returns the user to the previous app
+        // (typically the browser they shared from). This is the AirDrop-
+        // like UX: share → pick device → sent → back to the source app.
+        // Must be called on the UI thread; we are already on it (command
+        // handler runs on UI thread).
+        var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+        activity?.MoveTaskToBack(true);
+#endif
     }
 
     public void Dispose()
