@@ -50,8 +50,14 @@ public static class MauiProgram
         builder.Services.AddTransient<AudioControlPage>();
         builder.Services.AddTransient<AudioControlViewModel>();
 
-        builder.Services.AddTransient<DisplayControlPage>();     
-        builder.Services.AddTransient<DisplayControlViewModel>(); 
+        builder.Services.AddTransient<DisplayControlPage>();
+        builder.Services.AddTransient<DisplayControlViewModel>();
+
+        builder.Services.AddTransient<SendTextPage>();
+        builder.Services.AddTransient<SendTextViewModel>();
+
+        builder.Services.AddTransient<ShareTextPage>();
+        builder.Services.AddTransient<ShareTextViewModel>();
 
         return builder.Build();
     }

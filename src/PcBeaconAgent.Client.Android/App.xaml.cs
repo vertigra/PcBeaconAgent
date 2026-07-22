@@ -3,6 +3,7 @@ using Microsoft.Maui;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Android.Pages;
+using PcBeaconAgent.Client.Android.ViewModels;
 using PcBeaconAgent.Client.Core.Exceptions;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Client.Core.Models;
@@ -39,6 +40,21 @@ public partial class App : Application
     protected override void OnStart()
     {
         _ = Task.Run(ConnectToManagedDevicesAsync);
+
+        // Cold-start share-sheet path: MainActivity.OnCreate already
+        // stashed the shared text. OnResume will also fire after
+        // OnStart, but on some Android versions the Shell is not yet
+        // ready at OnResume time right after OnStart. Schedule the
+        // navigation with a small delay so the Shell has time to
+        // initialise — the user perceives the bottom sheet appearing
+        // immediately after the splash.
+        if (!string.IsNullOrEmpty(ShareTextViewModel.PendingSharedText))
+        {
+            _ = Task.Delay(300).ContinueWith(_ =>
+                MainThread.InvokeOnMainThreadAsync(() =>
+                    Shell.Current.GoToAsync(nameof(ShareTextPage))));
+        }
+
         base.OnStart();
     }
 
@@ -51,6 +67,18 @@ public partial class App : Application
     protected override void OnResume()
     {
         _ = Task.Run(ConnectToManagedDevicesAsync);
+
+        // If the app was launched or resumed via a share-sheet intent,
+        // MainActivity has already stashed the shared text in
+        // ShareTextViewModel.PendingSharedText. Navigate to the
+        // ShareTextPage modal so the user can pick a device and send.
+        // OnMainThread because Shell navigation must run on the UI thread.
+        if (!string.IsNullOrEmpty(ShareTextViewModel.PendingSharedText))
+        {
+            _ = MainThread.InvokeOnMainThreadAsync(() =>
+                Shell.Current.GoToAsync(nameof(ShareTextPage)));
+        }
+
         base.OnResume();
     }
 

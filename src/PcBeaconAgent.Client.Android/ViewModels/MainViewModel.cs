@@ -92,40 +92,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task SendText(ManagedDevice device)
     {
-        // DisplayPromptAsync shows a single-line text entry. Most
-        // transfers are single-line (URLs, snippets) — multiline
-        // editing is a Phase 2 concern (dedicated send page with an
-        // Editor). maxLength is generous (10 000) to handle pasted
-        // content; the server enforces the real 100 KB cap and returns
-        // a clear rejection message if exceeded.
-        string? text = await Shell.Current.CurrentPage.DisplayPromptAsync(
-            "Send Text",
-            $"To {device.Device.MachineName}:",
-            "Send",
-            "Cancel",
-            placeholder: "Type or paste text…",
-            maxLength: 10000,
-            keyboard: Keyboard.Chat);
-
-        if (string.IsNullOrWhiteSpace(text)) return;
-
-        try
-        {
-            var response = await device.Transfer.SendTextAsync(text);
-            if (response.Accepted)
-            {
-                await Shell.Current.CurrentPage.DisplayAlertAsync("Sent", response.Message, "OK");
-            }
-            else
-            {
-                await Shell.Current.CurrentPage.DisplayAlertAsync("Not sent", response.Message, "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            mLogger.LogWarning(ex, "Failed to send text to {Ip}", device.Device.IpAddress);
-            await Shell.Current.CurrentPage.DisplayAlertAsync("Error", "Could not send text. Check the connection.", "OK");
-        }
+        // Navigate to the full SendTextPage instead of using a
+        // single-line DisplayPromptAsync. The page provides a multiline
+        // Editor, Paste-from-clipboard button, and a richer send flow
+        // with status feedback.
+        await Shell.Current.GoToAsync($"{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]
