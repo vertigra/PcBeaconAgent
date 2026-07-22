@@ -61,13 +61,15 @@ public class MainActivity : MauiAppCompatActivity
             _multicastLock?.Acquire();
         }
 
-        // Consume the share intent if present. The Intent is set by
-        // the system when another app invokes "Share → Send to PC".
-        // We stash the text in a static field because the MAUI
-        // navigation stack is not ready yet at OnCreate time — the
-        // App.OnCreated handler will pick it up and navigate to
-        // ShareTextPage once the Shell is initialised.
+        // Consume the share intent if present, then replace it with a
+        // clean empty Intent. Without this, the share Intent "sticks"
+        // to the activity — after Finish() and activity recreation,
+        // OnCreate would re-receive the same stale share Intent,
+        // re-stash the old text, and confuse the navigation flow
+        // (PendingSharedText from a previous share would be overwritten
+        // or race with a new share).
         ConsumeShareIntent(Intent);
+        Intent = new Intent();
     }
 
     /// <inheritdoc />
@@ -90,6 +92,10 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnNewIntent(intent);
         ConsumeShareIntent(intent);
+        // Replace the activity's Intent with a clean one so the share
+        // Intent does not "stick" and get re-delivered on the next
+        // lifecycle event. See OnCreate for rationale.
+        Intent = new Intent();
     }
 
     private static void ConsumeShareIntent(Intent? intent)
