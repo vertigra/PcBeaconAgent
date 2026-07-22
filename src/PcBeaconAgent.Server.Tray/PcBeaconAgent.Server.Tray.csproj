@@ -57,4 +57,8 @@
     <Resource Include="beacon.ico" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Converters\" />
+  </ItemGroup>
+
 </Project>

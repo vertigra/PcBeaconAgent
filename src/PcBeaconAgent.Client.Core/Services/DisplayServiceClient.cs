@@ -3,7 +3,6 @@ using PcBeaconAgent.Client.Core.Helpres;
 using PcBeaconAgent.Client.Core.Interfaces;
 using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Contracts.Models;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;

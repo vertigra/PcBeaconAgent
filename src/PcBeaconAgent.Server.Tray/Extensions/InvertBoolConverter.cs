@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace PcBeaconAgent.Server.Tray.Converters;
+namespace PcBeaconAgent.Server.Tray.Extensions;
 
 public class InvertBoolConverter : IValueConverter
 {
