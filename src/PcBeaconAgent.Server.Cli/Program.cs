@@ -83,6 +83,7 @@ namespace PcBeaconAgent.Server.Cli
                 builder.Services.AddAudioService();
                 builder.Services.AddDisplayService();
                 builder.Services.AddPairingService();
+                builder.Services.AddTransferService();
                 builder.Services.AddWebApi();
 
                 var app = builder.Build();
@@ -100,6 +101,7 @@ namespace PcBeaconAgent.Server.Cli
                 app.MapAudioServiceEndpoints(settings, identity);
                 app.MapDisplayServiceEndpoints(settings, identity);
                 app.MapPairingEndpoints();
+                app.MapTransferServiceEndpoints(settings, identity);
 
                 await app.RunAsync();
             }
