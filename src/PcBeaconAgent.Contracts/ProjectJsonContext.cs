@@ -14,6 +14,8 @@ namespace PcBeaconAgent.Contracts
     [JsonSerializable(typeof(DisplayListResponseDto))]
     [JsonSerializable(typeof(DisableRequestDto))]
     [JsonSerializable(typeof(MessageDto))]
+    [JsonSerializable(typeof(TextTransferRequestDto))]
+    [JsonSerializable(typeof(TextTransferResponseDto))]
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = false)]
     public partial class ProjectJsonContext : JsonSerializerContext
     {

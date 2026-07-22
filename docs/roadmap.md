@@ -293,13 +293,22 @@ note before implementation; the entries here are reminders.
       CheckInterval: "24:00:00" }`). Requires a release-asset naming
       convention to be added to `publish-server.yml` (e.g.
       `PcBeaconAgent.Server.Tray-win-x64-{version}.zip`).
-- [ ] Cross-device clipboard & file transfer.A lightweight "AirDrop-like" feature: 
-      send arbitrary text,files, or clipboard contents from the Android client to themanaged PC, 
-      and vice versa. Today the user works around thisby sending links/files to "Saved Messages" 
-      in Telegram — aworkable but clumsy cross-device hop. A nativePOST /api/transfer endpoint 
-      (text payloads first, binaryfiles later) with a SignalR push event to notify the receivingside 
-      would make the PcBeaconAgent a single-purpose tool forthe "I just need to get this string to my PC" 
-      problem. The trayhost is the natural receiver surface for incoming transfers.
+- [x] **Cross-device clipboard & file transfer — Phase 1 (text).**
+      (`<TBD>`)
+      A lightweight "AirDrop-like" feature: send arbitrary text from
+      the Android client to the managed PC. The server exposes
+      `POST /api/transfer/text` (rate-limited to 10 req/min per IP,
+      size-capped at 100 KB). `TransferController` stores the last 100
+      transfers in an in-memory ring buffer and raises a
+      `TransferReceived` event that the tray host subscribes to for the
+      toast + auto-copy behaviour. Phase 2 (binary files, PC→Android
+      direction, SignalR push to Android clients) is tracked separately
+      below.
+      <br/>**Phase 2 (open):** binary file payloads with a larger size
+      cap, PC→Android direction (requires a SignalR push event since
+      the tray host would be the sender, not the receiver), Android
+      Share-target integration, and persistence of the transfer history
+      across tray restarts (SQLite or JSON file next to `server.key`).
 - [ ] **Local AI agent integration with sandboxed tools.**
       Send and receive commands to a local AI agent (e.g. LM Studio,
       Ollama) running on the managed PC. The Android client types a

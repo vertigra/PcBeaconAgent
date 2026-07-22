@@ -28,6 +28,19 @@ namespace PcBeaconAgent.Server.Cli.Extensions
                         QueueLimit = 0
                     });
                 });
+
+                // 10 text transfers per minute per IP. See
+                // TrayWebApiExtensions for rationale.
+                options.AddPolicy("transfer-text", context =>
+                {
+                    var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                    return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromSeconds(60),
+                        QueueLimit = 0
+                    });
+                });
             });
 
             return services;

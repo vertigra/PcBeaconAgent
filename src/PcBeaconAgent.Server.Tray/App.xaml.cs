@@ -99,6 +99,7 @@ public partial class App : Application
         builder.Services.AddAudioService();
         builder.Services.AddDisplayService();
         builder.Services.AddPairingService();
+        builder.Services.AddTransferService();
         builder.Services.AddWebApi();
 
         // Tray view models and services — singleton so the window state
@@ -120,6 +121,7 @@ public partial class App : Application
         mWebApp.MapAudioServiceEndpoints(settings, identity);
         mWebApp.MapDisplayServiceEndpoints(settings, identity);
         mWebApp.MapPairingEndpoints();
+        mWebApp.MapTransferServiceEndpoints(settings, identity);
 
         await mWebApp.StartAsync();
     }

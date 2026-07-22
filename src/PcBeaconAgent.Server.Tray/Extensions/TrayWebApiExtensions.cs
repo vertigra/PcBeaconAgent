@@ -25,6 +25,22 @@ public static class TrayWebApiExtensions
                     QueueLimit = 0
                 });
             });
+
+            // 10 text transfers per minute per IP. The API key already
+            // authenticates the caller; this is a courtesy guard against
+            // a misbehaving client (e.g. a script that spams the
+            // endpoint in a loop). 10/min is well above any reasonable
+            // manual use — even rapid copy-paste is ~2-3/min.
+            options.AddPolicy("transfer-text", context =>
+            {
+                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromSeconds(60),
+                    QueueLimit = 0
+                });
+            });
         });
 
         return services;
