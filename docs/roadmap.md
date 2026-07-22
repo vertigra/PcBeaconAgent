@@ -315,11 +315,19 @@ note before implementation; the entries here are reminders.
       sheet. The static `ShareTextViewModel.PendingSharedText` hand-off
       bridges the native Intent to MAUI; `MainPage.OnAppearing`
       consumes it and navigates to `ShareTextPage`.
-      <br/>**Phase 2 (open):** binary file payloads with a larger size
-      cap, PC→Android direction (requires a SignalR push event since
-      the tray host would be the sender, not the receiver), and
-      persistence of the transfer history across tray restarts
-      (SQLite or JSON file next to `server.key`).
+      <br/>**Phase 2 (open):** PC→Android direction (requires a SignalR
+      push event since the tray host would be the sender, not the
+      receiver), and persistence of the transfer history across tray
+      restarts (SQLite or JSON file next to `server.key`).
+      <br/>**Done in Phase 2:** file payloads Android→PC —
+      `POST /api/transfer/file` (multipart/form-data, streamed to disk,
+      no size cap, rate-limited 5 req/min per IP), `TransferController.
+      ReceiveFile` with filename sanitisation (path traversal guard,
+      reserved Windows name guard, collision suffix), configurable save
+      folder via `TransferSettings.SaveFolder` (default
+      `%USERPROFILE%\Downloads\PcBeaconAgent`, `%USERPROFILE%`
+      placeholder expanded at runtime). Tray `FilesView` shows file
+      rows with Open-folder button.
 - [ ] **Local AI agent integration with sandboxed tools.**
       Send and receive commands to a local AI agent (e.g. LM Studio,
       Ollama) running on the managed PC. The Android client types a

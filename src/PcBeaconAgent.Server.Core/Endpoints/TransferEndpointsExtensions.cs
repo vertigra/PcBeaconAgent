@@ -8,6 +8,8 @@ using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Extensions;
 using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
+using System;
+using System.IO;
 
 namespace PcBeaconAgent.Server.Core.Endpoints
 {
@@ -39,6 +41,39 @@ namespace PcBeaconAgent.Server.Core.Endpoints
                     new TextTransferResponseDto(accepted, message), ProjectJsonContext.Default.TextTransferResponseDto,
                     statusCode: accepted ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
             }).RequireRateLimiting("transfer-text");
+
+            // POST /api/transfer/file — accepts a single file upload via
+            // multipart/form-data. The file is streamed to disk in the
+            // configured save folder (see TransferSettings.SaveFolder).
+            // No size cap per user decision — the API key authenticates
+            // the caller, and the user trusts their own paired devices.
+            // Files are streamed (not buffered) so memory usage stays
+            // bounded regardless of file size. Rate-limited to 5 req/min
+            // per IP — files are heavier than text, so the limit is
+            // tighter.
+            transferGroup.MapPost("/file", async ([FromForm] IFormFile? file, [FromServices] TransferController controller, HttpContext context) =>
+            {
+                if (file is null || file.Length == 0)
+                {
+                    return Results.Json(
+                        new FileTransferResponseDto(false, "No file was provided.", string.Empty),
+                        ProjectJsonContext.Default.FileTransferResponseDto,
+                        statusCode: StatusCodes.Status400BadRequest);
+                }
+
+                string sourceIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+                // Open the upload stream and pass it to the controller.
+                // The controller is responsible for copying to disk;
+                // we dispose the source stream here (using-scope).
+                using Stream uploadStream = file.OpenReadStream();
+                var (accepted, message, savedFileName) = controller.ReceiveFile(uploadStream, file.FileName, sourceIp);
+
+                return Results.Json(
+                    new FileTransferResponseDto(accepted, message, savedFileName),
+                    ProjectJsonContext.Default.FileTransferResponseDto,
+                    statusCode: accepted ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
+            }).RequireRateLimiting("transfer-file").DisableAntiforgery();
 
             return app;
         }

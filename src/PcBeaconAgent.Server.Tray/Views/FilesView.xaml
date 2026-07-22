@@ -46,15 +46,58 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Preview text + timestamp -->
+                                <!-- Content area: switches between text
+                                     preview and file info based on Kind.
+                                     The grid contains both variants and
+                                     shows/hides them via DataTrigger. -->
                                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="{Binding Text, Mode=OneWay}"
-                                               FontSize="13"
-                                               Foreground="White"
-                                               TextTrimming="CharacterEllipsis"
-                                               TextWrapping="Wrap"
-                                               MaxHeight="60"
-                                               Margin="0,0,0,4"/>
+                                    <Grid>
+                                        <!-- Text variant -->
+                                        <TextBlock Text="{Binding Text, Mode=OneWay}"
+                                                   FontSize="13"
+                                                   Foreground="White"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   TextWrapping="Wrap"
+                                                   MaxHeight="60"
+                                                   Margin="0,0,0,4">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <!-- File variant: icon + name + size -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <TextBlock Text="📄"
+                                                       FontSize="14"
+                                                       Foreground="#D0BCFF"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,6,0"/>
+                                            <TextBlock Text="{Binding FileName, Mode=OneWay}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="White"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Timestamp + source IP (shared) -->
                                     <TextBlock FontSize="11" Foreground="#9E9E9E">
                                         <Run Text="{Binding ReceivedAtUtc, Mode=OneWay, StringFormat='HH:mm:ss'}"/>
                                         <Run Text=" · "/>
@@ -62,7 +105,12 @@
                                     </TextBlock>
                                 </StackPanel>
 
-                                <!-- Copy button -->
+                                <!-- Action buttons: Copy (text only) and
+                                     Open folder (file only). Both bound to
+                                     the same record; the VM guards against
+                                     the wrong kind. Visibility toggled via
+                                     DataTrigger so only the relevant button
+                                     is shown. -->
                                 <Button Grid.Column="1"
                                         Content="Copy"
                                         Command="{Binding DataContext.CopyToClipboardCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ItemsControl}}"
@@ -72,7 +120,39 @@
                                         FontSize="12"
                                         Padding="14,6"
                                         Cursor="Hand"
-                                        VerticalAlignment="Center"/>
+                                        VerticalAlignment="Center">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button Grid.Column="1"
+                                        Content="Open folder"
+                                        Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding ., Mode=OneWay}"
+                                        Background="#6750A4" Foreground="White"
+                                        BorderThickness="0"
+                                        FontSize="12"
+                                        Padding="14,6"
+                                        Cursor="Hand"
+                                        VerticalAlignment="Center">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
                         </Border>
                     </DataTemplate>

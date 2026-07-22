@@ -89,6 +89,7 @@ public partial class App : Application
 
         builder.Services.AddSingleton(beaconOptions);
         builder.Services.AddSingleton(apiOptions);
+        builder.Services.AddSingleton(settings.Transfer);
 
         builder.WebHost.UseUrls($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
 

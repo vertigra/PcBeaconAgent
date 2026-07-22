@@ -21,4 +21,21 @@ namespace PcBeaconAgent.Contracts.Models
     /// in the client UI (e.g. "Transfer received", "Payload too
     /// large").</param>
     public record TextTransferResponseDto(bool Accepted, string Message);
+
+    /// <summary>
+    /// Response payload for <c>POST /api/transfer/file</c>. The request
+    /// is <c>multipart/form-data</c> (file upload), so there is no
+    /// matching request DTO — ASP.NET Core binds the file via
+    /// <c>IFormFile</c>.
+    /// </summary>
+    /// <param name="Accepted"><c>true</c> if the file was saved to
+    /// disk; <c>false</c> if rejected (empty file, save folder
+    /// misconfigured, disk error).</param>
+    /// <param name="Message">Short status message suitable for showing
+    /// in the client UI (e.g. "File received: photo.jpg").</param>
+    /// <param name="FileName">The sanitised file name that was saved.
+    /// May differ from the client's original name if a collision
+    /// occurred (numeric suffix appended). Empty if
+    /// <paramref name="Accepted"/> is <c>false</c>.</param>
+    public record FileTransferResponseDto(bool Accepted, string Message, string FileName);
 }

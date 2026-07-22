@@ -69,6 +69,7 @@ namespace PcBeaconAgent.Server.Cli
 
                 builder.Services.AddSingleton(beaconOptions);
                 builder.Services.AddSingleton(apiOptions);
+                builder.Services.AddSingleton(settings.Transfer);
 
                 ShowSecurityWarning(settings);
 
