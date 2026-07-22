@@ -80,8 +80,8 @@ dotnet publish src/PcBeaconAgent.Server.Cli/PcBeaconAgent.Server.Cli.csproj \
   -r win-x64
 ```
 
-The CI pipeline (`publish-server.yml`) builds this automatically on
-every `server.v.X.Y.Z` tag push. See the
+The CI pipeline (`publish-all.yml`) builds this automatically on
+every `release.v.X.Y.Z` tag push. See the
 [main README](../README.md#internal-version-processing-mechanics) for
 the release workflow.
 

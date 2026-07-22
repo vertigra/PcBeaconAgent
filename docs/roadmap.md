@@ -233,7 +233,7 @@ note before implementation; the entries here are reminders.
       Discovery"). Switch to .NET resource files (`.resx`) per project
       with `IStringLocalizer`-style lookup, ship English + Russian as
       the first two locales, add a language picker in Settings. The
-      server's PIN popup and balloon strings go through the same
+      server's PIN popup and toast strings go through the same
       mechanism so the tray host inherits the locale from the OS or
       from a setting in `appsettings.json`. ClI host stays English-only
       (its output is log-shaped, not user-facing prose).
@@ -291,7 +291,7 @@ note before implementation; the entries here are reminders.
       must be hash-verified before any swap. The update check is
       opt-out via `appsettings.json` (`Updates: { Enabled: true,
       CheckInterval: "24:00:00" }`). Requires a release-asset naming
-      convention to be added to `publish-server.yml` (e.g.
+      convention to be added to `publish-all.yml` (e.g.
       `PcBeaconAgent.Server.Tray-win-x64-{version}.zip`).
 - [x] **Cross-device clipboard & file transfer — Phase 1 (text).**
       (`<TBD>`)
@@ -301,14 +301,25 @@ note before implementation; the entries here are reminders.
       size-capped at 100 KB). `TransferController` stores the last 100
       transfers in an in-memory ring buffer and raises a
       `TransferReceived` event that the tray host subscribes to for the
-      toast + auto-copy behaviour. Phase 2 (binary files, PC→Android
-      direction, SignalR push to Android clients) is tracked separately
-      below.
+      toast + auto-copy behaviour.
+      <br/>**Android UX:** two entry points. (a) From the Devices tab —
+      the send button on a device card navigates to `SendTextPage`, a
+      full-page multiline Editor with Paste-from-clipboard and Send.
+      (b) From any app's Share Sheet — long-press text in a browser /
+      notes / Telegram, Share → "Send to PC" opens `ShareTextPage`, a
+      modal bottom-sheet-styled page with the shared text preview and
+      a list of online devices. Tapping a device sends the text and
+      `Finish()`es the activity, returning the user to the source app.
+      `MainActivity` uses `LaunchMode.SingleTop` + `IntentFilter` for
+      `text/plain` with `Priority=100` to appear early in the share
+      sheet. The static `ShareTextViewModel.PendingSharedText` hand-off
+      bridges the native Intent to MAUI; `MainPage.OnAppearing`
+      consumes it and navigates to `ShareTextPage`.
       <br/>**Phase 2 (open):** binary file payloads with a larger size
       cap, PC→Android direction (requires a SignalR push event since
-      the tray host would be the sender, not the receiver), Android
-      Share-target integration, and persistence of the transfer history
-      across tray restarts (SQLite or JSON file next to `server.key`).
+      the tray host would be the sender, not the receiver), and
+      persistence of the transfer history across tray restarts
+      (SQLite or JSON file next to `server.key`).
 - [ ] **Local AI agent integration with sandboxed tools.**
       Send and receive commands to a local AI agent (e.g. LM Studio,
       Ollama) running on the managed PC. The Android client types a
