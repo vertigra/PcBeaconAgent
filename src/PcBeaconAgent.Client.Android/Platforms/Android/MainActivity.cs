@@ -82,11 +82,13 @@ public class MainActivity : MauiAppCompatActivity
     /// </summary>
     /// <remarks>
     /// This method ONLY stashes the shared text. Navigation is handled
-    /// by <c>App.OnResume</c> via <c>NavigateToSharePageIfPending</c>,
-    /// which uses retry logic to handle Shell-not-ready races. Having
-    /// <c>OnNewIntent</c> navigate directly caused silent failures when
-    /// the Shell was not ready (the navigation call returned without
-    /// throwing, but the page never appeared).
+    /// by <c>MainPage.OnAppearing</c>, which checks
+    /// <c>ShareTextViewModel.PendingSharedText</c> and navigates to
+    /// <c>ShareTextPage</c> if set. <c>MainPage.OnAppearing</c> is the
+    /// most reliable trigger point — it always fires when a new AppShell
+    /// is created, unlike <c>App.OnStart</c>/<c>OnResume</c> which
+    /// proved unreliable when the process was alive but the activity
+    /// was recreated.
     /// </remarks>
     protected override void OnNewIntent(Intent? intent)
     {
@@ -106,11 +108,12 @@ public class MainActivity : MauiAppCompatActivity
         string? text = intent.GetStringExtra(Intent.ExtraText);
         if (string.IsNullOrWhiteSpace(text)) return;
 
-        // Stash for ShareTextPage to consume on OnAppearing. We do not
+        // Stash for MainPage.OnAppearing to consume — it checks
+        // PendingSharedText and navigates to ShareTextPage. We do not
         // navigate here because the MAUI Shell may not be ready yet
         // (OnCreate path) or the current page may be mid-transition
-        // (OnNewIntent path). App.OnCreated or MainPage.OnAppearing
-        // will detect the pending text and navigate.
+        // (OnNewIntent path). MainPage.OnAppearing is the reliable
+        // trigger point that always fires after Shell initialisation.
         ShareTextViewModel.PendingSharedText = text;
     }
 
