@@ -52,7 +52,7 @@ public partial class App : Application
         {
             _ = Task.Delay(300).ContinueWith(_ =>
                 MainThread.InvokeOnMainThreadAsync(() =>
-                    Shell.Current.GoToAsync(nameof(ShareTextPage))));
+                    Shell.Current.GoToAsync($"///{nameof(ShareTextPage)}")));
         }
 
         base.OnStart();
@@ -73,10 +73,12 @@ public partial class App : Application
         // ShareTextViewModel.PendingSharedText. Navigate to the
         // ShareTextPage modal so the user can pick a device and send.
         // OnMainThread because Shell navigation must run on the UI thread.
+        // The '///' prefix is an absolute route — MAUI Shell requires
+        // it for routes registered outside a TabBar.
         if (!string.IsNullOrEmpty(ShareTextViewModel.PendingSharedText))
         {
             _ = MainThread.InvokeOnMainThreadAsync(() =>
-                Shell.Current.GoToAsync(nameof(ShareTextPage)));
+                Shell.Current.GoToAsync($"///{nameof(ShareTextPage)}"));
         }
 
         base.OnResume();

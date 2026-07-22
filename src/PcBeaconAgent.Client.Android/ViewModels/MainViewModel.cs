@@ -96,7 +96,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
         // single-line DisplayPromptAsync. The page provides a multiline
         // Editor, Paste-from-clipboard button, and a richer send flow
         // with status feedback.
-        await Shell.Current.GoToAsync($"{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
+        // The '///' prefix is an absolute route — MAUI Shell requires
+        // it for routes registered outside a TabBar (relative routing
+        // to shell elements is not supported, see MAUI docs).
+        await Shell.Current.GoToAsync($"///{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]

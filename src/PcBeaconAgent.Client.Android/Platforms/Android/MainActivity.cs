@@ -24,7 +24,16 @@ namespace PcBeaconAgent.Client.Android;
     new[] { Intent.ActionSend },
     Categories = new[] { Intent.CategoryDefault },
     DataMimeType = "text/plain",
-    Label = "Send to PC")]
+    Label = "Send to PC",
+    // Priority influences the order in the Android Share Sheet —
+    // higher values appear earlier. Officially deprecated for share
+    // intents since Android Q, but the system still honours it as a
+    // tiebreaker when multiple targets match. 100 is a safe high
+    // value that does not conflict with system apps (which typically
+    // use 0). Some vendor share sheets (Samsung, Xiaomi) sort by
+    // usage frequency regardless, so frequent selection lifts us
+    // organically on those ROMs.
+    Priority = 100)]
 public class MainActivity : MauiAppCompatActivity
 {
     private WifiManager.MulticastLock? _multicastLock;
