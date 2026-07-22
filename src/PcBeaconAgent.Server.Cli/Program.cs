@@ -96,8 +96,9 @@ namespace PcBeaconAgent.Server.Cli
 
                 app.MapSignalHubs();
                 app.ConfigureWebApi();
-                app.MapAudioServiceEndpoints(settings);
-                app.MapDisplayServiceEndpoints(settings);
+                var identity = app.Services.GetRequiredService<IBeaconServerIdentity>();
+                app.MapAudioServiceEndpoints(settings, identity);
+                app.MapDisplayServiceEndpoints(settings, identity);
                 app.MapPairingEndpoints();
 
                 await app.RunAsync();

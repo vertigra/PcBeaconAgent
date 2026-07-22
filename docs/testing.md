@@ -11,6 +11,15 @@ src/PcBeaconAgent.Server.Core.Tests/
     BeaconServerIdentityTests.cs
     SingleInstanceGuardTests.cs
     BeaconServerTests.cs
+
+src/PcBeaconAgent.Client.Core.Tests/
+  PcBeaconAgent.Client.Core.Tests.csproj
+  Stores/
+    DeviceStoreTests.cs
+  Helpers/
+    UrlHelpersTests.cs
+  Models/
+    ManagedDeviceTests.cs
 ```
 
 ## Framework
@@ -49,6 +58,14 @@ Moq to create proxies for `ILogger<T>` where `T` is an internal type.
 | `SingleInstanceGuard` | First acquire succeeds, second acquire fails, dispose releases |
 | `BeaconServer` | UDP ping/pong integration test (loopback, random port) |
 
+### Client.Core.Tests
+
+| Class | Coverage |
+|-------|----------|
+| `DeviceStore` | Add/forget device, duplicate prevention, different IP, persistence (SaveDevices called), load from storage, duplicate load dedup |
+| `UrlHelpers` | BuildUrl with various IP/port/path combinations |
+| `ManagedDevice` | Equals (same, different, null, self-ref), GetHashCode, IsOnline default + PropertyChanged |
+
 ## What is NOT tested
 
 | Class | Reason |
@@ -63,8 +80,9 @@ Moq to create proxies for `ILogger<T>` where `T` is an internal type.
 Tests run on:
 - Every push to `devel` branch (`tests.yml`)
 - Every pull request to `master` (`tests.yml`)
-- Before every server release (`publish-server.yml` → `needs: test`)
-- Before every client release (`publish-client.yml` → `needs: test`)
+- Before every release (`publish-all.yml` → `test` job runs first,
+  `build-server` and `build-client` jobs run in parallel only if `test`
+  passes)
 
 Coverage is collected in CI via `--collect:"XPlat Code Coverage"` and
 can be downloaded as an artifact from the test run.

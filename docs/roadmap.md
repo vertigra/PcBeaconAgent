@@ -69,16 +69,22 @@ tray host. They stay in the backlog:
       for clear visual feedback. The Forget button stays enabled —
       forgetting a device only removes the local pairing key and does not
       require a live connection.
-- [ ] **Display: improve topology UI.**
-      The current topology indicator is a plain text label ("Topology:
-      Extend"). Consider replacing it with monitor icons (e.g. two
-      overlapping rectangles for Clone, side-by-side for Extend) for
-      better visual clarity.
+- [x] **Display: improve topology UI.**
+      The plain text "Topology: Extend" label on `DisplayControlPage`
+      is replaced by an icon row: two monitor rectangles whose layout
+      reflects the active topology (Extend → side-by-side, Clone →
+      second monitor overlaps the first, Internal → second monitor
+      faded, External → first monitor faded), plus the original text
+      label for accessibility / screen readers. The mapping lives in
+      `DisplayControlViewModel.OnCurrentTopologyChanged` (string →
+      `DisplayTopologyKind` enum); the XAML picks the layout via
+      `DataTrigger`s on the enum value.
 
-## Tier 2 — tray host
+## Tier 2 — tray host ✅ DONE
 
 The `PcBeaconAgent.Server.Cli` console host stays. A new
-`PcBeaconAgent.Server.Tray` project is added alongside it:
+`PcBeaconAgent.Server.Tray` project is added alongside it. All Tier 2
+items shipped:
 
 - WPF + `Hardcodet.NotifyIcon.Wpf` (pure WPF tray icon — no WinForms
   interop). Shipped.
@@ -86,11 +92,11 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
   Shipped.
 - **PIN popup with countdown** (`PinPopupWindow` + `PinPopupViewModel`)
   snapped to the taskbar edge via `SHAppBarMessage`. Shipped.
-- **Balloon notifications** for terminal pairing states (Used / Expired /
-  Locked) via `INotificationService`. Shipped. Custom positioning of the
-  balloons themselves is tracked in Tier 3 — Windows positions
-  `Shell_NotifyIcon` balloons next to the tray icon and we cannot
-  control it.
+- **Transient terminal-state toast** for pairing states (Used / Expired /
+  Locked) via `INotificationService`. Shipped as a `Shell_NotifyIcon`
+  balloon initially; later replaced by a custom WPF toast popup
+  (`TransientToastWindow`) pixel-aligned with the PIN popup — see the
+  Tier 3 entry "Custom balloon / toast positioning" for the full story.
 - [x] **Auto-start on user login.** (`0003cec`)
       Implemented via `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
       (no admin rights needed). Off by default — the user opts in via
@@ -129,15 +135,16 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       nothing to control in Session 0. The service-mode registration
       was misleading documentation; it never actually worked. The
       always-on use case is handled by `Server.Tray` with auto-start
-      on user login (still pending).
+      on user login (off by default, opt-in via Settings).
 - [x] **CI/CD for Server.Tray.** (`<TBD>`)
-      The `publish-server.yml` workflow now builds and publishes both
-      `Server.Cli` and `Server.Tray` under the same `server.v.X.Y.Z`
-      tag. The release includes both ZIPs. `Server.Tray` is published
-      with `PublishTrimmed=false` (WPF XAML bindings trim unreliably)
-      while `Server.Cli` keeps `PublishTrimmed=true`. Smoke test
-      covers `Server.Cli` only — `Server.Tray` is a GUI app that
-      needs a desktop session and cannot be easily smoke-tested in CI.
+      The `publish-all.yml` workflow builds and publishes both
+      `Server.Cli` and `Server.Tray` (plus the Android client) under the
+      same `release.v.X.Y.Z` tag. The release includes both ZIPs.
+      `Server.Tray` is published with `PublishTrimmed=false` (WPF XAML
+      bindings trim unreliably) while `Server.Cli` keeps
+      `PublishTrimmed=true`. Smoke test covers `Server.Cli` only —
+      `Server.Tray` is a GUI app that needs a desktop session and cannot
+      be easily smoke-tested in CI.
 - [x] **Documentation for Server.Tray.** (`e782f92`)
       Split into [docs/server-cli.md](server-cli.md) and
       [docs/server-tray.md](server-tray.md); `README.md` updated with a
@@ -164,8 +171,9 @@ The `PcBeaconAgent.Server.Cli` console host stays. A new
       they require real COM/CCD hardware. CI runs tests on every
       push to devel and before every release via `tests.yml`.
       Coverage is collected via coverlet and uploaded to Coveralls.
-      `Client.Core.Tests` (DeviceStore, SignalService) is still
-      pending — tracked as a follow-up.
+      `Client.Core.Tests` (DeviceStore, UrlHelpers, ManagedDevice)
+      shipped — covers add/forget, persistence, equality, and URL
+      building.
 
 ## Tier 3 — new feature modules
 
@@ -229,21 +237,31 @@ note before implementation; the entries here are reminders.
       mechanism so the tray host inherits the locale from the OS or
       from a setting in `appsettings.json`. ClI host stays English-only
       (its output is log-shaped, not user-facing prose).
-- [ ] **Custom balloon / toast positioning.**
+- [x] **Custom balloon / toast positioning.** (`<TBD>`)
       The Windows `Shell_NotifyIcon` balloon API positions the balloon
-      next to the tray icon — the app cannot control it. The PIN popup
-      (patch #39) snaps to the taskbar via `SHAppBarMessage`, but the
-      transient terminal-state balloons (Used / Expired / Locked) still
-      appear wherever Windows decides. Two options: (a) switch to the
-      UWP Toast API (`Microsoft.Toolkit.Uwp.Notifications`) which gives
-      a richer UI and lands in the Action Center but still doesn't let
-      us pick the on-screen position; (b) replace balloons entirely
-      with a small transient WPF popup (similar to `PinPopupWindow`
-      but auto-closing after a few seconds) positioned next to the
-      tray icon via `Shell_NotifyIconGetRect`. Option (b) is the only
-      way to get pixel-perfect control. Defer until the rest of Tier 2
-      ships; the current balloons are functional, just not pixel-aligned
-      with the popup.
+      next to the tray icon — the app cannot control it. Replaced the
+      balloons entirely with a small transient WPF popup
+      (`TransientToastWindow` + `TransientToastViewModel`), modelled on
+      `PinPopupWindow` but auto-closing after 5 seconds. Position is
+      computed by the same `SHAppBarMessage`-based `ApplyPosition`
+      helper in `NotificationService`, so the toast is pixel-aligned
+      with the PIN popup (bottom / top / left / right taskbar aware,
+      multi-monitor fallback via `SystemParameters.WorkArea`).
+      Click-to-dismiss is wired through `Window.OnMouseLeftButtonDown`.
+      The `INotificationService.AttachTaskbarIcon` method was removed
+      at the same time — it existed only to feed the balloon API and is
+      no longer needed.
+      <br/>**Trade-off:** the original design note suggested
+      `Shell_NotifyIconGetRect` for true per-icon pixel alignment.
+      Hardcodet 2.x does not expose the underlying `hWnd`/`uID` of the
+      registered shell icon publicly, so using that API would require
+      reflection on Hardcodet internals (fragile across upgrades) or a
+      small fork. Since the goal was visual alignment with the PIN
+      popup (not per-icon precision), reusing the existing
+      `SHAppBarMessage` positioning was the cleaner choice. If
+      per-icon precision ever becomes important, the
+      `Shell_NotifyIconGetRect` P/Invoke can be added to
+      `NotificationService` without changing the public contract.
 - [ ] **Network interface binding + soft restart.**
       Today the server binds to a single host address from
       `appsettings.json` (`0.0.0.0` = all interfaces). Add a

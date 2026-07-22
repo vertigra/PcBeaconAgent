@@ -6,15 +6,16 @@ using PcBeaconAgent.Contracts;
 using PcBeaconAgent.Contracts.Models;
 using PcBeaconAgent.Server.Core.Configuration;
 using PcBeaconAgent.Server.Core.Extensions;
+using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Services;
 
 namespace PcBeaconAgent.Server.Core.Endpoints
 {
     public static class AudioEndpointsExtensions
     {
-        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings)
+        public static IEndpointRouteBuilder MapAudioServiceEndpoints(this IEndpointRouteBuilder app, AppSettings settings, IBeaconServerIdentity identity)
         {
-            var audioGroup = app.MapGroup("/api/audio").RequireApiKey(settings);
+            var audioGroup = app.MapGroup("/api/audio").RequireApiKey(identity);
 
             audioGroup.MapGet("/devices", ([FromServices] AudioController controller) =>
             {

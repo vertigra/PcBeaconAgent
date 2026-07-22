@@ -35,8 +35,9 @@ popup with countdown, and balloon notifications. Both share the same
 - **Server.Cli** — interactive console host for debugging and scripted
   use. Detailed documentation: [docs/server-cli.md](docs/server-cli.md).
 - **Server.Tray** — interactive desktop sessions; auto-starts on user
-  login (planned), shows the PIN in a popup next to the taskbar.
-  Detailed documentation: [docs/server-tray.md](docs/server-tray.md).
+  login (off by default, opt-in via Settings), shows the PIN in a popup
+  next to the taskbar. Detailed documentation:
+  [docs/server-tray.md](docs/server-tray.md).
 
 ### 💻 CLI Arguments (Silent Mode)
 
@@ -86,9 +87,10 @@ Android        Server.Cli  •  Server.Tray
   [docs/server-cli.md](docs/server-cli.md).
 * **`PcBeaconAgent.Server.Tray`** — the WPF tray host. Runs the same
   `Server.Core` business logic and adds a system tray icon, a PIN popup
-  with countdown, and balloon notifications via `INotificationService`.
-  Suitable for interactive desktop sessions. References `Server.Core`.
-  See [docs/server-tray.md](docs/server-tray.md).
+  with countdown, and a transient toast (Used / Expired / Locked
+  pairing states) via `INotificationService`. Suitable for interactive
+  desktop sessions. References `Server.Core`. See
+  [docs/server-tray.md](docs/server-tray.md).
 * **`PcBeaconAgent.Client.Android`** — the .NET MAUI Android client.
   References `Client.Core`.
 

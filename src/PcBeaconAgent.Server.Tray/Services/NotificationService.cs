@@ -1,4 +1,3 @@
-using Hardcodet.Wpf.TaskbarNotification;
 using PcBeaconAgent.Server.Tray.Models;
 using PcBeaconAgent.Server.Tray.ViewModels;
 using PcBeaconAgent.Server.Tray.Views;
@@ -12,23 +11,24 @@ namespace PcBeaconAgent.Server.Tray.Services
     /// Implementation of <see cref="INotificationService"/> for the tray
     /// host. Owns:
     /// <list type="bullet">
-    ///   <item>The <see cref="PinPopupWindow"/> instance and its lifecycle.</item>
-    ///   <item>The Win32 <c>SHAppBarMessage</c> interop used to snap the
-    ///       popup to the taskbar edge. The P/Invoke lives here as private
-    ///       detail — no other type in the project needs it, and keeping
-    ///       it local makes the audit surface one file wide.</item>
-    ///   <item>The mapping from <see cref="NotificationSeverity"/> to
-    ///       Hardcodet <see cref="BalloonIcon"/>. When the Tier 3 "custom
-    ///       balloon positioning" work lands and we draw our own
-    ///       transient popups, this mapping disappears but the public
-    ///       <see cref="INotificationService"/> contract stays.</item>
+    ///   <item>The persistent <see cref="PinPopupWindow"/> instance and
+    ///       its lifecycle (open on Generated, close on terminal
+    ///       states).</item>
+    ///   <item>The transient <see cref="TransientToastWindow"/> shown for
+    ///       terminal pairing states (Used / Expired / Locked). Only one
+    ///       toast is on screen at a time — a new toast closes the
+    ///       previous one.</item>
+    ///   <item>The Win32 <c>SHAppBarMessage</c> interop used to snap both
+    ///       surfaces to the taskbar edge. The P/Invoke lives here as
+    ///       private detail — no other type in the project needs it, and
+    ///       keeping it local makes the audit surface one file wide.</item>
     /// </list>
     /// </summary>
     internal sealed class NotificationService : INotificationService
     {
         private readonly App mApp;
-        private TaskbarIcon? mTaskbarIcon;
         private PinPopupWindow? mActivePopup;
+        private TransientToastWindow? mActiveToast;
 
         // ── Win32 interop: taskbar rect query ──────────────────────────
 
@@ -70,12 +70,6 @@ namespace PcBeaconAgent.Server.Tray.Services
         }
 
         /// <inheritdoc />
-        public void AttachTaskbarIcon(TaskbarIcon icon)
-        {
-            mTaskbarIcon = icon;
-        }
-
-        /// <inheritdoc />
         public void ShowPinPopup(string pin, DateTime expiryUtc)
         {
             if (!mApp.Dispatcher.CheckAccess())
@@ -91,12 +85,15 @@ namespace PcBeaconAgent.Server.Tray.Services
             mActivePopup.Closed += OnPopupClosed;
 
             // Position before Show() so we don't see a flash at (0,0).
-            ApplyPosition(mActivePopup, declaredSizeOnly: true);
+            ApplyPosition(mActivePopup, declaredSizeOnly: true,
+                          fallbackWidth: 300, fallbackHeight: 160);
             mActivePopup.Show();
 
             // Re-apply after the visual tree has measured — at Show()
             // time ActualWidth/Height are still 0/NaN.
-            mActivePopup.ContentRendered += (_, _) => ApplyPosition(mActivePopup, declaredSizeOnly: false);
+            mActivePopup.ContentRendered += (_, _) => ApplyPosition(
+                mActivePopup, declaredSizeOnly: false,
+                fallbackWidth: 300, fallbackHeight: 160);
         }
 
         /// <inheritdoc />
@@ -127,21 +124,33 @@ namespace PcBeaconAgent.Server.Tray.Services
                 return;
             }
 
-            if (mTaskbarIcon == null) return;
+            CloseTransient();
 
-            BalloonIcon icon = severity switch
+            var vm = new TransientToastViewModel(title, message, severity);
+            mActiveToast = new TransientToastWindow(vm);
+            mActiveToast.Closed += OnToastClosed;
+
+            // Same two-phase positioning as the PIN popup: declared size
+            // first (so Show() doesn't flash at 0,0), then re-apply after
+            // measure. Fallback height is smaller than the PIN popup
+            // because the toast has no countdown / progress bar.
+            ApplyPosition(mActiveToast, declaredSizeOnly: true,
+                          fallbackWidth: 300, fallbackHeight: 80);
+            mActiveToast.Show();
+
+            mActiveToast.ContentRendered += (_, _) => ApplyPosition(
+                mActiveToast, declaredSizeOnly: false,
+                fallbackWidth: 300, fallbackHeight: 80);
+        }
+
+        private void CloseTransient()
+        {
+            if (mActiveToast != null)
             {
-                NotificationSeverity.Info => BalloonIcon.Info,
-                NotificationSeverity.Warning => BalloonIcon.Warning,
-                NotificationSeverity.Error => BalloonIcon.Error,
-                _ => BalloonIcon.None
-            };
-            // Hardcodet 2.x dropped the customTimeout parameter — Windows
-            // ignores it anyway and clamps to its own system timeout
-            // (~10–30s). The balloon is intentionally a short transient
-            // signal, not a persistent state holder — that's what the
-            // popup is for.
-            mTaskbarIcon.ShowBalloonTip(title, message, icon);
+                mActiveToast.Closed -= OnToastClosed;
+                mActiveToast.Close();
+                mActiveToast = null;
+            }
         }
 
         private void OnPopupClosed(object? sender, EventArgs e)
@@ -149,10 +158,15 @@ namespace PcBeaconAgent.Server.Tray.Services
             mActivePopup = null;
         }
 
+        private void OnToastClosed(object? sender, EventArgs e)
+        {
+            mActiveToast = null;
+        }
+
         // ── Positioning ────────────────────────────────────────────────
 
         /// <summary>
-        /// Places the popup directly above the taskbar (or against the
+        /// Places the window directly above the taskbar (or against the
         /// relevant screen edge for non-bottom taskbars) with a tiny gap.
         /// Falls back to <see cref="SystemParameters.WorkArea"/> when the
         /// taskbar rect query fails (e.g. on Wine/ReactOS or unusual
@@ -165,22 +179,27 @@ namespace PcBeaconAgent.Server.Tray.Services
         /// <c>false</c> — use <c>ActualWidth</c>/<c>ActualHeight</c>
         /// (called from <c>ContentRendered</c> after measure).
         /// </param>
-        private void ApplyPosition(Window popup, bool declaredSizeOnly)
+        /// <param name="fallbackWidth">Used when the window has no
+        /// declared <c>Width</c> and no measured <c>ActualWidth</c>
+        /// (e.g. <c>SizeToContent</c> windows before measure).</param>
+        /// <param name="fallbackHeight">Same, for height.</param>
+        private void ApplyPosition(Window popup, bool declaredSizeOnly,
+                                   double fallbackWidth, double fallbackHeight)
         {
             double width, height;
             if (declaredSizeOnly)
             {
                 width = popup.Width;
                 height = popup.Height;
-                if (double.IsNaN(width)) width = 300;
-                if (double.IsNaN(height)) height = 160;
+                if (double.IsNaN(width)) width = fallbackWidth;
+                if (double.IsNaN(height)) height = fallbackHeight;
             }
             else
             {
                 width = popup.ActualWidth > 0 ? popup.ActualWidth : popup.Width;
                 height = popup.ActualHeight > 0 ? popup.ActualHeight : popup.Height;
-                if (double.IsNaN(width)) width = 300;
-                if (double.IsNaN(height)) height = 160;
+                if (double.IsNaN(width)) width = fallbackWidth;
+                if (double.IsNaN(height)) height = fallbackHeight;
             }
 
             Rect workArea = SystemParameters.WorkArea;

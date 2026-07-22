@@ -25,10 +25,63 @@
             </Label.FormattedText>
         </Label>
 
-        <Label Grid.Row="1"
-               Text="{Binding CurrentTopology, StringFormat='Topology: {0}'}"
-               FontSize="13" TextColor="#9E9E9E"
-               IsVisible="{Binding HasTopology}"/>
+        <HorizontalStackLayout Grid.Row="1"
+                               Spacing="8"
+                               IsVisible="{Binding HasTopology}">
+            <!-- Topology icon: two monitor rectangles whose layout
+                 reflects the active topology. Extend → side-by-side;
+                 Clone → second monitor overlaps the first; Internal →
+                 second monitor faded; External → first monitor faded.
+                 The exact topology name is still shown as text next to
+                 the icon so there is no ambiguity (e.g. for
+                 accessibility / screen readers). -->
+            <Grid WidthRequest="34" HeightRequest="20" VerticalOptions="Center">
+                <!-- Monitor 1 (left). Faded only for External. -->
+                <Border WidthRequest="16" HeightRequest="13"
+                        StrokeShape="RoundRectangle 2"
+                        BackgroundColor="#D0BCFF"
+                        StrokeThickness="0"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Opacity" Value="1"/>
+                            <Style.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding TopologyKind}" Value="External">
+                                    <Setter Property="Opacity" Value="0.3"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <!-- Monitor 2 (right). Overlaps for Clone, faded for
+                     Internal. -->
+                <Border WidthRequest="16" HeightRequest="13"
+                        StrokeShape="RoundRectangle 2"
+                        BackgroundColor="#D0BCFF"
+                        StrokeThickness="0"
+                        HorizontalOptions="End"
+                        VerticalOptions="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Opacity" Value="1"/>
+                            <Setter Property="TranslationX" Value="0"/>
+                            <Style.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding TopologyKind}" Value="Clone">
+                                    <Setter Property="TranslationX" Value="-6"/>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding TopologyKind}" Value="Internal">
+                                    <Setter Property="Opacity" Value="0.3"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+            </Grid>
+            <Label Text="{Binding CurrentTopology, StringFormat='Topology: {0}'}"
+                   FontSize="13" TextColor="#9E9E9E"
+                   VerticalOptions="Center"/>
+        </HorizontalStackLayout>
 
         <Button Grid.Row="2"
                 Text="Refresh"

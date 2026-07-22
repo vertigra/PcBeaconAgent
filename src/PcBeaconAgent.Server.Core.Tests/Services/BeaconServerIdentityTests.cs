@@ -10,20 +10,23 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
 {
     public class BeaconServerIdentityTests : IDisposable
     {
-        private readonly string mTempDir;
+        private readonly string mKeyPath;
         private readonly Mock<ILogger<BeaconServerIdentity>> mLoggerMock;
 
         public BeaconServerIdentityTests()
         {
-            mTempDir = Path.Combine(Path.GetTempPath(), $"pcb-test-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(mTempDir);
+            // BeaconServerIdentity resolves server.key relative to
+            // AppContext.BaseDirectory (the test bin directory).
+            // We write/delete it there — no CWD manipulation needed.
+            mKeyPath = Path.Combine(AppContext.BaseDirectory, "server.key");
             mLoggerMock = new Mock<ILogger<BeaconServerIdentity>>();
         }
 
         public void Dispose()
         {
-            try { Directory.Delete(mTempDir, recursive: true); }
-            catch { /* temp cleanup is best-effort */ }
+            // Clean up server.key between tests so they don't interfere.
+            try { if (File.Exists(mKeyPath)) File.Delete(mKeyPath); }
+            catch { /* best-effort */ }
         }
 
         [Fact]
@@ -40,12 +43,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         [Fact]
         public void Constructor_WithEmptyApiKey_LoadsFromFile()
         {
-            string keyPath = Path.Combine(mTempDir, "server.key");
-            File.WriteAllText(keyPath, "key-from-file");
-
-            // Change to temp dir so LoadOrCreateKey("server.key")
-            // resolves to our temp file.
-            Directory.SetCurrentDirectory(mTempDir);
+            File.WriteAllText(mKeyPath, "key-from-file");
 
             var options = new WebApiOptions(5000, "");
             var identity = new BeaconServerIdentity(options, mLoggerMock.Object);
@@ -56,25 +54,25 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         [Fact]
         public void Constructor_WithEmptyApiKey_GeneratesNewKeyIfFileMissing()
         {
-            Directory.SetCurrentDirectory(mTempDir);
+            // Ensure no key file exists.
+            if (File.Exists(mKeyPath)) File.Delete(mKeyPath);
 
             var options = new WebApiOptions(5000, "");
             var identity = new BeaconServerIdentity(options, mLoggerMock.Object);
 
             Assert.False(string.IsNullOrEmpty(identity.ApiKey));
-            Assert.True(File.Exists("server.key"));
-            Assert.Equal(identity.ApiKey, File.ReadAllText("server.key"));
+            Assert.True(File.Exists(mKeyPath));
+            Assert.Equal(identity.ApiKey, File.ReadAllText(mKeyPath));
         }
 
         [Fact]
         public void Constructor_GeneratedKey_Is32CharHexGuid()
         {
-            Directory.SetCurrentDirectory(mTempDir);
+            if (File.Exists(mKeyPath)) File.Delete(mKeyPath);
 
             var options = new WebApiOptions(5000, "");
             var identity = new BeaconServerIdentity(options, mLoggerMock.Object);
 
-            // Guid.ToString("N") produces 32 hex chars without dashes.
             Assert.Equal(32, identity.ApiKey.Length);
             Assert.All(identity.ApiKey, c => Assert.True(Uri.IsHexDigit(c)));
         }
@@ -82,10 +80,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         [Fact]
         public void Constructor_LoadedKey_IsTrimmed()
         {
-            string keyPath = Path.Combine(mTempDir, "server.key");
-            File.WriteAllText(keyPath, "  key-with-whitespace  \n");
-
-            Directory.SetCurrentDirectory(mTempDir);
+            File.WriteAllText(mKeyPath, "  key-with-whitespace  \n");
 
             var options = new WebApiOptions(5000, "");
             var identity = new BeaconServerIdentity(options, mLoggerMock.Object);
@@ -96,14 +91,12 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         [Fact]
         public void Constructor_GeneratedKey_PersistsAcrossInstances()
         {
-            Directory.SetCurrentDirectory(mTempDir);
+            if (File.Exists(mKeyPath)) File.Delete(mKeyPath);
 
             var options = new WebApiOptions(5000, "");
             var identity1 = new BeaconServerIdentity(options, mLoggerMock.Object);
             string firstKey = identity1.ApiKey;
 
-            // Second instance should load the same key from the file
-            // the first instance created.
             var identity2 = new BeaconServerIdentity(options, mLoggerMock.Object);
 
             Assert.Equal(firstKey, identity2.ApiKey);
