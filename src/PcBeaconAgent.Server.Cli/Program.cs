@@ -67,9 +67,15 @@ namespace PcBeaconAgent.Server.Cli
                 var beaconOptions = new BeaconServerOptions(settings.Server.Host, settings.Server.DiscoveryPort);
                 var apiOptions = new WebApiOptions(settings.Server.ApiPort, settings.Server.ApiKey);
 
+                // Register AppSettings as a singleton first — other
+                // services are derived from it but kept as separate
+                // singletons for ISP. TransferSettings is resolved via
+                // a factory from AppSettings so there is a single source
+                // of truth.
+                builder.Services.AddSingleton<AppSettings>(settings);
                 builder.Services.AddSingleton(beaconOptions);
                 builder.Services.AddSingleton(apiOptions);
-                builder.Services.AddSingleton(settings.Transfer);
+                builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Transfer);
 
                 ShowSecurityWarning(settings);
 
