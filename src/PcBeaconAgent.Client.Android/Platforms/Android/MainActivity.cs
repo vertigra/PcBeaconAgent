@@ -1,6 +1,7 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Android.Net;
 using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
@@ -41,6 +42,18 @@ namespace PcBeaconAgent.Client.Android.Platforms.Android;
     // use 0). Some vendor share sheets (Samsung, Xiaomi) sort by
     // usage frequency regardless, so frequent selection lifts us
     // organically on those ROMs.
+    Priority = 100)]
+// Second intent filter for file sharing — accepts any MIME type.
+// The system shows "Send to PC" once for text/plain (above) and once
+// for */* (here), but Android deduplicates by component name so the
+// user sees a single "Send to PC" entry that accepts both text and
+// files. ConsumeShareIntent distinguishes the two by checking for
+// ExtraText (text) vs ExtraStream (file).
+[IntentFilter(
+    [Intent.ActionSend],
+    Categories = new[] { Intent.CategoryDefault },
+    DataMimeType = "*/*",
+    Label = "Send to PC",
     Priority = 100)]
 public class MainActivity : MauiAppCompatActivity
 {
@@ -103,18 +116,33 @@ public class MainActivity : MauiAppCompatActivity
     private static void ConsumeShareIntent(Intent? intent)
     {
         if (intent?.Action != Intent.ActionSend) return;
-        if (intent.Type != "text/plain") return;
 
+        // Distinguish text vs file share by checking which extra is
+        // present. Text shares carry ExtraText; file shares carry
+        // ExtraStream (a content:// or file:// URI). Some apps send
+        // both (e.g. a URL as text + a screenshot as stream) — we
+        // prioritise text in that case, since text is cheaper to send
+        // and the user typically wants the URL, not the screenshot.
         string? text = intent.GetStringExtra(Intent.ExtraText);
-        if (string.IsNullOrWhiteSpace(text)) return;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            ShareTextViewModel.PendingSharedText = text;
+            return;
+        }
 
-        // Stash for MainPage.OnAppearing to consume — it checks
-        // PendingSharedText and navigates to ShareTextPage. We do not
-        // navigate here because the MAUI Shell may not be ready yet
-        // (OnCreate path) or the current page may be mid-transition
-        // (OnNewIntent path). MainPage.OnAppearing is the reliable
-        // trigger point that always fires after Shell initialisation.
-        ShareTextViewModel.PendingSharedText = text;
+        // File share — extract the stream URI. The URI carries a
+        // read permission grant (FLAG_GRANT_READ_URI_PERMISSION) from
+        // the source app, so we can open it via ContentResolver in
+        // ShareFileViewModel.SendToDeviceAsync.
+        Uri? streamUri = intent.GetParcelableExtra(Intent.ExtraStream) as Uri;
+        if (streamUri != null)
+        {
+            ShareFileViewModel.PendingFileUri = streamUri;
+            return;
+        }
+
+        // Neither text nor stream — the share intent had no usable
+        // payload. Ignore it (the user sees MainPage, no error).
     }
 
     /// <inheritdoc />

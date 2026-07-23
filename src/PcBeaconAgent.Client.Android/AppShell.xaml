@@ -21,13 +21,21 @@
     </TabBar>
 
     <!-- Non-tab routes — pushed onto the navigation stack.
-         SendTextPage is reached from MainPage's send button.
-         ShareTextPage is reached from the Android Share Sheet. -->
+         SendTextPage / SendFilePage reached from MainPage's buttons.
+         ShareTextPage / ShareFilePage reached from the Android Share
+         Sheet (text/plain and */* intent filters respectively). -->
     <ShellContent Route="SendTextPage"
                   ContentTemplate="{DataTemplate local:SendTextPage}"/>
 
+    <ShellContent Route="SendFilePage"
+                  ContentTemplate="{DataTemplate local:SendFilePage}"/>
+
     <ShellContent Route="ShareTextPage"
                   ContentTemplate="{DataTemplate local:ShareTextPage}"
+                  Shell.PresentationMode="ModalAnimated"/>
+
+    <ShellContent Route="ShareFilePage"
+                  ContentTemplate="{DataTemplate local:ShareFilePage}"
                   Shell.PresentationMode="ModalAnimated"/>
 
 </Shell>

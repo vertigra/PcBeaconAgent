@@ -52,6 +52,42 @@ namespace PcBeaconAgent.Client.Core.Services
             return dto;
         }
 
+        /// <inheritdoc />
+        public async Task<FileTransferResponseDto> SendFileAsync(HttpContent content, string fileName)
+        {
+            using var request = CreateRequest(HttpMethod.Post, $"{mBaseUrl}/file");
+
+            // Multipart/form-data with a single "file" field. The
+            // server's [FromForm] IFormFile parameter binds to this
+            // field name. The ContentDisposition header carries the
+            // original file name so the server can sanitise and save
+            // it — without it, ASP.NET Core would reject the upload.
+            using var multipart = new MultipartFormDataContent();
+            // Quote the filename so non-ASCII / space / special chars
+            // survive the multipart encoding. Without quotes, characters
+            // like ';' would break the Content-Disposition parsing.
+            multipart.Add(content, "file", $"\"{fileName}\"");
+            request.Content = multipart;
+
+            // Send the request. We do NOT use ResponseHeadersRead here
+            // because we need the full response body (the
+            // FileTransferResponseDto JSON) to determine success — the
+            // status code alone is not enough (the server returns 400
+            // with a message for rejections like "no file provided").
+            using var response = await mClient.SendAsync(request);
+
+            var dto = await response.Content.ReadFromJsonAsync(
+                ProjectJsonContext.Default.FileTransferResponseDto);
+
+            if (dto == null)
+            {
+                response.EnsureSuccessStatusCode();
+                return new FileTransferResponseDto(false, "Server returned an unexpected response.", string.Empty);
+            }
+
+            return dto;
+        }
+
         private HttpRequestMessage CreateRequest(HttpMethod method, string url)
         {
             var request = new HttpRequestMessage(method, url);

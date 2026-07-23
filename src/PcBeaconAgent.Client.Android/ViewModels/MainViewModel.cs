@@ -103,6 +103,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    public async Task SendFile(ManagedDevice device)
+    {
+        // Navigate to SendFilePage, which uses MAUI's FilePicker for
+        // system file selection and streams the file to the server.
+        await Shell.Current.GoToAsync($"///{nameof(SendFilePage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
     public async Task Forget(ManagedDevice device)
     {
         bool confirm = await Shell.Current.CurrentPage.DisplayAlertAsync("Forget Device",
