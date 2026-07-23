@@ -498,8 +498,14 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
         private List<(string Event, object[] Args)> SetupHubMock(string targetConnectionId)
         {
             var calls = new List<(string, object[])>();
-            var clientProxyMock = new Mock<IClientProxy>();
 
+            // ISingleClientProxy (not IClientProxy) — in .NET 10,
+            // IHubClients.Client(string) returns ISingleClientProxy,
+            // which extends IClientProxy. Mocking IClientProxy and
+            // casting to ISingleClientProxy throws InvalidCastException
+            // at runtime, which gets caught by SendTextToClientAsync's
+            // try/catch and silently returns false.
+            var clientProxyMock = new Mock<ISingleClientProxy>();
             clientProxyMock
                 .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
                 .Callback<string, object[], CancellationToken>((name, args, _) => calls.Add((name, args)))
@@ -513,12 +519,11 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             };
             mConnectionTrackerMock.SetupGet(t => t.ConnectedClients).Returns(clientsDict);
 
-            mHubContextMock.Setup(h => h.Clients).Returns(() =>
-            {
-                var clientsMock = new Mock<IHubClients>();
-                clientsMock.Setup(c => c.Client(targetConnectionId)).Returns((ISingleClientProxy)clientProxyMock.Object);
-                return clientsMock.Object;
-            });
+            // Set up IHubClients with the client proxy. Create the mock
+            // once (not in a factory) so the setup is stable.
+            var clientsMock = new Mock<IHubClients>();
+            clientsMock.Setup(c => c.Client(targetConnectionId)).Returns(clientProxyMock.Object);
+            mHubContextMock.Setup(h => h.Clients).Returns(clientsMock.Object);
 
             return calls;
         }
