@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
+using PcBeaconAgent.Server.Core.Configuration;
+using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Models;
 using PcBeaconAgent.Server.Core.Services;
 using PcBeaconAgent.Server.Tray.Models;
@@ -8,23 +11,29 @@ using PcBeaconAgent.Server.Tray.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.IO;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
 namespace PcBeaconAgent.Server.Tray.ViewModels
 {
     /// <summary>
-    /// View model for the Files tab. Owns the incoming-text-transfer
-    /// history list and the auto-copy-to-clipboard setting. Subscribes
-    /// to <see cref="TransferController.TransferReceived"/> and
-    /// marshals each event to the UI thread for ObservableCollection
-    /// mutation, clipboard access (STA-required), and toast display.
+    /// View model for the Files tab. Owns the transfer history list
+    /// (both incoming and outgoing), the auto-copy-to-clipboard
+    /// setting, and the "Send to phone" UI (device picker + text/file
+    /// send commands). Subscribes to
+    /// <see cref="TransferController.TransferReceived"/> and
+    /// <see cref="IConnectionTracker.CountChanged"/> to keep the UI
+    /// live.
     /// </summary>
     /// <remarks>
     /// <b>Threading.</b> <see cref="TransferController.TransferReceived"/>
     /// fires on the HTTP request thread (thread-pool). All UI-side
-    /// mutations (history add, clipboard set, toast show) must run on
-    /// the WPF Dispatcher. The handler uses
+    /// mutations must run on the WPF Dispatcher. The handler uses
     /// <see cref="Dispatcher.BeginInvoke(Delegate, DispatcherPriority, object[])"/>
     /// (asynchronous) to avoid blocking the HTTP thread.
     /// </remarks>
@@ -33,33 +42,79 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
         private readonly ILogger<FilesViewModel> mLogger;
         private readonly TransferController mTransferController;
         private readonly INotificationService mNotifications;
+        private readonly IConnectionTracker mConnectionTracker;
+        private readonly WebApiOptions mApiOptions;
         private readonly Dispatcher mDispatcher;
         private bool mDisposed;
 
         /// <summary>
-        /// Incoming transfer history, newest first. Bound to the
-        /// ItemsControl in <see cref="Views.FilesView"/>. Mutated only
-        /// on the UI thread.
+        /// Transfer history, newest first. Contains both incoming
+        /// (from Android) and outgoing (to Android) records. Bound to
+        /// the ItemsControl in <see cref="Views.FilesView"/>.
         /// </summary>
         public ObservableCollection<TransferRecord> History { get; } = [];
+
+        /// <summary>
+        /// Connected Android clients. Refreshed from
+        /// <see cref="IConnectionTracker"/> on every
+        /// <see cref="IConnectionTracker.CountChanged"/> event. Bound
+        /// to the device picker ComboBox in the "Send to phone"
+        /// section.
+        /// </summary>
+        public ObservableCollection<ConnectedDeviceInfo> ConnectedDevices { get; } = [];
 
         [ObservableProperty]
         public partial bool AutoCopyToClipboard { get; set; } = true;
 
         public bool HasHistory => History.Count > 0;
 
-        public FilesViewModel(TransferController transferController, INotificationService notifications, ILogger<FilesViewModel> logger)
+        public bool HasConnectedDevices => ConnectedDevices.Count > 0;
+
+        /// <summary>
+        /// Currently selected device in the device picker. Null when
+        /// no device is selected or no devices are connected.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanSendToPhone))]
+        public partial ConnectedDeviceInfo? SelectedDevice { get; set; }
+
+        /// <summary>
+        /// Text to send to the selected phone. Bound to a TextBox in
+        /// the "Send to phone" section.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanSendToPhone))]
+        public partial string OutgoingText { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial bool IsSending { get; set; }
+
+        [ObservableProperty]
+        public partial string SendStatus { get; set; } = string.Empty;
+
+        public bool CanSendToPhone => SelectedDevice != null && !IsSending && !string.IsNullOrWhiteSpace(OutgoingText);
+
+        public FilesViewModel(
+            TransferController transferController,
+            INotificationService notifications,
+            IConnectionTracker connectionTracker,
+            WebApiOptions apiOptions,
+            ILogger<FilesViewModel> logger)
         {
             mTransferController = transferController;
             mNotifications = notifications;
+            mConnectionTracker = connectionTracker;
+            mApiOptions = apiOptions;
             mLogger = logger;
-            // Capture the Dispatcher at construction time. FilesViewModel
-            // is a DI singleton resolved on the UI thread, so
-            // Application.Current.Dispatcher is the WPF Dispatcher.
             mDispatcher = Application.Current.Dispatcher;
 
             mTransferController.TransferReceived += OnTransferReceived;
+            mConnectionTracker.CountChanged += OnCountChanged;
             History.CollectionChanged += OnHistoryChanged;
+
+            // Populate the device list immediately — clients may already
+            // be connected when the window opens.
+            RefreshConnectedDevices();
         }
 
         private void OnTransferReceived(TransferRecord record)
@@ -183,6 +238,165 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             OnPropertyChanged(nameof(HasHistory));
         }
 
+        // ── Connected devices ────────────────────────────────────────
+
+        private void OnCountChanged(int newCount)
+        {
+            // CountChanged is marshaled to the UI thread by
+            // ConnectionTracker (captured the Dispatcher sync context
+            // at construction). We are already on the UI thread.
+            RefreshConnectedDevices();
+        }
+
+        /// <summary>
+        /// Rebuilds the <see cref="ConnectedDevices"/> collection from
+        /// the connection tracker's current snapshot. Must run on the
+        /// UI thread because ObservableCollection mutation is not
+        /// thread-safe.
+        /// </summary>
+        private void RefreshConnectedDevices()
+        {
+            ConnectedDevices.Clear();
+            foreach (var kvp in mConnectionTracker.ConnectedClients)
+            {
+                ConnectedDevices.Add(new ConnectedDeviceInfo(
+                    kvp.Key,
+                    kvp.Value.MachineName,
+                    kvp.Value.RemoteIp));
+            }
+            OnPropertyChanged(nameof(HasConnectedDevices));
+
+            // If the selected device disconnected, clear the selection
+            // so CanSendToPhone re-evaluates.
+            if (SelectedDevice != null && !ConnectedDevices.Contains(SelectedDevice))
+            {
+                SelectedDevice = null;
+            }
+
+            // Auto-select the first device if none is selected and
+            // devices are available — saves the user a click.
+            if (SelectedDevice == null && ConnectedDevices.Count > 0)
+            {
+                SelectedDevice = ConnectedDevices[0];
+            }
+        }
+
+        // ── Send to phone commands ───────────────────────────────────
+
+        [RelayCommand]
+        public async Task SendTextToPhoneAsync()
+        {
+            if (!CanSendToPhone || SelectedDevice == null) return;
+
+            IsSending = true;
+            SendStatus = "Sending…";
+
+            try
+            {
+                var (accepted, message) = await mTransferController.SendTextToClientAsync(
+                    OutgoingText, SelectedDevice.ConnectionId, Environment.MachineName);
+
+                if (accepted)
+                {
+                    SendStatus = "Sent.";
+                    OutgoingText = string.Empty;
+                    await System.Threading.Tasks.Task.Delay(800);
+                    SendStatus = string.Empty;
+                }
+                else
+                {
+                    SendStatus = message;
+                }
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogWarning(ex, "Failed to send text to phone {Conn}", SelectedDevice.ConnectionId);
+                SendStatus = "Could not send. Check the connection.";
+            }
+            finally
+            {
+                IsSending = false;
+            }
+        }
+
+        [RelayCommand]
+        public async Task SendFileToPhoneAsync()
+        {
+            if (SelectedDevice == null || IsSending) return;
+
+            var dialog = new OpenFileDialog
+            {
+                Title = "Select a file to send",
+                Filter = "All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            IsSending = true;
+            SendStatus = $"Sending {Path.GetFileName(dialog.FileName)}…";
+
+            try
+            {
+                string downloadBaseUrl = $"http://{GetLocalLanIp()}:{mApiOptions.ApiPort}";
+
+                using var stream = File.OpenRead(dialog.FileName);
+                var (accepted, message) = await mTransferController.SendFileToClientAsync(
+                    stream, Path.GetFileName(dialog.FileName),
+                    SelectedDevice.ConnectionId, Environment.MachineName,
+                    downloadBaseUrl);
+
+                if (accepted)
+                {
+                    SendStatus = $"Sent: {Path.GetFileName(dialog.FileName)}";
+                    await System.Threading.Tasks.Task.Delay(1500);
+                    SendStatus = string.Empty;
+                }
+                else
+                {
+                    SendStatus = message;
+                }
+            }
+            catch (Exception ex)
+            {
+                mLogger.LogWarning(ex, "Failed to send file to phone {Conn}", SelectedDevice.ConnectionId);
+                SendStatus = "Could not send. Check the connection.";
+            }
+            finally
+            {
+                IsSending = false;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the PC's LAN IPv4 address for constructing the
+        /// download base URL. Uses the first active Ethernet/Wi-Fi
+        /// interface's first IPv4 unicast address. Falls back to
+        /// "localhost" if no suitable interface is found (e.g. the
+        /// server is running in a container without LAN access — in
+        /// that case file download would not work anyway).
+        /// </summary>
+        private static string GetLocalLanIp()
+        {
+            try
+            {
+                var ni = NetworkInterface.GetAllNetworkInterfaces()
+                    .FirstOrDefault(n => n.OperationalStatus == OperationalStatus.Up &&
+                        (n.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                         n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211));
+
+                if (ni == null) return "localhost";
+
+                var ip = ni.GetIPProperties().UnicastAddresses
+                    .FirstOrDefault(a => a.Address.AddressFamily == AddressFamily.InterNetwork);
+
+                return ip?.Address.ToString() ?? "localhost";
+            }
+            catch
+            {
+                return "localhost";
+            }
+        }
+
         [RelayCommand]
         public void CopyToClipboard(TransferRecord? record)
         {
@@ -250,6 +464,7 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             if (!mDisposed)
             {
                 mTransferController.TransferReceived -= OnTransferReceived;
+                mConnectionTracker.CountChanged -= OnCountChanged;
                 History.CollectionChanged -= OnHistoryChanged;
                 mDisposed = true;
                 GC.SuppressFinalize(this);
