@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using PcBeaconAgent.Server.Core.Configuration;
+using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Models;
 using PcBeaconAgent.Server.Core.Services;
 using System;
@@ -16,17 +18,22 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
     public class TransferControllerTests : IDisposable
     {
         private readonly Mock<ILogger<TransferController>> mLoggerMock;
+        private readonly Mock<IHubContext<BeaconServiceHub>> mHubContextMock;
+        private readonly Mock<IConnectionTracker> mConnectionTrackerMock;
         private readonly TransferSettings mSettings;
         private readonly string mTempSaveFolder;
 
         public TransferControllerTests()
         {
             mLoggerMock = new Mock<ILogger<TransferController>>();
+            mHubContextMock = new Mock<IHubContext<BeaconServiceHub>>();
+            mConnectionTrackerMock = new Mock<IConnectionTracker>();
             mTempSaveFolder = Path.Combine(Path.GetTempPath(), $"pcbeacon-tests-{Guid.NewGuid():N}");
             mSettings = new TransferSettings { SaveFolder = mTempSaveFolder };
         }
 
-        private TransferController CreateController() => new(mLoggerMock.Object, mSettings);
+        private TransferController CreateController() =>
+            new(mLoggerMock.Object, mSettings, mHubContextMock.Object, mConnectionTrackerMock.Object);
 
         public void Dispose()
         {
@@ -479,6 +486,166 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
 
             var history = controller.GetHistory();
             Assert.Equal(TransferController.MaxHistoryItems, history.Count);
+        }
+
+        // ── Outgoing (PC → Android via SignalR) ──────────────────────
+
+        /// <summary>
+        /// Sets up the IHubContext mock so that SendAsync on a specific
+        /// connection ID records the event name and arguments. Returns
+        /// a list that tests can assert against.
+        /// </summary>
+        private List<(string Event, object[] Args)> SetupHubMock(string targetConnectionId)
+        {
+            var calls = new List<(string, object[])>();
+            var clientProxyMock = new Mock<IClientProxy>();
+
+            clientProxyMock
+                .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+                .Callback<string, object[], CancellationToken>((name, args, _) => calls.Add((name, args)))
+                .Returns(Task.CompletedTask);
+
+            // ConnectedClients.Contains(connectionId) must return true
+            // for the SendTextToClientAsync pre-check.
+            var clientsDict = new Dictionary<string, ClientInfo>
+            {
+                [targetConnectionId] = new ClientInfo { RemoteIp = "10.0.0.42", MachineName = "TestPhone" }
+            };
+            mConnectionTrackerMock.SetupGet(t => t.ConnectedClients).Returns(clientsDict);
+
+            mHubContextMock.Setup(h => h.Clients).Returns(() =>
+            {
+                var clientsMock = new Mock<IHubClients>();
+                clientsMock.Setup(c => c.Client(targetConnectionId)).Returns((ISingleClientProxy)clientProxyMock.Object);
+                return clientsMock.Object;
+            });
+
+            return calls;
+        }
+
+        [Fact]
+        public async Task SendTextToClient_ValidPayload_PushesAndStores()
+        {
+            const string connId = "test-conn-1";
+            var calls = SetupHubMock(connId);
+            var controller = CreateController();
+
+            var (accepted, message) = await controller.SendTextToClientAsync("Hello, phone!", connId, "TestPC");
+
+            Assert.True(accepted);
+            Assert.Equal("Transfer sent.", message);
+
+            // Verify SignalR push.
+            Assert.Single(calls);
+            Assert.Equal("ReceiveTextTransfer", calls[0].Event);
+            Assert.Equal("Hello, phone!", calls[0].Args[0]);
+            Assert.Equal("TestPC", calls[0].Args[1]);
+
+            // Verify history record.
+            var history = controller.GetHistory();
+            Assert.Single(history);
+            Assert.Equal(TransferDirection.Outgoing, history[0].Direction);
+            Assert.Equal(TransferKind.Text, history[0].Kind);
+            Assert.Equal("Hello, phone!", history[0].Text);
+            Assert.Equal(connId, history[0].SourceIp);
+        }
+
+        [Fact]
+        public async Task SendTextToClient_ClientNotConnected_Rejects()
+        {
+            // No client registered — ConnectedClients is empty.
+            mConnectionTrackerMock.SetupGet(t => t.ConnectedClients)
+                .Returns(new Dictionary<string, ClientInfo>());
+
+            var controller = CreateController();
+            var (accepted, message) = await controller.SendTextToClientAsync("text", "missing-conn", "PC");
+
+            Assert.False(accepted);
+            Assert.Contains("no longer connected", message, StringComparison.OrdinalIgnoreCase);
+            Assert.Empty(controller.GetHistory());
+        }
+
+        [Fact]
+        public async Task SendFileToClient_ValidFile_PushesAndStoresAndDownloadable()
+        {
+            const string connId = "test-conn-2";
+            var calls = SetupHubMock(connId);
+            var controller = CreateController();
+
+            byte[] content = "file content"u8.ToArray();
+            using var stream = new MemoryStream(content);
+
+            var (accepted, message) = await controller.SendFileToClientAsync(
+                stream, "doc.txt", connId, "TestPC", "http://10.0.0.1:5000");
+
+            Assert.True(accepted);
+            Assert.Contains("doc.txt", message);
+
+            // Verify SignalR push includes download URL.
+            Assert.Single(calls);
+            Assert.Equal("ReceiveFileTransfer", calls[0].Event);
+            Assert.Equal("doc.txt", calls[0].Args[0]);
+            Assert.Equal((long)content.Length, calls[0].Args[1]);
+            string downloadUrl = (string)calls[0].Args[2];
+            Assert.Contains("/api/transfer/download/", downloadUrl);
+
+            // Verify history record.
+            var history = controller.GetHistory();
+            Assert.Single(history);
+            var record = history[0];
+            Assert.Equal(TransferDirection.Outgoing, record.Direction);
+            Assert.Equal(TransferKind.File, record.Kind);
+            Assert.Equal("doc.txt", record.FileName);
+
+            // Verify the download token resolves to a file path.
+            string? filePath = controller.GetOutgoingFilePath(record.Id);
+            Assert.NotNull(filePath);
+            Assert.True(File.Exists(filePath));
+            Assert.Equal("file content", File.ReadAllText(filePath!));
+        }
+
+        [Fact]
+        public async Task SendFileToClient_ClientNotConnected_RejectsAndCleansUp()
+        {
+            mConnectionTrackerMock.SetupGet(t => t.ConnectedClients)
+                .Returns(new Dictionary<string, ClientInfo>());
+
+            var controller = CreateController();
+            byte[] content = "data"u8.ToArray();
+            using var stream = new MemoryStream(content);
+
+            var (accepted, _) = await controller.SendFileToClientAsync(
+                stream, "f.txt", "missing", "PC", "http://x:5000");
+
+            Assert.False(accepted);
+            Assert.Empty(controller.GetHistory());
+        }
+
+        [Fact]
+        public async Task GetOutgoingFilePath_UnknownToken_ReturnsNull()
+        {
+            var controller = CreateController();
+            Assert.Null(controller.GetOutgoingFilePath("nonexistent-token"));
+        }
+
+        [Fact]
+        public async Task SendTextToClient_OutgoingAndIncomingCoexistInHistory()
+        {
+            const string connId = "test-conn-3";
+            var calls = SetupHubMock(connId);
+            var controller = CreateController();
+
+            // Incoming text from a phone.
+            controller.ReceiveText("from phone", "10.0.0.42");
+
+            // Outgoing text to a phone.
+            await controller.SendTextToClientAsync("to phone", connId, "PC");
+
+            var history = controller.GetHistory();
+            Assert.Equal(2, history.Count);
+            // Newest first: outgoing is index 0, incoming is index 1.
+            Assert.Equal(TransferDirection.Outgoing, history[0].Direction);
+            Assert.Equal(TransferDirection.Incoming, history[1].Direction);
         }
     }
 }

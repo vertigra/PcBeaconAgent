@@ -75,6 +75,40 @@ namespace PcBeaconAgent.Server.Core.Endpoints
                     statusCode: accepted ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
             }).RequireRateLimiting("transfer-file").DisableAntiforgery();
 
+            // GET /api/transfer/download/{token} — streams an outgoing
+            // file to the Android client. The token is the
+            // TransferRecord.Id returned in the ReceiveFileTransfer
+            // SignalR push event. The file was saved to the "outgoing"
+            // subfolder of the save folder by
+            // TransferController.SendFileToClientAsync. No rate limit
+            // — downloads are gated by the token (only known tokens
+            // resolve to files, and tokens are unguessable GUIDs).
+            transferGroup.MapGet("/download/{token}", ([FromRoute] string token, [FromServices] TransferController controller) =>
+            {
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Results.BadRequest(new MessageDto("Download token is required."));
+                }
+
+                string? filePath = controller.GetOutgoingFilePath(token);
+                if (filePath == null || !File.Exists(filePath))
+                {
+                    return Results.NotFound(new MessageDto("File not found. It may have been evicted from history."));
+                }
+
+                // Stream the file. Results.File with a physical path
+                // uses SendFileAsync under the hood on Kestrel, which
+                // is zero-copy on Windows. The content type is
+                // application/octet-stream so the browser/client treats
+                // it as a download rather than trying to render it.
+                // The file name in the Content-Disposition header is
+                // taken from the actual file on disk (which has a GUID
+                // name) — the Android client already received the
+                // friendly name in the push event and uses that when
+                // saving locally.
+                return Results.File(filePath, contentType: "application/octet-stream", fileDownloadName: Path.GetFileName(filePath));
+            });
+
             return app;
         }
     }

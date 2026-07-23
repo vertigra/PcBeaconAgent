@@ -24,16 +24,39 @@ namespace PcBeaconAgent.Server.Core.Models
     }
 
     /// <summary>
-    /// In-memory record of a received transfer (text or file). Stored
-    /// in the <see cref="Services.TransferController"/> history ring
-    /// and passed to subscribers of
+    /// Direction of a transfer relative to the PC (server). Incoming
+    /// = received from an Android client. Outgoing = sent from the PC
+    /// to an Android client. The tray UI groups history by direction.
+    /// </summary>
+    public enum TransferDirection
+    {
+        /// <summary>
+        /// Transfer received by the PC from an Android client (Phase 2A
+        /// flow — <c>POST /api/transfer/text|file</c>).
+        /// </summary>
+        Incoming,
+
+        /// <summary>
+        /// Transfer sent from the PC to an Android client via SignalR
+        /// push (Phase 2B flow —
+        /// <c>TransferController.SendTextToClientAsync</c> /
+        /// <c>SendFileToClientAsync</c>).
+        /// </summary>
+        Outgoing
+    }
+
+    /// <summary>
+    /// In-memory record of a transfer (text or file, incoming or
+    /// outgoing). Stored in the <see cref="Services.TransferController"/>
+    /// history ring and passed to subscribers of
     /// <see cref="Services.TransferController.TransferReceived"/>.
     /// </summary>
     public sealed class TransferRecord
     {
         /// <summary>
         /// Unique identifier (GUID) for this transfer. Used by the tray
-        /// UI as a key when listing history items.
+        /// UI as a key when listing history items, and by the download
+        /// endpoint to look up outgoing files.
         /// </summary>
         public string Id { get; init; }
 
@@ -42,6 +65,11 @@ namespace PcBeaconAgent.Server.Core.Models
         /// populated and which tray UI row template is used.
         /// </summary>
         public TransferKind Kind { get; init; }
+
+        /// <summary>
+        /// Direction — incoming (from Android) or outgoing (to Android).
+        /// </summary>
+        public TransferDirection Direction { get; init; }
 
         /// <summary>
         /// Full text payload for <see cref="TransferKind.Text"/> records.
@@ -75,23 +103,26 @@ namespace PcBeaconAgent.Server.Core.Models
         public long SizeBytes { get; init; }
 
         /// <summary>
-        /// UTC timestamp at which the server received the transfer.
-        /// Used for history display and ordering.
+        /// UTC timestamp at which the server received or sent the
+        /// transfer. Used for history display and ordering.
         /// </summary>
         public DateTime ReceivedAtUtc { get; init; }
 
         /// <summary>
-        /// Source IP of the client that sent the transfer. Extracted
-        /// from <c>HttpContext.Connection.RemoteIpAddress</c> at the
-        /// endpoint layer. <c>"unknown"</c> if the IP cannot be
-        /// determined (unusual — should not happen on a normal LAN
-        /// connection).
+        /// For <see cref="TransferDirection.Incoming"/>: source IP of
+        /// the client that sent the transfer. For
+        /// <see cref="TransferDirection.Outgoing"/>: the SignalR
+        /// connection ID of the recipient client (used to look up the
+        /// client in <see cref="Interfaces.IConnectionTracker"/> for
+        /// display). <c>"unknown"</c> if the value cannot be
+        /// determined.
         /// </summary>
         public string SourceIp { get; init; }
 
         public TransferRecord(
             string id,
             TransferKind kind,
+            TransferDirection direction,
             string text,
             string fileName,
             string savedFilePath,
@@ -101,6 +132,7 @@ namespace PcBeaconAgent.Server.Core.Models
         {
             Id = id;
             Kind = kind;
+            Direction = direction;
             Text = text;
             FileName = fileName;
             SavedFilePath = savedFilePath;

@@ -29,7 +29,14 @@ namespace PcBeaconAgent.Server.Core.Services
             mTracker.Register(Context.ConnectionId, new ClientInfo
             {
                 RemoteIp = http?.Connection.RemoteIpAddress?.ToString(),
-                UserAgent = http?.Request.Headers.UserAgent.ToString()
+                UserAgent = http?.Request.Headers.UserAgent.ToString(),
+                // Android client passes its Build.Model (e.g. "Pixel 7")
+                // via the "machine" query parameter on the SignalR
+                // handshake. Used by the tray UI to label connected
+                // devices when choosing a recipient for outgoing
+                // transfers. Missing for older clients — UI falls back
+                // to the IP address.
+                MachineName = http?.Request.Query["machine"].ToString()
             });
 
             await base.OnConnectedAsync();
