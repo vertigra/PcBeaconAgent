@@ -56,9 +56,6 @@ public static class MauiProgram
         builder.Services.AddTransient<SendTextPage>();
         builder.Services.AddTransient<SendTextViewModel>();
 
-        builder.Services.AddTransient<SendFilePage>();
-        builder.Services.AddTransient<SendFileViewModel>();
-
         builder.Services.AddTransient<ShareTextPage>();
         builder.Services.AddTransient<ShareTextViewModel>();
 

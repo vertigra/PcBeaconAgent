@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
+             xmlns:clientModels="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
+             x:Class="PcBeaconAgent.Client.Android.Pages.ShareTextPage"
+             x:DataType="vm:ShareTextViewModel"
+             Title="Share"
+             BackgroundColor="#80000000"
+             NavigationPage.HasNavigationBar="False">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*, Auto" Padding="0">
+
+        <!-- Tap-to-dismiss overlay. Tapping the dark area above the
+             sheet closes the modal — same UX as Android's standard
+             bottom sheet. -->
+        <Grid Grid.Row="0" BackgroundColor="Transparent">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseCommand}" />
+            </Grid.GestureRecognizers>
+        </Grid>
+
+        <!-- Bottom sheet card -->
+        <Border Grid.Row="1"
+                StrokeShape="RoundRectangle 20,20,0,0"
+                BackgroundColor="#1E1E1E"
+                Stroke="#3A3A3A"
+                StrokeThickness="1"
+                Padding="20,12,20,24"
+                MinimumHeightRequest="320">
+
+            <Grid RowDefinitions="Auto, Auto, Auto, Auto, *" RowSpacing="12">
+
+                <!-- Drag handle indicator -->
+                <Border Grid.Row="0"
+                        StrokeShape="RoundRectangle 4"
+                        BackgroundColor="#424242"
+                        WidthRequest="40" HeightRequest="4"
+                        HorizontalOptions="Center"
+                        Margin="0,0,0,4"/>
+
+                <!-- Header -->
+                <Label Grid.Row="1"
+                       Text="Send to PC"
+                       FontSize="18" FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"/>
+
+                <!-- Text preview -->
+                <Border Grid.Row="2"
+                        StrokeShape="RoundRectangle 8"
+                        BackgroundColor="#2A2A2A"
+                        Padding="12,8"
+                        IsVisible="{Binding SharedText, Converter={StaticResource StringNotEmptyConverter}}">
+                    <Label Text="{Binding Preview}"
+                           FontSize="13"
+                           TextColor="#BDBDBD"
+                           MaxLines="2"
+                           LineBreakMode="TailTruncation"/>
+                </Border>
+
+                <!-- Sending indicator -->
+                <VerticalStackLayout Grid.Row="3"
+                                     IsVisible="{Binding IsSending}"
+                                     HorizontalOptions="Center"
+                                     Spacing="8">
+                    <ActivityIndicator IsRunning="{Binding IsSending}"
+                                       Color="#D0BCFF"/>
+                    <Label Text="{Binding SendingToDeviceName, StringFormat='Sending to {0}…'}"
+                           FontSize="13" TextColor="#9E9E9E"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <!-- Device list (shown when idle and there are devices) -->
+                <CollectionView Grid.Row="4"
+                                ItemsSource="{Binding Devices}"
+                                IsVisible="{Binding HasDevices}"
+                                MaximumHeightRequest="300">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="clientModels:ManagedDevice">
+                            <Border StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="#2A2A2A"
+                                    Margin="0,4"
+                                    Padding="14,12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ShareTextViewModel}}, Path=SendToDeviceCommand}"
+                                                          CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+                                    <Label Grid.Column="0"
+                                           Text="🖥️"
+                                           FontSize="20"
+                                           VerticalOptions="Center"/>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding Device.MachineName, TargetNullValue='Unknown'}"
+                                               FontSize="15" FontAttributes="Bold"
+                                               TextColor="White"/>
+                                        <Label Text="{Binding Device.IpAddress}"
+                                               FontSize="11" TextColor="#9E9E9E"/>
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="2"
+                                           Text="›"
+                                           FontSize="22" TextColor="#757575"
+                                           VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Empty state: no managed devices -->
+                <VerticalStackLayout Grid.Row="4"
+                                     IsVisible="{Binding HasNoDevices}"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="8">
+                    <Label Text="📱"
+                           FontSize="40"
+                           HorizontalOptions="Center"/>
+                    <Label Text="No paired devices"
+                           FontSize="16" FontAttributes="Bold"
+                           TextColor="#9E9E9E"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Pair a PC first from the Devices tab."
+                           FontSize="13"
+                           TextColor="#757575"
+                           HorizontalTextAlignment="Center"
+                           HorizontalOptions="Center"
+                           MaxLines="3"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

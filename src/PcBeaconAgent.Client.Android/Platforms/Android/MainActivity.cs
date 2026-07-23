@@ -134,7 +134,13 @@ public class MainActivity : MauiAppCompatActivity
         // read permission grant (FLAG_GRANT_READ_URI_PERMISSION) from
         // the source app, so we can open it via ContentResolver in
         // ShareFileViewModel.SendToDeviceAsync.
-        Uri? streamUri = intent.GetParcelableExtra(Intent.ExtraStream) as Uri;
+        //
+        // Use the typed GetParcelableExtra(string, Class) overload on
+        // Android 13+ (Tiramisu). The parameterless overload is marked
+        // obsolete (CA1422). Version-gate for older API levels.
+        Uri? streamUri = (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            ? intent.GetParcelableExtra(Intent.ExtraStream, Java.Lang.Class.FromType(typeof(Uri))) as Uri
+            : intent.GetParcelableExtra(Intent.ExtraStream) as Uri;
         if (streamUri != null)
         {
             ShareFileViewModel.PendingFileUri = streamUri;

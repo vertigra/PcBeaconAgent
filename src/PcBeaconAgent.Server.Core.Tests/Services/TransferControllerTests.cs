@@ -278,13 +278,16 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
 
             var history = controller.GetHistory();
             Assert.Equal(2, history.Count);
-            Assert.Equal("dup.txt", history[0].FileName);
-            Assert.Equal("dup (1).txt", history[1].FileName);
+            // GetHistory returns newest-first. The second upload (dup (1).txt)
+            // is newest, so it is at index 0; the first upload (dup.txt) is
+            // oldest, at index 1.
+            Assert.Equal("dup (1).txt", history[0].FileName);
+            Assert.Equal("dup.txt", history[1].FileName);
 
             // Both files should exist on disk with their respective
             // content — the second upload must NOT overwrite the first.
-            Assert.Equal("first", File.ReadAllText(history[1].SavedFilePath));
             Assert.Equal("second", File.ReadAllText(history[0].SavedFilePath));
+            Assert.Equal("first", File.ReadAllText(history[1].SavedFilePath));
         }
 
         // ── Mixed history ───────────────────────────────────────────

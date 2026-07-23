@@ -92,22 +92,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task SendText(ManagedDevice device)
     {
-        // Navigate to the full SendTextPage instead of using a
-        // single-line DisplayPromptAsync. The page provides a multiline
-        // Editor, Paste-from-clipboard button, and a richer send flow
-        // with status feedback.
-        // The '///' prefix is an absolute route — MAUI Shell requires
-        // it for routes registered outside a TabBar (relative routing
-        // to shell elements is not supported, see MAUI docs).
+        // Navigate to SendTextPage. The page now handles both text
+        // and file sending — a "📎 File" button opens the system file
+        // picker and sends the picked file inline. No separate
+        // SendFilePage needed.
         await Shell.Current.GoToAsync($"///{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
-    }
-
-    [RelayCommand]
-    public async Task SendFile(ManagedDevice device)
-    {
-        // Navigate to SendFilePage, which uses MAUI's FilePicker for
-        // system file selection and streams the file to the server.
-        await Shell.Current.GoToAsync($"///{nameof(SendFilePage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]

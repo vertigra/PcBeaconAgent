@@ -21,14 +21,11 @@
     </TabBar>
 
     <!-- Non-tab routes — pushed onto the navigation stack.
-         SendTextPage / SendFilePage reached from MainPage's buttons.
-         ShareTextPage / ShareFilePage reached from the Android Share
-         Sheet (text/plain and */* intent filters respectively). -->
+         SendTextPage handles both text and file sending (📎 File
+         button on the page). ShareTextPage / ShareFilePage are
+         reached from the Android Share Sheet. -->
     <ShellContent Route="SendTextPage"
                   ContentTemplate="{DataTemplate local:SendTextPage}"/>
-
-    <ShellContent Route="SendFilePage"
-                  ContentTemplate="{DataTemplate local:SendFilePage}"/>
 
     <ShellContent Route="ShareTextPage"
                   ContentTemplate="{DataTemplate local:ShareTextPage}"
