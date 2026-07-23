@@ -131,10 +131,19 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
 
         private void HandleTransferReceived(TransferRecord record)
         {
+            // Always add to history — the Received tab shows both
+            // incoming and outgoing records so the user can see the
+            // full transfer log.
             History.Insert(0, record);
 
-            // Branch on kind — text gets auto-copy + text preview,
-            // file gets a "saved to disk" toast with the file name.
+            // Only show toast + auto-copy for INCOMING transfers.
+            // Outgoing transfers are initiated by the user from the
+            // Send tab — they already know it was sent. Showing a
+            // "received" toast for their own outgoing transfer is
+            // confusing.
+            if (record.Direction == TransferDirection.Outgoing)
+                return;
+
             if (record.Kind == TransferKind.File)
             {
                 HandleFileReceived(record);
