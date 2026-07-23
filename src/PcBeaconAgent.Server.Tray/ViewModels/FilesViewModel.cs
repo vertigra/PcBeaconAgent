@@ -250,31 +250,32 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
 
         /// <summary>
         /// Rebuilds the <see cref="ConnectedDevices"/> collection from
-        /// the connection tracker's current snapshot. Must run on the
-        /// UI thread because ObservableCollection mutation is not
-        /// thread-safe.
+        /// the connection tracker's KnownClients (all ever-seen
+        /// devices). Each device is marked online/offline based on
+        /// whether it has an active SignalR connection. Must run on
+        /// the UI thread.
         /// </summary>
         private void RefreshConnectedDevices()
         {
             ConnectedDevices.Clear();
-            foreach (var kvp in mConnectionTracker.ConnectedClients)
+            foreach (var kvp in mConnectionTracker.KnownClients)
             {
+                bool online = mConnectionTracker.FindConnectionIdByIp(kvp.Key) != null;
                 ConnectedDevices.Add(new ConnectedDeviceInfo(
                     kvp.Key,
                     kvp.Value.MachineName,
-                    kvp.Value.RemoteIp));
+                    online));
             }
             OnPropertyChanged(nameof(HasConnectedDevices));
 
-            // If the selected device disconnected, clear the selection
-            // so CanSendToPhone re-evaluates.
-            if (SelectedDevice != null && !ConnectedDevices.Contains(SelectedDevice))
+            // If the selected device is no longer in the list (shouldn't
+            // happen with KnownClients, but guard anyway), clear it.
+            if (SelectedDevice != null && !ConnectedDevices.Any(d => d.ClientIp == SelectedDevice.ClientIp))
             {
                 SelectedDevice = null;
             }
 
-            // Auto-select the first device if none is selected and
-            // devices are available — saves the user a click.
+            // Auto-select the first device if none is selected.
             if (SelectedDevice == null && ConnectedDevices.Count > 0)
             {
                 SelectedDevice = ConnectedDevices[0];
@@ -294,13 +295,13 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             try
             {
                 var (accepted, message) = await mTransferController.SendTextToClientAsync(
-                    OutgoingText, SelectedDevice.ConnectionId, Environment.MachineName);
+                    OutgoingText, SelectedDevice.ClientIp, Environment.MachineName);
 
                 if (accepted)
                 {
-                    SendStatus = "Sent.";
+                    SendStatus = message;
                     OutgoingText = string.Empty;
-                    await System.Threading.Tasks.Task.Delay(800);
+                    await System.Threading.Tasks.Task.Delay(1500);
                     SendStatus = string.Empty;
                 }
                 else
@@ -310,7 +311,7 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             }
             catch (Exception ex)
             {
-                mLogger.LogWarning(ex, "Failed to send text to phone {Conn}", SelectedDevice.ConnectionId);
+                mLogger.LogWarning(ex, "Failed to send text to phone {Ip}", SelectedDevice.ClientIp);
                 SendStatus = "Could not send. Check the connection.";
             }
             finally
@@ -342,12 +343,12 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
                 using var stream = File.OpenRead(dialog.FileName);
                 var (accepted, message) = await mTransferController.SendFileToClientAsync(
                     stream, Path.GetFileName(dialog.FileName),
-                    SelectedDevice.ConnectionId, Environment.MachineName,
+                    SelectedDevice.ClientIp, Environment.MachineName,
                     downloadBaseUrl);
 
                 if (accepted)
                 {
-                    SendStatus = $"Sent: {Path.GetFileName(dialog.FileName)}";
+                    SendStatus = message;
                     await System.Threading.Tasks.Task.Delay(1500);
                     SendStatus = string.Empty;
                 }
@@ -358,7 +359,7 @@ namespace PcBeaconAgent.Server.Tray.ViewModels
             }
             catch (Exception ex)
             {
-                mLogger.LogWarning(ex, "Failed to send file to phone {Conn}", SelectedDevice.ConnectionId);
+                mLogger.LogWarning(ex, "Failed to send file to phone {Ip}", SelectedDevice.ClientIp);
                 SendStatus = "Could not send. Check the connection.";
             }
             finally

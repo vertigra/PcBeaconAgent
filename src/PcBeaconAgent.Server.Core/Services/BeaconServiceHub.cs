@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
-    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger, IConnectionTracker mTracker) : Hub
+    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger, IConnectionTracker mTracker, TransferController mTransferController) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -26,20 +26,25 @@ namespace PcBeaconAgent.Server.Core.Services
             LogClientConnected();
 
             var http = Context.GetHttpContext();
+            string? clientIp = http?.Connection.RemoteIpAddress?.ToString();
+
             mTracker.Register(Context.ConnectionId, new ClientInfo
             {
-                RemoteIp = http?.Connection.RemoteIpAddress?.ToString(),
+                RemoteIp = clientIp,
                 UserAgent = http?.Request.Headers.UserAgent.ToString(),
-                // Android client passes its Build.Model (e.g. "Pixel 7")
-                // via the "machine" query parameter on the SignalR
-                // handshake. Used by the tray UI to label connected
-                // devices when choosing a recipient for outgoing
-                // transfers. Missing for older clients — UI falls back
-                // to the IP address.
                 MachineName = http?.Request.Query["machine"].ToString()
             });
 
             await base.OnConnectedAsync();
+
+            // Replay any pending transfers queued while this client
+            // was offline. Fire-and-forget — the replay runs on the
+            // hub thread pool; if it fails (client disconnects
+            // mid-replay), the items are re-queued by the controller.
+            if (!string.IsNullOrEmpty(clientIp))
+            {
+                _ = mTransferController.ReplayPendingTransfers(Context.ConnectionId, clientIp);
+            }
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)

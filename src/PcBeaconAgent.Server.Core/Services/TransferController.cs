@@ -59,6 +59,11 @@ namespace PcBeaconAgent.Server.Core.Services
         // when evicted from the history ring (see StoreAndRaise).
         private readonly Dictionary<string, string> mOutgoingFiles = new();
 
+        // Pending transfers queued for offline clients. Keyed by client
+        // IP address. When a client reconnects, ReplayPendingTransfers
+        // drains the queue and pushes all pending items via SignalR.
+        private readonly Dictionary<string, List<PendingTransfer>> mPending = new();
+
         /// <summary>
         /// Maximum accepted text payload size, measured in UTF-8 bytes.
         /// 100 KB is well above any reasonable clipboard snippet while
@@ -244,23 +249,13 @@ namespace PcBeaconAgent.Server.Core.Services
         // ── Outgoing (PC → Android via SignalR) ─────────────────────
 
         /// <summary>
-        /// Sends a text payload to a specific connected Android client
-        /// via SignalR push, stores an outgoing record in history, and
-        /// raises <see cref="TransferReceived"/>. The Android client's
-        /// <c>ReceiveTextTransfer</c> handler will fire.
+        /// Sends a text payload to an Android client identified by IP.
+        /// If the client is connected, pushes immediately via SignalR.
+        /// If the client is offline, queues the transfer as pending —
+        /// it will be delivered when the client reconnects.
         /// </summary>
-        /// <param name="text">The text to send. Must not be empty or
-        /// whitespace-only, and must not exceed
-        /// <see cref="MaxTextSizeBytes"/>.</param>
-        /// <param name="targetConnectionId">SignalR connection ID of
-        /// the recipient client (from
-        /// <see cref="IConnectionTracker.ConnectedClients"/>).</param>
-        /// <param name="sourceMachineName">Machine name of the PC
-        /// (sent to the Android client so it can display the source).
-        /// </param>
-        /// <returns>A tuple of (accepted, message).</returns>
         public async Task<(bool Accepted, string Message)> SendTextToClientAsync(
-            string text, string targetConnectionId, string sourceMachineName)
+            string text, string targetClientIp, string sourceMachineName)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -275,31 +270,7 @@ namespace PcBeaconAgent.Server.Core.Services
                 return (false, $"Payload too large ({byteCount} bytes; limit {MaxTextSizeBytes}).");
             }
 
-            // Verify the target client is still connected before
-            // pushing — if the client disconnected between the UI
-            // picking it and the user tapping Send, the SignalR push
-            // would silently no-op. Returning an error here gives the
-            // user a clear message instead.
-            if (!mConnectionTracker.ConnectedClients.ContainsKey(targetConnectionId))
-            {
-                LogClientNotConnected(targetConnectionId);
-                return (false, "The selected device is no longer connected.");
-            }
-
-            // Push via SignalR. The event name "ReceiveTextTransfer"
-            // must match the Android client's hub.On(...) registration.
-            // The sourceMachineName lets the Android UI show "From PC"
-            // or the actual machine name.
-            try
-            {
-                await mHubContext.Clients.Client(targetConnectionId)
-                    .SendAsync("ReceiveTextTransfer", text, sourceMachineName);
-            }
-            catch (Exception ex)
-            {
-                LogSignalRSendError(ex);
-                return (false, "Could not deliver the transfer.");
-            }
+            string? connectionId = mConnectionTracker.FindConnectionIdByIp(targetClientIp);
 
             TransferRecord record = new(
                 id: Guid.NewGuid().ToString("N"),
@@ -310,35 +281,40 @@ namespace PcBeaconAgent.Server.Core.Services
                 savedFilePath: string.Empty,
                 sizeBytes: byteCount,
                 receivedAtUtc: DateTime.UtcNow,
-                sourceIp: targetConnectionId);
+                sourceIp: targetClientIp);
+
+            if (connectionId == null)
+            {
+                // Client offline — queue for replay on reconnect.
+                QueuePending(targetClientIp, new PendingTransfer(record, sourceMachineName));
+                StoreAndRaise(record);
+                LogTextTransferQueued(record.Id, byteCount, targetClientIp);
+                return (true, "Queued — will be delivered when the device connects.");
+            }
+
+            try
+            {
+                await mHubContext.Clients.Client(connectionId)
+                    .SendAsync("ReceiveTextTransfer", text, sourceMachineName);
+            }
+            catch (Exception ex)
+            {
+                LogSignalRSendError(ex);
+                return (false, "Could not deliver the transfer.");
+            }
 
             StoreAndRaise(record);
-            LogTextTransferSent(record.Id, byteCount, targetConnectionId);
+            LogTextTransferSent(record.Id, byteCount, targetClientIp);
             return (true, "Transfer sent.");
         }
 
         /// <summary>
-        /// Sends a file to a specific connected Android client. The
-        /// file is copied to an <c>outgoing</c> subfolder of the save
-        /// folder (so it survives for re-download), a SignalR
-        /// <c>ReceiveFileTransfer</c> event is pushed with the file
-        /// name, size, and a download URL, and an outgoing record is
-        /// stored in history.
+        /// Sends a file to an Android client identified by IP. If
+        /// connected, pushes immediately. If offline, saves the file
+        /// to disk and queues the notification for replay on reconnect.
         /// </summary>
-        /// <param name="stream">The file content stream. The caller
-        /// owns the stream lifetime (using-scope at the call site).</param>
-        /// <param name="fileName">Original file name. Sanitised to
-        /// basename only.</param>
-        /// <param name="targetConnectionId">SignalR connection ID of
-        /// the recipient.</param>
-        /// <param name="sourceMachineName">Machine name of the PC.</param>
-        /// <param name="downloadBaseUrl">Base URL for constructing the
-        /// download link, e.g. <c>http://192.168.1.10:5000</c>. The
-        /// Android client will GET
-        /// <c>{downloadBaseUrl}/api/transfer/download/{token}</c>.</param>
-        /// <returns>A tuple of (accepted, message).</returns>
         public async Task<(bool Accepted, string Message)> SendFileToClientAsync(
-            Stream stream, string fileName, string targetConnectionId,
+            Stream stream, string fileName, string targetClientIp,
             string sourceMachineName, string downloadBaseUrl)
         {
             if (stream == null)
@@ -347,40 +323,21 @@ namespace PcBeaconAgent.Server.Core.Services
                 return (false, "File stream is null.");
             }
 
-            if (!mConnectionTracker.ConnectedClients.ContainsKey(targetConnectionId))
-            {
-                LogClientNotConnected(targetConnectionId);
-                return (false, "The selected device is no longer connected.");
-            }
-
             string safeName = SanitiseFileName(fileName);
             if (string.IsNullOrEmpty(safeName))
-            {
                 safeName = $"transfer-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
-            }
 
-            // Outgoing files go to an "outgoing" subfolder of the save
-            // folder. This keeps them separate from incoming files and
-            // makes it clear which files were sent vs received.
             string outgoingFolder = Path.Combine(ResolveSaveFolder(), "outgoing");
-            try
-            {
-                Directory.CreateDirectory(outgoingFolder);
-            }
+            try { Directory.CreateDirectory(outgoingFolder); }
             catch (Exception ex)
             {
                 LogSaveFolderCreateError(ex);
                 return (false, "Could not create the outgoing folder.");
             }
 
-            // Use a GUID-based name to avoid collisions — the original
-            // name is preserved in the TransferRecord and in the push
-            // event, so the Android client sees the user-friendly name.
-            // The GUID also serves as the download token.
             string transferId = Guid.NewGuid().ToString("N");
             string ext = Path.GetExtension(safeName);
-            string diskName = $"{transferId}{ext}";
-            string diskPath = Path.Combine(outgoingFolder, diskName);
+            string diskPath = Path.Combine(outgoingFolder, $"{transferId}{ext}");
 
             long bytesWritten;
             try
@@ -395,24 +352,7 @@ namespace PcBeaconAgent.Server.Core.Services
                 return (false, "Could not save the file for sending.");
             }
 
-            // Construct the download URL. The Android client will GET
-            // this URL to download the file content.
             string downloadUrl = $"{downloadBaseUrl.TrimEnd('/')}/api/transfer/download/{transferId}";
-
-            // Push via SignalR. The event name "ReceiveFileTransfer"
-            // must match the Android client's hub.On(...) registration.
-            try
-            {
-                await mHubContext.Clients.Client(targetConnectionId)
-                    .SendAsync("ReceiveFileTransfer", safeName, bytesWritten, downloadUrl, sourceMachineName);
-            }
-            catch (Exception ex)
-            {
-                LogSignalRSendError(ex);
-                // Clean up the file — the client will never download it.
-                try { File.Delete(diskPath); } catch { /* best effort */ }
-                return (false, "Could not deliver the transfer notification.");
-            }
 
             TransferRecord record = new(
                 id: transferId,
@@ -423,28 +363,104 @@ namespace PcBeaconAgent.Server.Core.Services
                 savedFilePath: diskPath,
                 sizeBytes: bytesWritten,
                 receivedAtUtc: DateTime.UtcNow,
-                sourceIp: targetConnectionId);
+                sourceIp: targetClientIp);
 
-            // Register the download token → file path mapping so the
-            // download endpoint can find the file. Must happen under
-            // the same lock as StoreAndRaise to keep the two
-            // collections consistent.
+            // Register download token before pushing or queuing.
             lock (mStateLock)
             {
                 mOutgoingFiles[transferId] = diskPath;
             }
 
+            string? connectionId = mConnectionTracker.FindConnectionIdByIp(targetClientIp);
+
+            if (connectionId == null)
+            {
+                // Client offline — queue for replay.
+                QueuePending(targetClientIp, new PendingTransfer(record, sourceMachineName, downloadUrl));
+                StoreAndRaise(record);
+                LogFileTransferQueued(record.Id, safeName, bytesWritten, targetClientIp);
+                return (true, $"Queued — {safeName} will be delivered when the device connects.");
+            }
+
+            try
+            {
+                await mHubContext.Clients.Client(connectionId)
+                    .SendAsync("ReceiveFileTransfer", safeName, bytesWritten, downloadUrl, sourceMachineName);
+            }
+            catch (Exception ex)
+            {
+                LogSignalRSendError(ex);
+                try { File.Delete(diskPath); } catch { }
+                lock (mStateLock) { mOutgoingFiles.Remove(transferId); }
+                return (false, "Could not deliver the transfer notification.");
+            }
+
             StoreAndRaise(record);
-            LogFileTransferSent(record.Id, safeName, bytesWritten, targetConnectionId);
+            LogFileTransferSent(record.Id, safeName, bytesWritten, targetClientIp);
             return (true, $"File sent: {safeName}");
         }
 
         /// <summary>
+        /// Replays all pending transfers for a client that just
+        /// connected. Called by BeaconServiceHub.OnConnectedAsync.
+        /// Drains the pending queue for the client's IP and pushes
+        /// each item via SignalR.
+        /// </summary>
+        public async Task ReplayPendingTransfers(string connectionId, string clientIp)
+        {
+            List<PendingTransfer>? pending;
+            lock (mStateLock)
+            {
+                if (!mPending.TryGetValue(clientIp, out pending) || pending.Count == 0)
+                    return;
+                // Remove from the queue — we're delivering now.
+                mPending.Remove(clientIp);
+            }
+
+            mLogger.LogInformation("Replaying {Count} pending transfer(s) for {Ip}", pending.Count, clientIp);
+
+            foreach (var item in pending)
+            {
+                try
+                {
+                    if (item.Record.Kind == TransferKind.Text)
+                    {
+                        await mHubContext.Clients.Client(connectionId)
+                            .SendAsync("ReceiveTextTransfer", item.Record.Text, item.SourceMachineName);
+                    }
+                    else
+                    {
+                        await mHubContext.Clients.Client(connectionId)
+                            .SendAsync("ReceiveFileTransfer", item.Record.FileName, item.Record.SizeBytes,
+                                item.DownloadUrl, item.SourceMachineName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogSignalRSendError(ex);
+                    // Re-queue on failure — the client may disconnect
+                    // mid-replay.
+                    QueuePending(clientIp, item);
+                    return;
+                }
+            }
+        }
+
+        private void QueuePending(string clientIp, PendingTransfer item)
+        {
+            lock (mStateLock)
+            {
+                if (!mPending.TryGetValue(clientIp, out var list))
+                {
+                    list = [];
+                    mPending[clientIp] = list;
+                }
+                list.Add(item);
+            }
+        }
+
+        /// <summary>
         /// Looks up the file path for an outgoing file download token.
-        /// Called by the <c>GET /api/transfer/download/{token}</c>
-        /// endpoint. Returns null if the token is unknown (never sent,
-        /// or evicted from history). The caller is responsible for
-        /// streaming the file to the HTTP response.
         /// </summary>
         public string? GetOutgoingFilePath(string token)
         {
@@ -568,7 +584,17 @@ namespace PcBeaconAgent.Server.Core.Services
             return raw.Replace("%USERPROFILE%", userProfile, StringComparison.OrdinalIgnoreCase);
         }
 
-        #region Structured logging definitions (allocation-free)
+        /// <summary>
+    /// Internal record for a pending transfer queued for an offline
+    /// client. Stores everything needed to replay via SignalR when
+    /// the client reconnects.
+    /// </summary>
+    private sealed record PendingTransfer(
+        TransferRecord Record,
+        string SourceMachineName,
+        string? DownloadUrl = null);
+
+    #region Structured logging definitions (allocation-free)
 
         private static readonly Action<ILogger, string, int, string, Exception?> LogTextTransferReceivedAction =
             LoggerMessage.Define<string, int, string>(
@@ -642,11 +668,29 @@ namespace PcBeaconAgent.Server.Core.Services
         private void LogFileTransferReceived(string id, string fileName, long byteCount, string sourceIp) =>
             LogFileTransferReceivedAction(mLogger, id, fileName, byteCount, sourceIp, null);
 
+        private static readonly Action<ILogger, string, int, string, Exception?> LogTextTransferQueuedAction =
+            LoggerMessage.Define<string, int, string>(
+                LogLevel.Information,
+                new EventId(31, "TextTransferQueued"),
+                "Text transfer {TransferId} queued for offline client {Ip} ({ByteCount} bytes).");
+
+        private static readonly Action<ILogger, string, string, long, string, Exception?> LogFileTransferQueuedAction =
+            LoggerMessage.Define<string, string, long, string>(
+                LogLevel.Information,
+                new EventId(32, "FileTransferQueued"),
+                "File transfer {TransferId} queued for offline client {Ip}: {FileName} ({ByteCount} bytes).");
+
         private void LogTextTransferSent(string id, int byteCount, string connectionId) =>
             LogTextTransferSentAction(mLogger, id, byteCount, connectionId, null);
 
         private void LogFileTransferSent(string id, string fileName, long byteCount, string connectionId) =>
             LogFileTransferSentAction(mLogger, id, fileName, byteCount, connectionId, null);
+
+        private void LogTextTransferQueued(string id, int byteCount, string ip) =>
+            LogTextTransferQueuedAction(mLogger, id, byteCount, ip, null);
+
+        private void LogFileTransferQueued(string id, string fileName, long byteCount, string ip) =>
+            LogFileTransferQueuedAction(mLogger, id, fileName, byteCount, ip, null);
 
         private void LogPayloadTooLarge(int byteCount) =>
             LogPayloadTooLargeAction(mLogger, byteCount, null);

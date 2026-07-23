@@ -2,31 +2,26 @@ using PcBeaconAgent.Server.Core.Interfaces;
 using PcBeaconAgent.Server.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
     /// <summary>
     /// Implementation of <see cref="IConnectionTracker"/>. Thread-safe
-    /// via a <see cref="Lock"/> around the dictionary. Event raises
+    /// via a <see cref="Lock"/> around the dictionaries. Event raises
     /// are marshaled onto the <see cref="SynchronizationContext"/>
     /// captured at construction time.
     /// </summary>
     internal sealed class ConnectionTracker : IConnectionTracker
     {
-        // Guards mClients. SignalR hub methods run on thread-pool
-        // threads, and multiple connections can connect/disconnect
-        // concurrently.
         private readonly Lock mLock = new();
         private readonly Dictionary<string, ClientInfo> mClients = new();
+        private readonly Dictionary<string, ClientInfo> mKnownClients = new();
         private readonly SynchronizationContext? mSyncContext;
 
         public ConnectionTracker()
         {
-            // Capture the current sync context. In the tray host this
-            // is the WPF Dispatcher sync context (the App runs on the
-            // UI thread). In the CLI host it is null — events fire on
-            // the hub's thread-pool thread.
             mSyncContext = SynchronizationContext.Current;
         }
 
@@ -44,11 +39,29 @@ namespace PcBeaconAgent.Server.Core.Services
             {
                 lock (mLock)
                 {
-                    // Return a snapshot copy so the caller can iterate
-                    // without holding the lock and without seeing
-                    // concurrent mutations.
                     return new Dictionary<string, ClientInfo>(mClients);
                 }
+            }
+        }
+
+        public IReadOnlyDictionary<string, ClientInfo> KnownClients
+        {
+            get
+            {
+                lock (mLock)
+                {
+                    return new Dictionary<string, ClientInfo>(mKnownClients);
+                }
+            }
+        }
+
+        public string? FindConnectionIdByIp(string ip)
+        {
+            if (string.IsNullOrEmpty(ip)) return null;
+            lock (mLock)
+            {
+                return mClients.FirstOrDefault(kvp =>
+                    kvp.Value.RemoteIp == ip).Key;
             }
         }
 
@@ -60,6 +73,16 @@ namespace PcBeaconAgent.Server.Core.Services
             lock (mLock)
             {
                 mClients[connectionId] = info;
+
+                // Persist in KnownClients keyed by IP — survives
+                // disconnect so the tray UI can show the device even
+                // when offline, and TransferController can queue
+                // pending transfers for it.
+                if (!string.IsNullOrEmpty(info.RemoteIp))
+                {
+                    mKnownClients[info.RemoteIp] = info;
+                }
+
                 newCount = mClients.Count;
             }
             RaiseCountChanged(newCount);
@@ -71,6 +94,9 @@ namespace PcBeaconAgent.Server.Core.Services
             lock (mLock)
             {
                 mClients.Remove(connectionId);
+                // Do NOT remove from mKnownClients — the device stays
+                // visible in the tray UI as "offline" so the user can
+                // queue transfers.
                 newCount = mClients.Count;
             }
             RaiseCountChanged(newCount);
@@ -83,15 +109,10 @@ namespace PcBeaconAgent.Server.Core.Services
 
             if (mSyncContext != null)
             {
-                // Marshal to the captured context (WPF Dispatcher in
-                // the tray host). Post is asynchronous — the hub
-                // thread is not blocked.
                 mSyncContext.Post(_ => handler(newCount), null);
             }
             else
             {
-                // No sync context (CLI host) — fire on the calling
-                // thread. Subscribers that touch UI must marshal.
                 handler(newCount);
             }
         }

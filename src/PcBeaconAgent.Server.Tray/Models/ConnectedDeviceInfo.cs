@@ -3,19 +3,20 @@ using System;
 namespace PcBeaconAgent.Server.Tray.Models
 {
     /// <summary>
-    /// Lightweight view-model-friendly wrapper around a connected
-    /// SignalR client. Used by <see cref="ViewModels.FilesViewModel"/>
-    /// to populate the "Send to phone" device picker. One instance per
-    /// connected Android device.
+    /// Lightweight view-model-friendly wrapper around a known client
+    /// (may be online or offline). Used by
+    /// <see cref="ViewModels.FilesViewModel"/> to populate the device
+    /// picker in the "Send to phone" section.
     /// </summary>
     public sealed class ConnectedDeviceInfo
     {
         /// <summary>
-        /// SignalR connection ID — passed to
-        /// <c>TransferController.SendTextToClientAsync</c> /
-        /// <c>SendFileToClientAsync</c> as the target.
+        /// Client IP address — used as the stable identifier for
+        /// TransferController.SendTextToClientAsync /
+        /// SendFileToClientAsync (not the SignalR connection ID, which
+        /// changes on every reconnect).
         /// </summary>
-        public string ConnectionId { get; init; }
+        public string ClientIp { get; init; }
 
         /// <summary>
         /// Display name — the client's machine name (e.g. "Pixel 7")
@@ -24,15 +25,18 @@ namespace PcBeaconAgent.Server.Tray.Models
         public string DisplayName { get; init; }
 
         /// <summary>
-        /// Client's IP address (for display in the picker tooltip).
+        /// True if the client is currently connected (SignalR
+        /// connection active). False if the client was previously
+        /// seen but is now offline. Offline clients can still receive
+        /// queued transfers (pending replay on reconnect).
         /// </summary>
-        public string? RemoteIp { get; init; }
+        public bool IsOnline { get; set; }
 
-        public ConnectedDeviceInfo(string connectionId, string? machineName, string? remoteIp)
+        public ConnectedDeviceInfo(string clientIp, string? machineName, bool isOnline)
         {
-            ConnectionId = connectionId;
-            DisplayName = string.IsNullOrEmpty(machineName) ? (remoteIp ?? "Unknown") : machineName;
-            RemoteIp = remoteIp;
+            ClientIp = clientIp;
+            DisplayName = string.IsNullOrEmpty(machineName) ? clientIp : machineName;
+            IsOnline = isOnline;
         }
     }
 }
