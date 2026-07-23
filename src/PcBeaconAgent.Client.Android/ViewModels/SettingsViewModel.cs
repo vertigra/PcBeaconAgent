@@ -19,6 +19,19 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    /// <summary>
+    /// When true, text transfers received from the PC are automatically
+    /// copied to the Android clipboard. Default: true. Stored in
+    /// preferences via <see cref="StorageKeys.AutoCopyReceivedText"/>.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool AutoCopyReceivedText { get; set; }
+
+    partial void OnAutoCopyReceivedTextChanged(bool value)
+    {
+        mPrefs.Set(StorageKeys.AutoCopyReceivedText, value);
+    }
+
     public ObservableCollection<StoredKeyEntry> StoredKeys { get; } = [];
 
     public SettingsViewModel(IPreferencesService prefs, IDeviceStorageService deviceStorage)
@@ -26,6 +39,7 @@ public partial class SettingsViewModel : ObservableObject
         mPrefs = prefs;
         mDeviceStorage = deviceStorage;
         ApiKey = mPrefs.Get(StorageKeys.ApiKey, string.Empty) ?? string.Empty;
+        AutoCopyReceivedText = mPrefs.Get(StorageKeys.AutoCopyReceivedText, true);
         LoadStoredKeys();
     }
 

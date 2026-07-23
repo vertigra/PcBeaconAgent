@@ -6,5 +6,6 @@
         public const string DiscoveryPort = "discovery_port";
         public const string ApiKey = "api_key";
         public static string ApiKeyFor(string ipAddress) => $"{ApiKey}:{ipAddress}";
+        public const string AutoCopyReceivedText = "auto_copy_received_text";
     }
 }

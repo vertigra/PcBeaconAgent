@@ -16,6 +16,10 @@ namespace PcBeaconAgent.Client.Core.Services;
 public class SignalService(ILogger<SignalService> mLogger, IPreferencesService mPrefs) : ISignalService
 {
     public event Action<string, bool>? DeviceStatusChanged;
+    public event Action<string, string, string>? TextTransferReceived;
+    public event Action<string, string, long, string, string>? FileTransferReceived;
+
+    public string ClientMachineName { get; set; } = string.Empty;
 
     private readonly Dictionary<string, HubConnection> mConnections = [];
 
@@ -24,6 +28,15 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
     public async Task ConnectToBeaconHubAsync(BeaconDevice beaconDevice)
     {
         string hubUrl = $"http://{beaconDevice.IpAddress}:{beaconDevice.ApiPort}/hubs/beacon";
+
+        // Append the machine name as a query-string parameter so the
+        // server can label this connection in the tray UI. URL-encode
+        // to handle spaces / special chars in device model names.
+        if (!string.IsNullOrEmpty(ClientMachineName))
+        {
+            hubUrl += $"?machine={Uri.EscapeDataString(ClientMachineName)}";
+        }
+
         await ConnectAsync(beaconDevice.IpAddress, hubUrl);
     }
 
@@ -154,6 +167,22 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             DeviceStatusChanged?.Invoke(ipAddress, true);
             return Task.CompletedTask;
         };
+
+        // ── Push event handlers (PC → Android) ──────────────────────
+        // The server pushes these events via SignalR when the tray
+        // host sends a text or file transfer to this client. The
+        // ipAddress (the PC's IP) is captured in the closure so the
+        // subscriber can resolve the API key for file downloads.
+
+        connection.On<string, string>("ReceiveTextTransfer", (text, sourceMachine) =>
+        {
+            TextTransferReceived?.Invoke(ipAddress, text, sourceMachine);
+        });
+
+        connection.On<string, long, string, string>("ReceiveFileTransfer", (fileName, sizeBytes, downloadUrl, sourceMachine) =>
+        {
+            FileTransferReceived?.Invoke(ipAddress, fileName, sizeBytes, downloadUrl, sourceMachine);
+        });
 
         return connection;
     }

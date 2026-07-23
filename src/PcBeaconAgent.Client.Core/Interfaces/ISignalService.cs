@@ -10,6 +10,32 @@ public interface ISignalService
 
     event Action<string, bool>? DeviceStatusChanged;
 
+    /// <summary>
+    /// Raised when the PC pushes a text transfer to this client via
+    /// SignalR. Parameters: (sourceIp, text, sourceMachineName).
+    /// The sourceIp is the PC's IP — used to resolve the API key
+    /// for any follow-up HTTP calls.
+    /// </summary>
+    event Action<string, string, string>? TextTransferReceived;
+
+    /// <summary>
+    /// Raised when the PC pushes a file transfer notification via
+    /// SignalR. Parameters: (sourceIp, fileName, sizeBytes,
+    /// downloadUrl, sourceMachineName). The client must HTTP GET
+    /// the downloadUrl (with X-Api-Key header) to fetch the file
+    /// content.
+    /// </summary>
+    event Action<string, string, long, string, string>? FileTransferReceived;
+
+    /// <summary>
+    /// Machine name of this client, sent to the server via the
+    /// <c>machine</c> query-string parameter on the SignalR
+    /// handshake. The server uses it to label connected devices
+    /// in the tray UI. Set this before calling
+    /// <see cref="ConnectToBeaconHubAsync"/>.
+    /// </summary>
+    string ClientMachineName { get; set; }
+
     Task ConnectToBeaconHubAsync(BeaconDevice beaconDevice);
     Task DisconnectBeaconHubAsync(string ipAddress);
     Task DisconnectBeaconHubAsync(BeaconDevice beaconDevice);

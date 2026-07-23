@@ -110,6 +110,21 @@
                 </CollectionView.EmptyView>
             </CollectionView>
 
+            <!-- ── Transfer settings ──────────────────────────── -->
+            <Label Text="Transfer"
+                   FontAttributes="Bold"
+                   TextColor="#D0BCFF"
+                   FontSize="14"
+                   Margin="0,8,0,0"/>
+
+            <CheckBox IsChecked="{Binding AutoCopyReceivedText}"
+                      Color="#6750A4"/>
+            <Label Text="Auto-copy received text to clipboard"
+                   TextColor="#BDBDBD"
+                   FontSize="12"
+                   Margin="28,-30,0,0"
+                   InputTransparent="True"/>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
