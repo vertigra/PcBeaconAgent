@@ -9,11 +9,9 @@ using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Android.Net;
 using Uri = Android.Net.Uri;
 
 namespace PcBeaconAgent.Client.Android.ViewModels;
