@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:coreModels="clr-namespace:PcBeaconAgent.Client.Core.Models;assembly=PcBeaconAgent.Client.Core"
+             x:Class="PcBeaconAgent.Client.Android.Pages.ReceivedPage"
+             x:DataType="vm:ReceivedViewModel"
+             Title="Received"
+             BackgroundColor="#121212">
+
+    <Grid RowDefinitions="*, Auto" Padding="20" RowSpacing="10">
+
+        <!-- Transfer list -->
+        <CollectionView Grid.Row="0"
+                        ItemsSource="{Binding Items}"
+                        IsVisible="{Binding HasItems}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="coreModels:ReceivedTransfer">
+                    <Border StrokeShape="RoundRectangle 12"
+                            BackgroundColor="#322F35"
+                            Margin="0,5"
+                            Padding="15">
+                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="4">
+
+                            <!-- Row 0: Icon + content -->
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+                                <!-- Text icon -->
+                                <Label Grid.Column="0" Text="📝" FontSize="18"
+                                       VerticalOptions="Center" Margin="0,0,8,0">
+                                    <Label.Style>
+                                        <Style TargetType="Label">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                    <Setter Property="IsVisible" Value="True"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Label.Style>
+                                </Label>
+                                <!-- File icon -->
+                                <Label Grid.Column="0" Text="📄" FontSize="18"
+                                       VerticalOptions="Center" Margin="0,0,8,0">
+                                    <Label.Style>
+                                        <Style TargetType="Label">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                    <Setter Property="IsVisible" Value="True"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Label.Style>
+                                </Label>
+
+                                <!-- Text content -->
+                                <Label Grid.Column="1"
+                                       FontSize="14" TextColor="White"
+                                       TextTrimming="CharacterEllipsis" MaxLines="2"
+                                       VerticalOptions="Center">
+                                    <Label.Style>
+                                        <Style TargetType="Label">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                    <Setter Property="IsVisible" Value="True"/>
+                                                    <Setter Property="Text" Value="{Binding Text}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                    <Setter Property="IsVisible" Value="True"/>
+                                                    <Setter Property="Text" Value="{Binding FileName}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Label.Style>
+                                </Label>
+                            </Grid>
+
+                            <!-- Row 1: Source + time + size -->
+                            <Label Grid.Row="1" FontSize="11" TextColor="#9E9E9E">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding SourceMachine}"/>
+                                        <Span Text=" · "/>
+                                        <Span Text="{Binding DisplayTime}"/>
+                                        <Span Text=" · "/>
+                                        <Span Text="{Binding DisplaySize}"/>
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+
+                            <!-- Row 2: Action button -->
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *" ColumnSpacing="8" Margin="0,4,0,0">
+                                <!-- Copy (text only) -->
+                                <Button Grid.Column="0" Text="Copy"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ReceivedViewModel}}, Path=CopyTextCommand}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        FontSize="12" CornerRadius="8" Padding="14,6">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                    <Setter Property="IsVisible" Value="True"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <!-- Open (file only) -->
+                                <Button Grid.Column="1" Text="Open"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ReceivedViewModel}}, Path=OpenFileCommand}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#6750A4" TextColor="White"
+                                        FontSize="12" CornerRadius="8" Padding="14,6">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                    <Setter Property="IsVisible" Value="True"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Empty state -->
+        <VerticalStackLayout Grid.Row="0"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="12">
+            <VerticalStackLayout.Style>
+                <Style TargetType="VerticalStackLayout">
+                    <Setter Property="IsVisible" Value="False"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasItems}" Value="False">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </VerticalStackLayout.Style>
+            <Label Text="📥" FontSize="48" HorizontalOptions="Center"/>
+            <Label Text="No transfers received yet"
+                   FontSize="18" FontAttributes="Bold"
+                   TextColor="#9E9E9E" HorizontalOptions="Center"/>
+            <Label Text="Transfers from your PC will appear here."
+                   FontSize="13" TextColor="#757575"
+                   HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Clear button -->
+        <Button Grid.Row="1"
+                Text="Clear all"
+                Command="{Binding ClearCommand}"
+                BackgroundColor="#B3261E" TextColor="White"
+                CornerRadius="10" HeightRequest="44"
+                HorizontalOptions="Center">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="IsVisible" Value="False"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasItems}" Value="True">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+    </Grid>
+</ContentPage>

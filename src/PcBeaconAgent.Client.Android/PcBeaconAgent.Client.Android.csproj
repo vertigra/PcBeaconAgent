@@ -67,6 +67,9 @@
     <MauiXaml Update="Pages\DisplayControlPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Pages\ReceivedPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\PairingPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

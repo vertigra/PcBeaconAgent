@@ -10,7 +10,10 @@
                       ContentTemplate="{DataTemplate local:MainPage}"
                       Route="MainPage"/>
 
-        
+        <ShellContent Title="Received"
+                      ContentTemplate="{DataTemplate local:ReceivedPage}"
+                      Route="ReceivedPage"/>
+
         <ShellContent Title="Discovery"
                       ContentTemplate="{DataTemplate local:DiscoveryPage}"
                       Route="DiscoveryPage"/>
