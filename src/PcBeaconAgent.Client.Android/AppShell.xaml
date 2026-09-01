@@ -23,19 +23,4 @@
                       Route="SettingsPage"/>
     </TabBar>
 
-    <!-- Non-tab routes — pushed onto the navigation stack. -->
-    <ShellContent Route="SendTextPage"
-                  ContentTemplate="{DataTemplate local:SendTextPage}"/>
-
-    <ShellContent Route="ShareTextPage"
-                  ContentTemplate="{DataTemplate local:ShareTextPage}"
-                  Shell.PresentationMode="ModalAnimated"/>
-
-    <ShellContent Route="ShareFilePage"
-                  ContentTemplate="{DataTemplate local:ShareFilePage}"
-                  Shell.PresentationMode="ModalAnimated"/>
-
-    <ShellContent Route="AppsPage"
-                  ContentTemplate="{DataTemplate local:AppsPage}"/>
-
 </Shell>

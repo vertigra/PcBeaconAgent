@@ -4,8 +4,6 @@ using Android.OS;
 using AndroidX.Core.App;
 using Microsoft.Maui.ApplicationModel;
 using PcBeaconAgent.Client.Android.Platforms.Android;
-using static Android.Manifest;
-
 
 namespace PcBeaconAgent.Client.Android.Services;
 
@@ -74,21 +72,21 @@ public static class AndroidNotificationService
     /// </summary>
     public static void RequestPermission()
     {
-        if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu) 
+        if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu)
             return;
 
         var activity = Platform.CurrentActivity;
-        if (activity == null) 
+        if (activity == null)
             return;
 
         // CheckSelfPermission returns int: 0 = Granted, -1 = Denied.
-        // Using the integer directly avoids namespace ambiguity with
-        // Android.Content.PM.Permission enum.
         const int PermissionGranted = 0;
 
-        if (activity.CheckSelfPermission(Permission.PostNotifications) == PermissionGranted)
+        if (activity.CheckSelfPermission(Android.Manifest.Permission.PostNotifications) == PermissionGranted)
             return;
 
-        activity.RequestPermissions([Permission.PostNotifications], requestCode: 200);
+        activity.RequestPermissions(
+            [Android.Manifest.Permission.PostNotifications],
+            requestCode: 200);
     }
 }
