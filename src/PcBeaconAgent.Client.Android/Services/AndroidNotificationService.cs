@@ -21,6 +21,7 @@ public static class AndroidNotificationService
     private static bool sChannelCreated;
 
     public const string ExtraFilePath = "extra_file_path";
+    public const string ExtraOpenReceivedTab = "extra_open_received_tab";
 
     /// <summary>
     /// Checks whether the app has permission to post notifications
