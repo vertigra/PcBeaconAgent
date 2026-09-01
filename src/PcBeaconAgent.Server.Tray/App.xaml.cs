@@ -98,6 +98,7 @@ public partial class App : Application
         builder.Services.AddSingleton(beaconOptions);
         builder.Services.AddSingleton(apiOptions);
         builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Transfer);
+        builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Launchers);
 
         builder.WebHost.UseUrls($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
 
@@ -109,6 +110,7 @@ public partial class App : Application
         builder.Services.AddDisplayService();
         builder.Services.AddPairingService();
         builder.Services.AddTransferService();
+        builder.Services.AddLauncherService();
         builder.Services.AddWebApi();
 
         // Tray view models and services — singleton so the window state
@@ -130,6 +132,7 @@ public partial class App : Application
         mWebApp.MapDisplayServiceEndpoints(settings, identity);
         mWebApp.MapPairingEndpoints();
         mWebApp.MapTransferServiceEndpoints(settings, identity);
+        mWebApp.MapLauncherServiceEndpoints(settings, identity);
 
         await mWebApp.StartAsync();
     }

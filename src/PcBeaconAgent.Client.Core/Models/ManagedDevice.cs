@@ -4,7 +4,7 @@ using PcBeaconAgent.Contracts.Models;
 
 namespace PcBeaconAgent.Client.Core.Models
 {
-    public partial class ManagedDevice(BeaconDevice device, IAudioServiceClient audio, IDisplayServiceClient monitor, ITransferServiceClient transfer) : ObservableObject
+    public partial class ManagedDevice(BeaconDevice device, IAudioServiceClient audio, IDisplayServiceClient monitor, ITransferServiceClient transfer, ILauncherServiceClient launcher) : ObservableObject
     {
         public BeaconDevice Device { get; init; } = device;
 
@@ -13,6 +13,7 @@ namespace PcBeaconAgent.Client.Core.Models
         public IAudioServiceClient Audio { get; init; } = audio;
         public IDisplayServiceClient Display { get; init; } = monitor;
         public ITransferServiceClient Transfer { get; init; } = transfer;
+        public ILauncherServiceClient Launcher { get; init; } = launcher;
         public override bool Equals(object? obj) => obj is ManagedDevice other && Device.Equals(other.Device);
         public override int GetHashCode() => Device.GetHashCode();
     }

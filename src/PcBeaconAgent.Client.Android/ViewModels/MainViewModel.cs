@@ -100,6 +100,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    public async Task ManageApps(ManagedDevice device)
+    {
+        await Shell.Current.GoToAsync($"///{nameof(AppsPage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
     public async Task Forget(ManagedDevice device)
     {
         bool confirm = await Shell.Current.CurrentPage.DisplayAlertAsync("Forget Device",

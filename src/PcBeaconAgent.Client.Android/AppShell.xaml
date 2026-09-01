@@ -23,10 +23,7 @@
                       Route="SettingsPage"/>
     </TabBar>
 
-    <!-- Non-tab routes — pushed onto the navigation stack.
-         SendTextPage handles both text and file sending (📎 File
-         button on the page). ShareTextPage / ShareFilePage are
-         reached from the Android Share Sheet. -->
+    <!-- Non-tab routes — pushed onto the navigation stack. -->
     <ShellContent Route="SendTextPage"
                   ContentTemplate="{DataTemplate local:SendTextPage}"/>
 
@@ -37,5 +34,8 @@
     <ShellContent Route="ShareFilePage"
                   ContentTemplate="{DataTemplate local:ShareFilePage}"
                   Shell.PresentationMode="ModalAnimated"/>
+
+    <ShellContent Route="AppsPage"
+                  ContentTemplate="{DataTemplate local:AppsPage}"/>
 
 </Shell>

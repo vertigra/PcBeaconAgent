@@ -76,6 +76,7 @@ namespace PcBeaconAgent.Server.Cli
                 builder.Services.AddSingleton(beaconOptions);
                 builder.Services.AddSingleton(apiOptions);
                 builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Transfer);
+                builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Launchers);
 
                 ShowSecurityWarning(settings);
 
@@ -91,6 +92,7 @@ namespace PcBeaconAgent.Server.Cli
                 builder.Services.AddDisplayService();
                 builder.Services.AddPairingService();
                 builder.Services.AddTransferService();
+                builder.Services.AddLauncherService();
                 builder.Services.AddWebApi();
 
                 var app = builder.Build();
@@ -109,6 +111,7 @@ namespace PcBeaconAgent.Server.Cli
                 app.MapDisplayServiceEndpoints(settings, identity);
                 app.MapPairingEndpoints();
                 app.MapTransferServiceEndpoints(settings, identity);
+                app.MapLauncherServiceEndpoints(settings, identity);
 
                 await app.RunAsync();
             }

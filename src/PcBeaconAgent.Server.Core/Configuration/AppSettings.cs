@@ -1,10 +1,13 @@
-﻿namespace PcBeaconAgent.Server.Core.Configuration
+﻿using System.Collections.Generic;
+
+namespace PcBeaconAgent.Server.Core.Configuration
 {
     public class AppSettings
     {
         public ServerSettings Server { get; set; } = new();
         public LogSettings Log { get; set; } = new();
         public TransferSettings Transfer { get; set; } = new();
+        public LaunchersSettings Launchers { get; set; } = new();
     }
 
     public class ServerSettings
@@ -49,5 +52,46 @@
         /// at runtime. Default is the user's Downloads subfolder.
         /// </summary>
         public string SaveFolder { get; set; } = "%USERPROFILE%\\Downloads\\PcBeaconAgent";
+    }
+
+    /// <summary>
+    /// Settings for the app launcher feature. Contains a list of
+    /// user-configured executable paths that can be launched from
+    /// the Android client. The client only sees launcher IDs and
+    /// names — never the file system paths.
+    /// </summary>
+    public class LaunchersSettings
+    {
+        public List<LauncherEntry> Entries { get; set; } = [];
+    }
+
+    /// <summary>
+    /// A single configured launcher entry. The user adds these to
+    /// appsettings.json (or a future settings UI) to make apps
+    /// available on the Android client.
+    /// </summary>
+    public class LauncherEntry
+    {
+        /// <summary>
+        /// Unique ID for this launcher. Used by the client to
+        /// identify which launcher to invoke.
+        /// </summary>
+        public string Id { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Display name shown in the Android client's Apps tab.
+        /// </summary>
+        public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Full path to the executable, e.g.
+        /// <c>C:\Program Files\Steam\steam.exe</c>.
+        /// </summary>
+        public string Path { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Optional command-line arguments passed to the executable.
+        /// </summary>
+        public string Args { get; set; } = string.Empty;
     }
 }
