@@ -1,4 +1,3 @@
-using Android;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -75,16 +74,21 @@ public static class AndroidNotificationService
     /// </summary>
     public static void RequestPermission()
     {
-        if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu) return;
+        if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu) 
+            return;
 
         var activity = Platform.CurrentActivity;
-        if (activity == null) return;
+        if (activity == null) 
+            return;
 
-        //if (activity.CheckSelfPermission(Manifest.Permission.PostNotifications) == Android.Content.PM.Permission.Granted)
-            //return;
+        // CheckSelfPermission returns int: 0 = Granted, -1 = Denied.
+        // Using the integer directly avoids namespace ambiguity with
+        // Android.Content.PM.Permission enum.
+        const int PermissionGranted = 0;
 
-        activity.RequestPermissions(
-            [Permission.PostNotifications],
-            requestCode: 200);
+        if (activity.CheckSelfPermission(Permission.PostNotifications) == PermissionGranted)
+            return;
+
+        activity.RequestPermissions([Permission.PostNotifications], requestCode: 200);
     }
 }

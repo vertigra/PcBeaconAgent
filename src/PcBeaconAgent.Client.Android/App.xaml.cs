@@ -172,6 +172,12 @@ public partial class App : Application
         mLogger.LogInformation("File transfer received from {Ip} ({Machine}): {File} ({Size} bytes)",
             sourceIp, sourceMachine, fileName, sizeBytes);
 
+        // Show notification IMMEDIATELY — before the download starts.
+        // The user needs to know a file is incoming, even if the
+        // download takes time or fails.
+        AndroidNotificationService.ShowNotification("File incoming",
+            $"From {sourceMachine}: {fileName} ({FormatFileSize(sizeBytes)}) — downloading…");
+
         string apiKey = mPrefs.Get(StorageKeys.ApiKeyFor(sourceIp), string.Empty);
 
         _ = Task.Run(async () =>
@@ -230,8 +236,9 @@ public partial class App : Application
             };
             mReceivedStore.Add(transfer);
 
+            // Update notification — download complete.
             AndroidNotificationService.ShowNotification("File received",
-                $"From {sourceMachine}: {Path.GetFileName(savedPath)} ({FormatFileSize(sizeBytes)})");
+                $"From {sourceMachine}: {Path.GetFileName(savedPath)} ({FormatFileSize(sizeBytes)}) — tap Received tab to open");
         });
     }
 
