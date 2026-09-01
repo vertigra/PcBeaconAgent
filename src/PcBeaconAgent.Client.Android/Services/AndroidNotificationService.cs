@@ -42,7 +42,7 @@ public static class AndroidNotificationService
 
         try
         {
-            // Main tap — opens Received tab.
+            // Tap on notification = open Received tab.
             var mainIntent = new Intent(context, typeof(MainActivity));
             mainIntent.AddFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
             mainIntent.PutExtra(ExtraOpenReceivedTab, true);
@@ -57,19 +57,6 @@ public static class AndroidNotificationService
                 .SetAutoCancel(true)
                 .SetContentIntent(mainPending)
                 .SetPriority(0);
-
-            // "Open folder" action button (file only).
-            if (!string.IsNullOrEmpty(filePath))
-            {
-                var folderIntent = new Intent(context, typeof(MainActivity));
-                folderIntent.AddFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
-                folderIntent.PutExtra(ExtraFilePath, filePath);
-
-                var folderPending = PendingIntent.GetActivity(context, 1, folderIntent,
-                    PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
-
-                builder.AddAction(0, "Open folder", folderPending);
-            }
 
             NotificationManagerCompat.From(context).Notify(NotificationId, builder.Build());
         }
@@ -115,34 +102,6 @@ public static class AndroidNotificationService
     public static bool HandleNotificationIntent(Intent? intent)
     {
         if (intent == null) return false;
-
-        // "Open folder" action button.
-        string? filePath = intent.GetStringExtra(ExtraFilePath);
-        if (!string.IsNullOrEmpty(filePath))
-        {
-            intent.RemoveExtra(ExtraFilePath);
-            _ = MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                try
-                {
-                    var ctx = Platform.CurrentActivity ?? Application.Context;
-                    if (ctx == null) return;
-
-                    string folder = System.IO.Path.GetDirectoryName(filePath) ?? filePath;
-                    var file = new Java.IO.File(folder);
-                    var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
-                        ctx, ctx.PackageName + ".fileprovider", file);
-
-                    var view = new Intent(Intent.ActionView);
-                    view.SetDataAndType(uri, "resource/folder");
-                    view.AddFlags(ActivityFlags.GrantReadUriPermission);
-                    view.AddFlags(ActivityFlags.NewTask);
-                    ctx.StartActivity(Intent.CreateChooser(view, "Open folder"));
-                }
-                catch { }
-            });
-            return true;
-        }
 
         // Tap on notification body — open Received tab.
         bool openReceived = intent.GetBooleanExtra(ExtraOpenReceivedTab, false);
