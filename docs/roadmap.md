@@ -328,6 +328,27 @@ note before implementation; the entries here are reminders.
       `%USERPROFILE%\Downloads\PcBeaconAgent`, `%USERPROFILE%`
       placeholder expanded at runtime). Tray `FilesView` shows file
       rows with Open-folder button.
+- [ ] **App launcher.**
+      The user configures a list of executable paths on the server
+      (e.g. <c>C:\Program Files\Steam\steam.exe</c>,
+      <c>C:\Windows\System32\notepad.exe</c>) via a settings UI in the
+      tray host. The paths are stored in <c>appsettings.json</c> under a
+      <c>Launchers</c> section (or a separate <c>launchers.json</c> file
+      for easy editing). The Android client gets a new "Apps" tab that
+      lists the configured launchers (name + optional icon). Tapping a
+      launcher sends an RPC to the server, which starts the process
+      via <c>Process.Start</c>. The process runs under the server's
+      user account in the interactive desktop session (same as the tray
+      host). The server returns success/failure + the launched PID;
+      the client shows a brief confirmation. No process management
+      (kill / list / stdout) — that is tracked separately as "Process
+      management" in Tier 3. The launcher list is read-only on the
+      client; adding/removing launchers is done on the server side.
+      <br/>**Security:** the launcher list is user-configured and
+      trusted — the server does not accept arbitrary paths from the
+      client. The API key authenticates the caller, and the server only
+      launches paths that were pre-configured by the user on the server
+      side. The client sends a launcher ID (index or GUID), not a path.
 - [ ] **Local AI agent integration with sandboxed tools.**
       Send and receive commands to a local AI agent (e.g. LM Studio,
       Ollama) running on the managed PC. The Android client types a
