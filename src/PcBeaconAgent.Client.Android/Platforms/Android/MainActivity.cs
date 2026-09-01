@@ -125,10 +125,7 @@ public class MainActivity : MauiAppCompatActivity
                     if (System.IO.File.Exists(filePath))
                     {
                         await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync(
-                            new Microsoft.Maui.ApplicationModel.OpenFileRequest
-                            {
-                                File = new Microsoft.Maui.ApplicationModel.ReadOnlyFile(filePath)
-                            });
+                            new Microsoft.Maui.Essentials.FileResult(filePath));
                     }
                 }
                 catch { /* best effort — if no app can open it, do nothing */ }

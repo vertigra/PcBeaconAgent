@@ -71,10 +71,7 @@ public partial class ReceivedViewModel : ObservableObject
             // Use MAUI's Launcher.OpenAsync to open the file with the
             // system's default app. On Android, this uses
             // ACTION_VIEW with a FileProvider URI.
-            await Launcher.Default.OpenAsync(new OpenFileRequest
-            {
-                File = new ReadOnlyFile(item.FilePath)
-            });
+            await Launcher.Default.OpenAsync(new Microsoft.Maui.Essentials.FileResult(item.FilePath));
         }
         catch (Exception ex)
         {
