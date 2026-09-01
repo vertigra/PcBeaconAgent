@@ -76,83 +76,23 @@ public class MainActivity : MauiAppCompatActivity
             _multicastLock?.Acquire();
         }
 
-        // Consume the share intent if present, then replace it with a
-        // clean empty Intent. Without this, the share Intent "sticks"
-        // to the activity — after Finish() and activity recreation,
-        // OnCreate would re-receive the same stale share Intent,
-        // re-stash the old text, and confuse the navigation flow
-        // (PendingSharedText from a previous share would be overwritten
-        // or race with a new share).
-        ConsumeShareIntent(Intent);
+        // Check for notification extras FIRST (cold start case).
+        if (!AndroidNotificationService.HandleNotificationIntent(Intent))
+        {
+            ConsumeShareIntent(Intent);
+        }
         Intent = new Intent();
     }
 
     /// <inheritdoc />
-    /// <summary>
-    /// Called when a new intent arrives while the activity is already
-    /// running (single-top behaviour, requires
-    /// <see cref="LaunchMode.SingleTop"/>). This is the path for
-    /// share-sheet invocations after the first launch — the activity
-    /// is reused, and we receive the new text here.
-    /// </summary>
-    /// <remarks>
-    /// This method ONLY stashes the shared text. Navigation is handled
-    /// by <c>MainPage.OnAppearing</c>, which checks
-    /// <c>ShareTextViewModel.PendingSharedText</c> and navigates to
-    /// <c>ShareTextPage</c> if set. <c>MainPage.OnAppearing</c> is the
-    /// most reliable trigger point — it always fires when a new AppShell
-    /// is created, unlike <c>App.OnStart</c>/<c>OnResume</c> which
-    /// proved unreliable when the process was alive but the activity
-    /// was recreated.
-    /// </remarks>
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);
 
-        // Check if this is a notification "Open folder" action.
-        string? filePath = intent?.GetStringExtra(AndroidNotificationService.ExtraFilePath);
-        if (!string.IsNullOrEmpty(filePath))
+        if (!AndroidNotificationService.HandleNotificationIntent(intent))
         {
-            intent?.RemoveExtra(AndroidNotificationService.ExtraFilePath);
-            Intent = new Intent();
-
-            var ctx = Platform.CurrentActivity ?? Application.Context;
-            _ = MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                try
-                {
-                    string folder = System.IO.Path.GetDirectoryName(filePath) ?? filePath;
-                    var file = new Java.IO.File(folder);
-                    var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
-                        ctx!, ctx!.PackageName + ".fileprovider", file);
-
-                    var viewIntent = new Intent(Intent.ActionView);
-                    viewIntent.SetDataAndType(uri, "resource/folder");
-                    viewIntent.AddFlags(ActivityFlags.GrantReadUriPermission);
-                    viewIntent.AddFlags(ActivityFlags.NewTask);
-                    ctx!.StartActivity(Intent.CreateChooser(viewIntent, "Open folder"));
-                }
-                catch { /* no file manager */ }
-            });
-            return;
+            ConsumeShareIntent(intent);
         }
-
-        // Check if this is a notification tap to open Received tab.
-        bool openReceivedTab = intent?.GetBooleanExtra(AndroidNotificationService.ExtraOpenReceivedTab, false) ?? false;
-        if (openReceivedTab)
-        {
-            intent?.RemoveExtra(AndroidNotificationService.ExtraOpenReceivedTab);
-            Intent = new Intent();
-
-            _ = MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                try { Microsoft.Maui.Controls.Shell.Current.GoToAsync("//ReceivedPage"); }
-                catch { /* best effort */ }
-            });
-            return;
-        }
-
-        ConsumeShareIntent(intent);
         Intent = new Intent();
     }
 
@@ -204,40 +144,5 @@ public class MainActivity : MauiAppCompatActivity
         }
 
         base.OnDestroy();
-    }
-
-    /// <summary>
-    /// Returns a MIME type for the file based on its extension.
-    /// Android requires a MIME type on ACTION_VIEW intents — without
-    /// it, no app will match. Returns application/octet-stream as
-    /// fallback for unknown extensions.
-    /// </summary>
-    private static string GetMimeType(string filePath)
-    {
-        string ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
-        return ext switch
-        {
-            ".txt" => "text/plain",
-            ".pdf" => "application/pdf",
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".bmp" => "image/bmp",
-            ".webp" => "image/webp",
-            ".mp4" => "video/mp4",
-            ".avi" => "video/x-msvideo",
-            ".mkv" => "video/x-matroska",
-            ".mp3" => "audio/mpeg",
-            ".wav" => "audio/wav",
-            ".doc" => "application/msword",
-            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".xls" => "application/vnd.ms-excel",
-            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".zip" => "application/zip",
-            ".json" => "application/json",
-            ".xml" => "application/xml",
-            ".html" or ".htm" => "text/html",
-            _ => "application/octet-stream"
-        };
     }
 }
