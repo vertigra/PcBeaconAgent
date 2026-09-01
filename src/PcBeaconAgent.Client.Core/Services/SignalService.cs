@@ -179,7 +179,7 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             TextTransferReceived?.Invoke(ipAddress, text, sourceMachine);
         });
 
-        connection.On<string, long, string, string>("ReceiveFileTransfer", (fileName, sizeBytes, downloadUrl, sourceMachine) =>
+        connection.On<string, int, string, string>("ReceiveFileTransfer", (fileName, sizeBytes, downloadUrl, sourceMachine) =>
         {
             FileTransferReceived?.Invoke(ipAddress, fileName, sizeBytes, downloadUrl, sourceMachine);
         });

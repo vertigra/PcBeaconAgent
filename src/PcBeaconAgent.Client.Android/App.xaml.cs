@@ -167,7 +167,7 @@ public partial class App : Application
         }
     }
 
-    private void OnFileTransferReceived(string sourceIp, string fileName, long sizeBytes, string downloadUrl, string sourceMachine)
+    private void OnFileTransferReceived(string sourceIp, string fileName, int sizeBytes, string downloadUrl, string sourceMachine)
     {
         mLogger.LogInformation("File transfer received from {Ip} ({Machine}): {File} ({Size} bytes)",
             sourceIp, sourceMachine, fileName, sizeBytes);

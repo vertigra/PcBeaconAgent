@@ -25,7 +25,7 @@ public interface ISignalService
     /// the downloadUrl (with X-Api-Key header) to fetch the file
     /// content.
     /// </summary>
-    event Action<string, string, long, string, string>? FileTransferReceived;
+    event Action<string, string, int, string, string>? FileTransferReceived;
 
     /// <summary>
     /// Machine name of this client, sent to the server via the
