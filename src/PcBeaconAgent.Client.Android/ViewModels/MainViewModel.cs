@@ -96,13 +96,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
         // and file sending — a "📎 File" button opens the system file
         // picker and sends the picked file inline. No separate
         // SendFilePage needed.
-        await Shell.Current.GoToAsync($"///{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
+        await Shell.Current.GoToAsync($"{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]
     public async Task ManageApps(ManagedDevice device)
     {
-        await Shell.Current.GoToAsync($"///{nameof(AppsPage)}?ip={device.Device.IpAddress}");
+        await Shell.Current.GoToAsync($"{nameof(AppsPage)}?ip={device.Device.IpAddress}");
     }
 
     [RelayCommand]
@@ -112,7 +112,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         $"Forget {device.Device.MachineName}? The pairing key will be removed.",
         "Forget", "Cancel");
 
-        if (!confirm) return;
+        if (!confirm) 
+            return;
 
         await mSignalService.ForgetAsync(device.Device.IpAddress);
         mDeviceStore.ForgetDevice(device.Device);
