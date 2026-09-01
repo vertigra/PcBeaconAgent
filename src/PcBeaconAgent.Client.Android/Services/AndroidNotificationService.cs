@@ -82,11 +82,11 @@ public static class AndroidNotificationService
         // CheckSelfPermission returns int: 0 = Granted, -1 = Denied.
         const int PermissionGranted = 0;
 
-        if (activity.CheckSelfPermission(Android.Manifest.Permission.PostNotifications) == PermissionGranted)
+        if (activity.CheckSelfPermission(global::Android.Manifest.Permission.PostNotifications) == PermissionGranted)
             return;
 
         activity.RequestPermissions(
-            [Android.Manifest.Permission.PostNotifications],
+            [global::Android.Manifest.Permission.PostNotifications],
             requestCode: 200);
     }
 }
