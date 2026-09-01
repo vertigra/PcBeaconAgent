@@ -385,7 +385,7 @@ namespace PcBeaconAgent.Server.Core.Services
             try
             {
                 await mHubContext.Clients.Client(connectionId)
-                    .SendAsync("ReceiveFileTransfer", safeName, bytesWritten, downloadUrl, sourceMachineName);
+                    .SendAsync("ReceiveFileTransfer", safeName, bytesWritten.ToString(), downloadUrl, sourceMachineName);
             }
             catch (Exception ex)
             {
@@ -431,7 +431,7 @@ namespace PcBeaconAgent.Server.Core.Services
                     else
                     {
                         await mHubContext.Clients.Client(connectionId)
-                            .SendAsync("ReceiveFileTransfer", item.Record.FileName, item.Record.SizeBytes,
+                            .SendAsync("ReceiveFileTransfer", item.Record.FileName, item.Record.SizeBytes.ToString(),
                                 item.DownloadUrl, item.SourceMachineName);
                     }
                 }

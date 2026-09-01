@@ -179,30 +179,11 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             TextTransferReceived?.Invoke(ipAddress, text, sourceMachine);
         });
 
-        // ReceiveFileTransfer — use the low-level On(string, Type[], Func)
-        // overload instead of On<T1,T2,T3,T4>. The generic On<>
-        // requires all types to be registered in ProjectJsonContext
-        // (source-generated JSON), and type mismatches (long vs int)
-        // cause silent failures. By passing Type[] explicitly, we let
-        // SignalR's JSON deserializer handle it without strict generic
-        // type matching.
-        connection.On("ReceiveFileTransfer",
-            [typeof(string), typeof(long), typeof(string), typeof(string)],
-            (args) =>
-            {
-                string fileName = args[0]?.ToString() ?? string.Empty;
-                long sizeBytes = args[1] switch
-                {
-                    long l => l,
-                    int i => i,
-                    double d => (long)d,
-                    _ => 0L
-                };
-                string downloadUrl = args[2]?.ToString() ?? string.Empty;
-                string sourceMachine = args[3]?.ToString() ?? string.Empty;
-                FileTransferReceived?.Invoke(ipAddress, fileName, (int)sizeBytes, downloadUrl, sourceMachine);
-                return Task.CompletedTask;
-            });
+        connection.On<string, string, string, string>("ReceiveFileTransfer", (fileName, sizeBytesStr, downloadUrl, sourceMachine) =>
+        {
+            int sizeBytes = int.TryParse(sizeBytesStr, out int s) ? s : 0;
+            FileTransferReceived?.Invoke(ipAddress, fileName, sizeBytes, downloadUrl, sourceMachine);
+        });
 
         return connection;
     }
