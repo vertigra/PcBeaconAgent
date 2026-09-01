@@ -6,6 +6,7 @@ using Microsoft.Maui.ApplicationModel;
 using PcBeaconAgent.Client.Android.Platforms.Android;
 using System;
 using System.Diagnostics;
+using Debug = System.Diagnostics.Debug;
 
 namespace PcBeaconAgent.Client.Android.Services;
 
@@ -18,6 +19,8 @@ public static class AndroidNotificationService
     private const string ChannelId = "transfers";
     private const int NotificationId = 1001;
     private static bool sChannelCreated;
+
+    public const string ExtraFilePath = "extra_file_path";
 
     /// <summary>
     /// Checks whether the app has permission to post notifications
@@ -39,20 +42,18 @@ public static class AndroidNotificationService
     /// <summary>
     /// Shows a notification. Tap opens the app.
     /// </summary>
-    public static void ShowNotification(string title, string message)
+    public static void ShowNotification(string title, string message, string? filePath = null)
     {
         var context = Platform.CurrentActivity ?? Application.Context;
         if (context == null)
         {
-            System.Diagnostics.Debug.WriteLine("[AndroidNotification] Context is null, cannot show notification");
+            Debug.WriteLine("[AndroidNotification] Context is null");
             return;
         }
 
-        // Check permission on Android 13+. If not granted, the
-        // notification will silently fail, so skip it and log.
         if (!HasNotificationPermission())
         {
-            System.Diagnostics.Debug.WriteLine("[AndroidNotification] POST_NOTIFICATIONS permission not granted — skipping notification");
+            Debug.WriteLine("[AndroidNotification] Permission not granted");
             return;
         }
 
@@ -62,6 +63,13 @@ public static class AndroidNotificationService
         {
             var intent = new Intent(context, typeof(MainActivity));
             intent.AddFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
+
+            // If a file path is provided, pass it as an extra so
+            // MainActivity.OnNewIntent can open it when the user
+            // taps the notification.
+            if (!string.IsNullOrEmpty(filePath))
+                intent.PutExtra(ExtraFilePath, filePath);
+
             var pendingIntent = PendingIntent.GetActivity(context, 0, intent,
                 PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
@@ -71,14 +79,14 @@ public static class AndroidNotificationService
                 .SetSmallIcon(Resource.Drawable.abc_btn_colored_material)
                 .SetAutoCancel(true)
                 .SetContentIntent(pendingIntent)
-                .SetPriority(0); // NotificationCompat.PriorityDefault = 0
+                .SetPriority(0);
 
             NotificationManagerCompat.From(context).Notify(NotificationId, builder.Build());
-            System.Diagnostics.Debug.WriteLine($"[AndroidNotification] Notification shown: {title} — {message}");
+            Debug.WriteLine($"[AndroidNotification] Shown: {title} — {message}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[AndroidNotification] Failed to show notification: {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"[AndroidNotification] Failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -94,36 +102,21 @@ public static class AndroidNotificationService
             channel.Description = "Text and file transfers received from your PC";
             var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
             manager?.CreateNotificationChannel(channel);
-            System.Diagnostics.Debug.WriteLine("[AndroidNotification] Channel created");
         }
     }
 
     /// <summary>
     /// Requests POST_NOTIFICATIONS permission (Android 13+).
-    /// No-op on older versions.
     /// </summary>
     public static void RequestPermission()
     {
-        if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu)
-        {
-            System.Diagnostics.Debug.WriteLine("[AndroidNotification] API < 33, permission not required");
-            return;
-        }
+        if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu) return;
 
         var activity = Platform.CurrentActivity;
-        if (activity == null)
-        {
-            System.Diagnostics.Debug.WriteLine("[AndroidNotification] Activity is null, cannot request permission");
-            return;
-        }
+        if (activity == null) return;
 
-        if (HasNotificationPermission())
-        {
-            System.Diagnostics.Debug.WriteLine("[AndroidNotification] Permission already granted");
-            return;
-        }
+        if (HasNotificationPermission()) return;
 
-        System.Diagnostics.Debug.WriteLine("[AndroidNotification] Requesting POST_NOTIFICATIONS permission...");
         activity.RequestPermissions(
             [global::Android.Manifest.Permission.PostNotifications],
             requestCode: 200);

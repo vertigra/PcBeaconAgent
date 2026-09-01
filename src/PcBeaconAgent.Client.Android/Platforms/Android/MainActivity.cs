@@ -5,6 +5,7 @@ using Android.Net;
 using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
+using PcBeaconAgent.Client.Android.Services;
 using PcBeaconAgent.Client.Android.ViewModels;
 
 namespace PcBeaconAgent.Client.Android.Platforms.Android;
@@ -106,6 +107,35 @@ public class MainActivity : MauiAppCompatActivity
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);
+
+        // Check if this is a notification tap with a file path extra.
+        // If so, open the file with the system default app.
+        string? filePath = intent?.GetStringExtra(AndroidNotificationService.ExtraFilePath);
+        if (!string.IsNullOrEmpty(filePath))
+        {
+            // Clear the extra so it doesn't re-trigger on next lifecycle event.
+            intent?.RemoveExtra(AndroidNotificationService.ExtraFilePath);
+            Intent = new Intent();
+
+            // Open the file on the UI thread via MAUI Launcher.
+            _ = Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                try
+                {
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync(
+                            new Microsoft.Maui.ApplicationModel.OpenFileRequest
+                            {
+                                File = new Microsoft.Maui.ApplicationModel.ReadOnlyFile(filePath)
+                            });
+                    }
+                }
+                catch { /* best effort — if no app can open it, do nothing */ }
+            });
+            return;
+        }
+
         ConsumeShareIntent(intent);
         // Replace the activity's Intent with a clean one so the share
         // Intent does not "stick" and get re-delivered on the next

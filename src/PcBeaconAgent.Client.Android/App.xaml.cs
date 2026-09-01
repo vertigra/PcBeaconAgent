@@ -236,9 +236,11 @@ public partial class App : Application
             };
             mReceivedStore.Add(transfer);
 
-            // Update notification — download complete.
+            // Update notification — download complete. Pass filePath
+            // so tapping the notification opens the file.
             AndroidNotificationService.ShowNotification("File received",
-                $"From {sourceMachine}: {Path.GetFileName(savedPath)} ({FormatFileSize(sizeBytes)}) — tap Received tab to open");
+                $"From {sourceMachine}: {Path.GetFileName(savedPath)} ({FormatFileSize(sizeBytes)}) — tap to open",
+                filePath: savedPath);
         });
     }
 
