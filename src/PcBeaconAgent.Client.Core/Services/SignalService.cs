@@ -17,7 +17,7 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
 {
     public event Action<string, bool>? DeviceStatusChanged;
     public event Action<string, string, string>? TextTransferReceived;
-    public event Action<string, string, long, string, string>? FileTransferReceived;
+    public event Action<string, string, int, string, string>? FileTransferReceived;
 
     public string ClientMachineName { get; set; } = string.Empty;
 
