@@ -109,43 +109,50 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnNewIntent(intent);
 
-        // Check if this is a notification tap with a file path extra.
-        // If so, open the file with the system default app.
+        // Check if this is a notification "Open folder" action.
         string? filePath = intent?.GetStringExtra(AndroidNotificationService.ExtraFilePath);
         if (!string.IsNullOrEmpty(filePath))
         {
-            // Clear the extra so it doesn't re-trigger on next lifecycle event.
             intent?.RemoveExtra(AndroidNotificationService.ExtraFilePath);
             Intent = new Intent();
 
-            // Open the file on the UI thread via native Android Intent.
             var ctx = Platform.CurrentActivity ?? Application.Context;
             _ = MainThread.InvokeOnMainThreadAsync(() =>
             {
                 try
                 {
-                    if (ctx == null || !System.IO.File.Exists(filePath)) return;
-
-                    var file = new Java.IO.File(filePath);
+                    string folder = System.IO.Path.GetDirectoryName(filePath) ?? filePath;
+                    var file = new Java.IO.File(folder);
                     var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
-                        ctx, ctx.PackageName + ".fileprovider", file);
+                        ctx!, ctx!.PackageName + ".fileprovider", file);
 
                     var viewIntent = new Intent(Intent.ActionView);
-                    viewIntent.SetDataAndType(uri, GetMimeType(filePath));
+                    viewIntent.SetDataAndType(uri, "resource/folder");
                     viewIntent.AddFlags(ActivityFlags.GrantReadUriPermission);
                     viewIntent.AddFlags(ActivityFlags.NewTask);
-
-                    ctx.StartActivity(viewIntent);
+                    ctx!.StartActivity(Intent.CreateChooser(viewIntent, "Open folder"));
                 }
+                catch { /* no file manager */ }
+            });
+            return;
+        }
+
+        // Check if this is a notification tap to open Received tab.
+        bool openReceivedTab = intent?.GetBooleanExtra(AndroidNotificationService.ExtraOpenReceivedTab, false) ?? false;
+        if (openReceivedTab)
+        {
+            intent?.RemoveExtra(AndroidNotificationService.ExtraOpenReceivedTab);
+            Intent = new Intent();
+
+            _ = MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                try { Microsoft.Maui.Controls.Shell.Current.GoToAsync("//ReceivedPage"); }
                 catch { /* best effort */ }
             });
             return;
         }
 
         ConsumeShareIntent(intent);
-        // Replace the activity's Intent with a clean one so the share
-        // Intent does not "stick" and get re-delivered on the next
-        // lifecycle event. See OnCreate for rationale.
         Intent = new Intent();
     }
 

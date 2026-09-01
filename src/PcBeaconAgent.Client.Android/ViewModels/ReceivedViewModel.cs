@@ -66,22 +66,20 @@ public partial class ReceivedViewModel : ObservableObject
         try
         {
 #if ANDROID
-            // Open via native Android Intent ACTION_VIEW with FileProvider.
             var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
             if (activity != null)
             {
-                var file = new Java.IO.File(item.FilePath);
+                string folder = System.IO.Path.GetDirectoryName(item.FilePath) ?? item.FilePath;
+                var file = new Java.IO.File(folder);
                 var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
                     activity, activity.PackageName + ".fileprovider", file);
 
                 var viewIntent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionView);
-                viewIntent.SetDataAndType(uri, GetMimeType(item.FilePath));
+                viewIntent.SetDataAndType(uri, "resource/folder");
                 viewIntent.AddFlags(global::Android.Content.ActivityFlags.GrantReadUriPermission);
                 viewIntent.AddFlags(global::Android.Content.ActivityFlags.NewTask);
-                activity.StartActivity(viewIntent);
+                activity.StartActivity(global::Android.Content.Intent.CreateChooser(viewIntent, "Open folder"));
             }
-#else
-            await Launcher.Default.OpenAsync(item.FilePath);
 #endif
         }
         catch (Exception ex)
