@@ -21,6 +21,8 @@ public static class TrayConfigurationExtensions
         var settings = new AppSettings();
         configuration.GetSection("ServerSettings").Bind(settings.Server);
         configuration.GetSection("LogSettings").Bind(settings.Log);
+        configuration.GetSection("TransferSettings").Bind(settings.Transfer);
+        configuration.GetSection("Launchers").Bind(settings.Launchers);
         builder.Services.AddSingleton(settings);
 
         string fullLogPath = Path.Combine(AppContext.BaseDirectory, settings.Log.FilePath);
