@@ -31,7 +31,7 @@
                                         <Style TargetType="Label">
                                             <Setter Property="IsVisible" Value="False"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Text">
                                                     <Setter Property="IsVisible" Value="True"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -45,7 +45,7 @@
                                         <Style TargetType="Label">
                                             <Setter Property="IsVisible" Value="False"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="File">
                                                     <Setter Property="IsVisible" Value="True"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -55,18 +55,19 @@
 
                                 <!-- Text content -->
                                 <Label Grid.Column="1"
-                                       FontSize="14" TextColor="White"
-                                       TextTrimming="CharacterEllipsis" MaxLines="2"
+                                       FontSize="14" 
+                                       TextColor="White"
+                                       MaxLines="2"
                                        VerticalOptions="Center">
                                     <Label.Style>
                                         <Style TargetType="Label">
                                             <Setter Property="IsVisible" Value="False"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Text">
                                                     <Setter Property="IsVisible" Value="True"/>
                                                     <Setter Property="Text" Value="{Binding Text}"/>
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="File">
                                                     <Setter Property="IsVisible" Value="True"/>
                                                     <Setter Property="Text" Value="{Binding FileName}"/>
                                                 </DataTrigger>
@@ -101,7 +102,7 @@
                                         <Style TargetType="Button">
                                             <Setter Property="IsVisible" Value="False"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Kind}" Value="Text">
+                                                <DataTrigger TargetType="Button" Binding="{Binding Kind}" Value="Text">
                                                     <Setter Property="IsVisible" Value="True"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -118,7 +119,7 @@
                                         <Style TargetType="Button">
                                             <Setter Property="IsVisible" Value="False"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Kind}" Value="File">
+                                                <DataTrigger TargetType="Button" Binding="{Binding Kind}" Value="File">
                                                     <Setter Property="IsVisible" Value="True"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -141,7 +142,7 @@
                 <Style TargetType="VerticalStackLayout">
                     <Setter Property="IsVisible" Value="False"/>
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasItems}" Value="False">
+                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding HasItems}" Value="False">
                             <Setter Property="IsVisible" Value="True"/>
                         </DataTrigger>
                     </Style.Triggers>
@@ -167,7 +168,7 @@
                 <Style TargetType="Button">
                     <Setter Property="IsVisible" Value="False"/>
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasItems}" Value="True">
+                        <DataTrigger TargetType="Button" Binding="{Binding HasItems}" Value="True">
                             <Setter Property="IsVisible" Value="True"/>
                         </DataTrigger>
                     </Style.Triggers>
