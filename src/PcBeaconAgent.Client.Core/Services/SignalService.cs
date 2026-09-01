@@ -179,8 +179,19 @@ public class SignalService(ILogger<SignalService> mLogger, IPreferencesService m
             TextTransferReceived?.Invoke(ipAddress, text, sourceMachine);
         });
 
-        connection.On<string, int, string, string>("ReceiveFileTransfer", (fileName, sizeBytes, downloadUrl, sourceMachine) =>
+        connection.On<object, object, string, string>("ReceiveFileTransfer", (fileNameObj, sizeBytesObj, downloadUrl, sourceMachine) =>
         {
+            // SignalR may send sizeBytes as long (from C# server) —
+            // JSON number deserializes to different CLR types depending
+            // on the value. Accept as object and convert to int.
+            string fileName = fileNameObj?.ToString() ?? string.Empty;
+            int sizeBytes = sizeBytesObj switch
+            {
+                int i => i,
+                long l => (int)l,
+                double d => (int)d,
+                _ => 0
+            };
             FileTransferReceived?.Invoke(ipAddress, fileName, sizeBytes, downloadUrl, sourceMachine);
         });
 
