@@ -1,15 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage;
 using PcBeaconAgent.Client.Core.Models;
 using PcBeaconAgent.Client.Core.Stores;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Client.Android.ViewModels;
@@ -68,10 +65,24 @@ public partial class ReceivedViewModel : ObservableObject
 
         try
         {
-            // Use MAUI's Launcher.OpenAsync to open the file with the
-            // system's default app. On Android, this uses
-            // ACTION_VIEW with a FileProvider URI.
-            await Launcher.Default.OpenAsync(new Microsoft.Maui.Essentials.FileResult(item.FilePath));
+#if ANDROID
+            // Open via native Android Intent ACTION_VIEW with FileProvider.
+            var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+            if (activity != null)
+            {
+                var file = new Java.IO.File(item.FilePath);
+                var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
+                    activity, activity.PackageName + ".fileprovider", file);
+
+                var viewIntent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionView);
+                viewIntent.SetDataAndType(uri, GetMimeType(item.FilePath));
+                viewIntent.AddFlags(global::Android.Content.ActivityFlags.GrantReadUriPermission);
+                viewIntent.AddFlags(global::Android.Content.ActivityFlags.NewTask);
+                activity.StartActivity(viewIntent);
+            }
+#else
+            await Launcher.Default.OpenAsync(item.FilePath);
+#endif
         }
         catch (Exception ex)
         {
@@ -86,4 +97,35 @@ public partial class ReceivedViewModel : ObservableObject
     {
         mStore.Clear();
     }
+
+#if ANDROID
+    private static string GetMimeType(string filePath)
+    {
+        string ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        return ext switch
+        {
+            ".txt" => "text/plain",
+            ".pdf" => "application/pdf",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".avi" => "video/x-msvideo",
+            ".mkv" => "video/x-matroska",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".zip" => "application/zip",
+            ".json" => "application/json",
+            ".xml" => "application/xml",
+            ".html" or ".htm" => "text/html",
+            _ => "application/octet-stream"
+        };
+    }
+#endif
 }

@@ -5,6 +5,7 @@ using Android.Net;
 using Android.Net.Wifi;
 using Android.OS;
 using Microsoft.Maui;
+using Microsoft.Maui.ApplicationModel;
 using PcBeaconAgent.Client.Android.Services;
 using PcBeaconAgent.Client.Android.ViewModels;
 
@@ -117,18 +118,26 @@ public class MainActivity : MauiAppCompatActivity
             intent?.RemoveExtra(AndroidNotificationService.ExtraFilePath);
             Intent = new Intent();
 
-            // Open the file on the UI thread via MAUI Launcher.
-            _ = Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(async () =>
+            // Open the file on the UI thread via native Android Intent.
+            var ctx = Platform.CurrentActivity ?? Application.Context;
+            _ = MainThread.InvokeOnMainThreadAsync(() =>
             {
                 try
                 {
-                    if (System.IO.File.Exists(filePath))
-                    {
-                        await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync(
-                            new Microsoft.Maui.Essentials.FileResult(filePath));
-                    }
+                    if (ctx == null || !System.IO.File.Exists(filePath)) return;
+
+                    var file = new Java.IO.File(filePath);
+                    var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
+                        ctx, ctx.PackageName + ".fileprovider", file);
+
+                    var viewIntent = new Intent(Intent.ActionView);
+                    viewIntent.SetDataAndType(uri, GetMimeType(filePath));
+                    viewIntent.AddFlags(ActivityFlags.GrantReadUriPermission);
+                    viewIntent.AddFlags(ActivityFlags.NewTask);
+
+                    ctx.StartActivity(viewIntent);
                 }
-                catch { /* best effort — if no app can open it, do nothing */ }
+                catch { /* best effort */ }
             });
             return;
         }
@@ -188,5 +197,40 @@ public class MainActivity : MauiAppCompatActivity
         }
 
         base.OnDestroy();
+    }
+
+    /// <summary>
+    /// Returns a MIME type for the file based on its extension.
+    /// Android requires a MIME type on ACTION_VIEW intents — without
+    /// it, no app will match. Returns application/octet-stream as
+    /// fallback for unknown extensions.
+    /// </summary>
+    private static string GetMimeType(string filePath)
+    {
+        string ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        return ext switch
+        {
+            ".txt" => "text/plain",
+            ".pdf" => "application/pdf",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".avi" => "video/x-msvideo",
+            ".mkv" => "video/x-matroska",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".zip" => "application/zip",
+            ".json" => "application/json",
+            ".xml" => "application/xml",
+            ".html" or ".htm" => "text/html",
+            _ => "application/octet-stream"
+        };
     }
 }
