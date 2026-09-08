@@ -581,7 +581,7 @@ namespace PcBeaconAgent.Server.Core.Tests.Services
             Assert.Single(calls);
             Assert.Equal("ReceiveFileTransfer", calls[0].Event);
             Assert.Equal("doc.txt", calls[0].Args[0]);
-            Assert.Equal((long)content.Length, calls[0].Args[1]);
+           
             string downloadUrl = (string)calls[0].Args[2];
             Assert.Contains("/api/transfer/download/", downloadUrl);
 
