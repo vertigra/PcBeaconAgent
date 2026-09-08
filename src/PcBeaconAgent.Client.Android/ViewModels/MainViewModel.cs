@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using PcBeaconAgent.Client.Android.Pages;
 using PcBeaconAgent.Client.Core.Interfaces;
@@ -89,13 +90,30 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    public async Task SendText(ManagedDevice device)
+    {
+        // Navigate to SendTextPage. The page now handles both text
+        // and file sending — a "📎 File" button opens the system file
+        // picker and sends the picked file inline. No separate
+        // SendFilePage needed.
+        await Shell.Current.GoToAsync($"{nameof(SendTextPage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
+    public async Task ManageApps(ManagedDevice device)
+    {
+        await Shell.Current.GoToAsync($"{nameof(AppsPage)}?ip={device.Device.IpAddress}");
+    }
+
+    [RelayCommand]
     public async Task Forget(ManagedDevice device)
     {
         bool confirm = await Shell.Current.CurrentPage.DisplayAlertAsync("Forget Device",
         $"Forget {device.Device.MachineName}? The pairing key will be removed.",
         "Forget", "Cancel");
 
-        if (!confirm) return;
+        if (!confirm) 
+            return;
 
         await mSignalService.ForgetAsync(device.Device.IpAddress);
         mDeviceStore.ForgetDevice(device.Device);

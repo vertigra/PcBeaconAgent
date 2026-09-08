@@ -87,8 +87,18 @@ public partial class App : Application
         var beaconOptions = new BeaconServerOptions(settings.Server.Host, settings.Server.DiscoveryPort);
         var apiOptions = new WebApiOptions(settings.Server.ApiPort, settings.Server.ApiKey);
 
+        // Register AppSettings as a singleton first — other services
+        // (BeaconServerOptions, WebApiOptions, TransferSettings) are
+        // derived from it but kept as separate singletons for ISP
+        // (each consumer sees only the slice it needs). The factory
+        // for TransferSettings resolves AppSettings and returns its
+        // .Transfer property, so there is a single source of truth
+        // for the configuration object graph.
+        builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton(beaconOptions);
         builder.Services.AddSingleton(apiOptions);
+        builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Transfer);
+        builder.Services.AddSingleton(sp => sp.GetRequiredService<AppSettings>().Launchers);
 
         builder.WebHost.UseUrls($"http://{settings.Server.Host}:{settings.Server.ApiPort}");
 
@@ -100,12 +110,12 @@ public partial class App : Application
         builder.Services.AddDisplayService();
         builder.Services.AddPairingService();
         builder.Services.AddTransferService();
+        builder.Services.AddLauncherService();
         builder.Services.AddWebApi();
 
         // Tray view models and services — singleton so the window state
         // (PIN display, settings) survives open/close cycles within one
         // process run.
-        builder.Services.AddSingleton<AppSettings>(settings);
         builder.Services.AddSingleton<IAutoStartService, AutoStartService>();
         builder.Services.AddSingleton<INotificationService>(sp => new NotificationService((App)Current));
         builder.Services.AddSingleton<PairingViewModel>();
@@ -122,6 +132,7 @@ public partial class App : Application
         mWebApp.MapDisplayServiceEndpoints(settings, identity);
         mWebApp.MapPairingEndpoints();
         mWebApp.MapTransferServiceEndpoints(settings, identity);
+        mWebApp.MapLauncherServiceEndpoints(settings, identity);
 
         await mWebApp.StartAsync();
     }

@@ -28,6 +28,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<DeviceFactory>();
         builder.Services.AddSingleton<DeviceStore>();
+        builder.Services.AddSingleton<ReceivedTransferStore>();
 
         builder.Services.AddSingleton<IBeaconClient, BeaconClient>();
         builder.Services.AddSingleton<ISignalService, SignalService>();
@@ -37,6 +38,9 @@ public static class MauiProgram
 
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddTransient<MainViewModel>();
+
+        builder.Services.AddTransient<ReceivedPage>();
+        builder.Services.AddTransient<ReceivedViewModel>();
 
         builder.Services.AddTransient<DiscoveryPage>();
         builder.Services.AddTransient<DiscoveryViewModel>();
@@ -50,8 +54,20 @@ public static class MauiProgram
         builder.Services.AddTransient<AudioControlPage>();
         builder.Services.AddTransient<AudioControlViewModel>();
 
-        builder.Services.AddTransient<DisplayControlPage>();     
-        builder.Services.AddTransient<DisplayControlViewModel>(); 
+        builder.Services.AddTransient<DisplayControlPage>();
+        builder.Services.AddTransient<DisplayControlViewModel>();
+
+        builder.Services.AddTransient<SendTextPage>();
+        builder.Services.AddTransient<SendTextViewModel>();
+
+        builder.Services.AddTransient<AppsPage>();
+        builder.Services.AddTransient<AppsViewModel>();
+
+        builder.Services.AddTransient<ShareTextPage>();
+        builder.Services.AddTransient<ShareTextViewModel>();
+
+        builder.Services.AddTransient<ShareFilePage>();
+        builder.Services.AddTransient<ShareFileViewModel>();
 
         return builder.Build();
     }

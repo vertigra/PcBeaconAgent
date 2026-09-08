@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PcBeaconAgent.Client.Android.ViewModels"
+             xmlns:conv="clr-namespace:PcBeaconAgent.Client.Android.Converters"
+             xmlns:contracts="clr-namespace:PcBeaconAgent.Contracts.Models;assembly=PcBeaconAgent.Contracts"
+             x:Class="PcBeaconAgent.Client.Android.Pages.AppsPage"
+             x:DataType="vm:AppsViewModel"
+             Title="Apps"
+             BackgroundColor="#121212">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto" Padding="20" RowSpacing="12">
+
+        <!-- Header: device name + refresh -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="10">
+            <Label Grid.Column="0"
+                   Text="{Binding MachineName, TargetNullValue='Unknown'}"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="#D0BCFF"
+                   VerticalOptions="Center"/>
+            <Button Grid.Column="1"
+                    Text="Refresh"
+                    Command="{Binding LoadCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    BackgroundColor="#424242" TextColor="White"
+                    CornerRadius="8" HeightRequest="38"
+                    FontSize="12" Padding="14,0"/>
+        </Grid>
+
+        <!-- Launcher list -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Launchers}"
+                        IsVisible="{Binding HasLaunchers}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="contracts:LauncherDto">
+                    <Border StrokeShape="RoundRectangle 12"
+                            BackgroundColor="#322F35"
+                            Margin="0,5"
+                            Padding="15">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AppsViewModel}}, Path=LaunchCommand}"
+                                                  CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+                            <Label Grid.Column="0"
+                                   Text="🚀"
+                                   FontSize="20"
+                                   VerticalOptions="Center"/>
+                            <Label Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   FontSize="15"
+                                   TextColor="White"
+                                   VerticalOptions="Center"/>
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="#757575"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Empty state -->
+        <VerticalStackLayout Grid.Row="1"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="12">
+            <VerticalStackLayout.Style>
+                <Style TargetType="VerticalStackLayout">
+                    <Setter Property="IsVisible" Value="False"/>
+                    <Style.Triggers>
+                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding HasLaunchers}" Value="False">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </VerticalStackLayout.Style>
+            <Label Text="🚀" FontSize="48" HorizontalOptions="Center"/>
+            <Label Text="No apps configured"
+                   FontSize="18" FontAttributes="Bold"
+                   TextColor="#9E9E9E" HorizontalOptions="Center"/>
+            <Label Text="Add launchers in appsettings.json on the server."
+                   FontSize="13" TextColor="#757575"
+                   HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Status -->
+        <Label Grid.Row="2"
+               Text="{Binding StatusMessage}"
+               FontSize="12"
+               TextColor="#F44336"
+               IsVisible="{Binding HasError}"/>
+    </Grid>
+</ContentPage>

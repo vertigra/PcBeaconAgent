@@ -41,6 +41,21 @@ public static class TrayWebApiExtensions
                     QueueLimit = 0
                 });
             });
+
+            // 5 file uploads per minute per IP. Files are heavier than
+            // text (disk I/O, larger request body), so the limit is
+            // tighter than text. 5/min is still well above reasonable
+            // manual use.
+            options.AddPolicy("transfer-file", context =>
+            {
+                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromSeconds(60),
+                    QueueLimit = 0
+                });
+            });
         });
 
         return services;

@@ -35,8 +35,12 @@ tabs:
 - **Settings** — auto-start toggle (Startup section) + app name and
   version (About section). Future settings (network, security, updates,
   log path) will be added as additional expanders.
-- **Files** — placeholder for the Tier 3 cross-device file transfer
-  feature.
+- **Files** — incoming text transfer history and auto-copy settings.
+  Shows a list of received transfers (newest first) with timestamp,
+  source IP, and a Copy button per item. A Settings expander toggles
+  auto-copy-to-clipboard (default on) and offers a Clear history
+  button. Populated by `TransferController.TransferReceived` events
+  via `FilesViewModel`.
 
 The window header shows the app icon, name, and version. The window is
 not modal — it stays open until the user closes it, and the tray host

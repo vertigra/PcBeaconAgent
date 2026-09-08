@@ -41,6 +41,19 @@ namespace PcBeaconAgent.Server.Cli.Extensions
                         QueueLimit = 0
                     });
                 });
+
+                // 5 file uploads per minute per IP. See
+                // TrayWebApiExtensions for rationale.
+                options.AddPolicy("transfer-file", context =>
+                {
+                    var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                    return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromSeconds(60),
+                        QueueLimit = 0
+                    });
+                });
             });
 
             return services;

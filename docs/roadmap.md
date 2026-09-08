@@ -233,7 +233,7 @@ note before implementation; the entries here are reminders.
       Discovery"). Switch to .NET resource files (`.resx`) per project
       with `IStringLocalizer`-style lookup, ship English + Russian as
       the first two locales, add a language picker in Settings. The
-      server's PIN popup and balloon strings go through the same
+      server's PIN popup and toast strings go through the same
       mechanism so the tray host inherits the locale from the OS or
       from a setting in `appsettings.json`. ClI host stays English-only
       (its output is log-shaped, not user-facing prose).
@@ -291,7 +291,7 @@ note before implementation; the entries here are reminders.
       must be hash-verified before any swap. The update check is
       opt-out via `appsettings.json` (`Updates: { Enabled: true,
       CheckInterval: "24:00:00" }`). Requires a release-asset naming
-      convention to be added to `publish-server.yml` (e.g.
+      convention to be added to `publish-all.yml` (e.g.
       `PcBeaconAgent.Server.Tray-win-x64-{version}.zip`).
 - [x] **Cross-device clipboard & file transfer — Phase 1 (text).**
       (`<TBD>`)
@@ -301,14 +301,54 @@ note before implementation; the entries here are reminders.
       size-capped at 100 KB). `TransferController` stores the last 100
       transfers in an in-memory ring buffer and raises a
       `TransferReceived` event that the tray host subscribes to for the
-      toast + auto-copy behaviour. Phase 2 (binary files, PC→Android
-      direction, SignalR push to Android clients) is tracked separately
-      below.
-      <br/>**Phase 2 (open):** binary file payloads with a larger size
-      cap, PC→Android direction (requires a SignalR push event since
-      the tray host would be the sender, not the receiver), Android
-      Share-target integration, and persistence of the transfer history
-      across tray restarts (SQLite or JSON file next to `server.key`).
+      toast + auto-copy behaviour.
+      <br/>**Android UX:** two entry points. (a) From the Devices tab —
+      the send button on a device card navigates to `SendTextPage`, a
+      full-page multiline Editor with Paste-from-clipboard and Send.
+      (b) From any app's Share Sheet — long-press text in a browser /
+      notes / Telegram, Share → "Send to PC" opens `ShareTextPage`, a
+      modal bottom-sheet-styled page with the shared text preview and
+      a list of online devices. Tapping a device sends the text and
+      `Finish()`es the activity, returning the user to the source app.
+      `MainActivity` uses `LaunchMode.SingleTop` + `IntentFilter` for
+      `text/plain` with `Priority=100` to appear early in the share
+      sheet. The static `ShareTextViewModel.PendingSharedText` hand-off
+      bridges the native Intent to MAUI; `MainPage.OnAppearing`
+      consumes it and navigates to `ShareTextPage`.
+      <br/>**Phase 2 (open):** PC→Android direction (requires a SignalR
+      push event since the tray host would be the sender, not the
+      receiver), and persistence of the transfer history across tray
+      restarts (SQLite or JSON file next to `server.key`).
+      <br/>**Done in Phase 2:** file payloads Android→PC —
+      `POST /api/transfer/file` (multipart/form-data, streamed to disk,
+      no size cap, rate-limited 5 req/min per IP), `TransferController.
+      ReceiveFile` with filename sanitisation (path traversal guard,
+      reserved Windows name guard, collision suffix), configurable save
+      folder via `TransferSettings.SaveFolder` (default
+      `%USERPROFILE%\Downloads\PcBeaconAgent`, `%USERPROFILE%`
+      placeholder expanded at runtime). Tray `FilesView` shows file
+      rows with Open-folder button.
+- [ ] **App launcher.**
+      The user configures a list of executable paths on the server
+      (e.g. <c>C:\Program Files\Steam\steam.exe</c>,
+      <c>C:\Windows\System32\notepad.exe</c>) via a settings UI in the
+      tray host. The paths are stored in <c>appsettings.json</c> under a
+      <c>Launchers</c> section (or a separate <c>launchers.json</c> file
+      for easy editing). The Android client gets a new "Apps" tab that
+      lists the configured launchers (name + optional icon). Tapping a
+      launcher sends an RPC to the server, which starts the process
+      via <c>Process.Start</c>. The process runs under the server's
+      user account in the interactive desktop session (same as the tray
+      host). The server returns success/failure + the launched PID;
+      the client shows a brief confirmation. No process management
+      (kill / list / stdout) — that is tracked separately as "Process
+      management" in Tier 3. The launcher list is read-only on the
+      client; adding/removing launchers is done on the server side.
+      <br/>**Security:** the launcher list is user-configured and
+      trusted — the server does not accept arbitrary paths from the
+      client. The API key authenticates the caller, and the server only
+      launches paths that were pre-configured by the user on the server
+      side. The client sends a launcher ID (index or GUID), not a path.
 - [ ] **Local AI agent integration with sandboxed tools.**
       Send and receive commands to a local AI agent (e.g. LM Studio,
       Ollama) running on the managed PC. The Android client types a

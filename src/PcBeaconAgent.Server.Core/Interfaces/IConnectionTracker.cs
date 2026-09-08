@@ -32,11 +32,25 @@ namespace PcBeaconAgent.Server.Core.Interfaces
 
         /// <summary>
         /// Read-only snapshot of the connected clients, keyed by
-        /// SignalR connection ID. Useful for future UI surfaces that
-        /// list individual connections. Do not mutate the returned
-        /// dictionary — it is a snapshot copy.
+        /// SignalR connection ID.
         /// </summary>
         IReadOnlyDictionary<string, ClientInfo> ConnectedClients { get; }
+
+        /// <summary>
+        /// All clients that have ever connected (and may or may not
+        /// still be connected). Keyed by client IP address. Used by
+        /// the tray UI to show previously-seen devices even when they
+        /// are offline, so the user can queue transfers for them.
+        /// </summary>
+        IReadOnlyDictionary<string, ClientInfo> KnownClients { get; }
+
+        /// <summary>
+        /// Looks up the SignalR connection ID for a connected client
+        /// by its IP address. Returns null if the client is not
+        /// currently connected. Used by TransferController to resolve
+        /// a target IP to a connection ID for SignalR push.
+        /// </summary>
+        string? FindConnectionIdByIp(string ip);
 
         /// <summary>
         /// Raised on the captured <see cref="SynchronizationContext"/>

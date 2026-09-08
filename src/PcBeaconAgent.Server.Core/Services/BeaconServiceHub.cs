@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace PcBeaconAgent.Server.Core.Services
 {
-    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger, IConnectionTracker mTracker) : Hub
+    public class BeaconServiceHub(IBeaconServerIdentity mIdentity, ILogger<BeaconServiceHub> mLogger, IConnectionTracker mTracker, TransferController mTransferController) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -26,13 +26,25 @@ namespace PcBeaconAgent.Server.Core.Services
             LogClientConnected();
 
             var http = Context.GetHttpContext();
+            string? clientIp = http?.Connection.RemoteIpAddress?.ToString();
+
             mTracker.Register(Context.ConnectionId, new ClientInfo
             {
-                RemoteIp = http?.Connection.RemoteIpAddress?.ToString(),
-                UserAgent = http?.Request.Headers.UserAgent.ToString()
+                RemoteIp = clientIp,
+                UserAgent = http?.Request.Headers.UserAgent.ToString(),
+                MachineName = http?.Request.Query["machine"].ToString()
             });
 
             await base.OnConnectedAsync();
+
+            // Replay any pending transfers queued while this client
+            // was offline. Fire-and-forget — the replay runs on the
+            // hub thread pool; if it fails (client disconnects
+            // mid-replay), the items are re-queued by the controller.
+            if (!string.IsNullOrEmpty(clientIp))
+            {
+                _ = mTransferController.ReplayPendingTransfers(Context.ConnectionId, clientIp);
+            }
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)
