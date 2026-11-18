@@ -138,7 +138,6 @@ namespace PcBeaconAgent.Server.Cli
                 Log.CloseAndFlush();
             }
         }
-
         private static void ShowSecurityWarning(AppSettings settings)
         {
             if (!string.IsNullOrEmpty(settings.Server.ApiKey))
