@@ -24,6 +24,7 @@ namespace PcBeaconAgent.Server.Cli
             // this guard, Kestrel would crash on socket bind with an
             // obscure AddressAlreadyInUse.
             using var singleInstance = new SingleInstanceGuard();
+
             if (!singleInstance.TryAcquire())
             {
                 Log.Fatal("Another PcBeaconAgent instance is already running. " +
